@@ -1,22 +1,12 @@
-import { Express } from 'express';
-import AuthController from '../controllers/AuthController';
-import IndexController from '../controllers';
+import { Router } from 'express';
+import agentRoutes from './agent-routes';
+import healthRoutes from './health-routes';
+import authRoutes from './auth-routes';
 
-const authController = new AuthController();
-const indexController = new IndexController();
+const router = Router();
 
-export function setRoutes(app: Express): void {
-  app.get('/', indexController.getIndex.bind(indexController));
+router.use('/agents', agentRoutes);
+router.use('/health', healthRoutes);
+router.use('/auth', authRoutes);
 
-  // Rota de login
-  app.post('/auth/login', authController.login.bind(authController));
-
-  // Rota de logout
-  app.post('/auth/logout', authController.logout.bind(authController));
-
-  // Rota de cadastro
-  app.post('/auth/register', authController.register.bind(authController));
-
-  // Rota para verificação de token expirado
-  app.post('/auth/token-expired', authController.isTokenExpired.bind(authController));
-}
+export default router;
