@@ -1,0 +1,498 @@
+@import "tailwindcss";
+@plugin "daisyui";
+
+:root[data-theme="light"] {
+  --color-primary: #229ad2;
+  --color-primary-focus: #1e87b8;
+  --color-primary-content: #ffffff;
+  --color-secondary: #f3f4f6;
+  --color-secondary-focus: #e5e7eb;
+  --color-secondary-content: #1f2937;
+  --color-accent: #6b7280;            
+  --color-accent-focus: #4b5563;
+  --color-accent-content: #ffffff;
+  --color-neutral: #6b7280;
+  --color-neutral-focus: #4b5563;
+  --color-neutral-content: #ffffff;
+  --color-base-100: #ffffff;          
+  --color-base-200: #f9fafb;
+  --color-base-300: #f3f4f6;
+  --color-base-content: #1f2937;
+  --color-info: #229ad2;             
+  --color-success: #229ad2;             
+  --color-warning: #6b7280;           
+  --color-error: #229ad2;             
+}
+
+:root[data-theme="dark"] {
+  --color-primary: #3ba8e0;
+  --color-primary-focus: #229ad2;
+  --color-primary-content: #ffffff;
+  --color-secondary: #374151;         
+  --color-secondary-focus: #4b5563;
+  --color-secondary-content: #f3f4f6;
+  --color-accent: #9ca3af;            
+  --color-accent-focus: #6b7280;
+  --color-accent-content: #1f2937;
+  --color-neutral: #9ca3af;
+  --color-neutral-focus: #6b7280;
+  --color-neutral-content: #ffffff;
+  --color-base-100: #1f2937;          
+  --color-base-200: #111827;
+  --color-base-300: #0f172a;
+  --color-base-content: #f3f4f6;
+  --color-info: #3ba8e0;
+  --color-success: #3ba8e0;
+  --color-warning: #9ca3af;
+  --color-error: #3ba8e0;
+}
+
+@layer base {
+  * {
+    @apply transition-colors duration-200;
+  }
+  
+  body {
+    @apply font-sans antialiased;
+  }
+}
+
+@layer components {
+  .sidebar-transition {
+    @apply transition-all duration-300 ease-in-out;
+  }
+  
+  .card-hover {
+    @apply hover:shadow-lg hover:scale-105 transition-all duration-200;
+  }
+  
+  .btn-apple {
+    @apply rounded-xl font-medium tracking-wide;
+  }
+  
+  /* Cards com bordas claras e sombras suaves */
+  .card {
+    border: 1px solid #ebebeb;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  }
+  
+  /* Borda para modo escuro */
+  [data-theme="dark"] .card {
+    border: 1px solid #374151;
+  }
+  
+  .card:hover {
+    @apply shadow-md;
+  }
+  
+  /* Sombras mais suaves para diferentes elementos */
+  .shadow-sm {
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  }
+  
+  .shadow-md {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  }
+  
+  .shadow-lg {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  }
+  
+  .shadow-xl {
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  }
+  
+  .shadow-2xl {
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  }
+  
+  /* Estilos personalizados para gráficos */
+  .recharts-wrapper {
+    @apply rounded-lg overflow-hidden;
+  }
+  
+  .recharts-cartesian-grid-horizontal line,
+  .recharts-cartesian-grid-vertical line {
+    @apply opacity-30;
+  }
+  
+  .recharts-tooltip-wrapper {
+    @apply drop-shadow-lg;
+  }
+  
+  .recharts-legend-wrapper {
+    @apply pt-4;
+  }
+  
+  /* Animação suave para os gráficos */
+  .recharts-surface {
+    @apply transition-all duration-300 ease-in-out;
+  }
+  
+  /* Tooltips melhorados para sidebar colapsado */
+  .sidebar-transition [title]:hover {
+    position: relative;
+  }
+  
+  .sidebar-transition [title]:hover::after {
+    content: attr(title);
+    position: absolute;
+    left: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    white-space: nowrap;
+    z-index: 1000;
+    margin-left: 8px;
+    opacity: 0;
+    animation: tooltipFadeIn 0.2s ease-in-out forwards;
+  }
+  
+  @keyframes tooltipFadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-50%) translateX(-4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(-50%) translateX(0);
+    }
+  }
+  
+  /* Animação para o gráfico de funil */
+  @keyframes slideInFunnel {
+    from {
+      opacity: 0;
+      transform: translateX(-20px) scale(0.9);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0) scale(1);
+    }
+  }
+  
+  /* Animações para notificações */
+  @keyframes slide-in {
+    from {
+      opacity: 0;
+      transform: translateX(100%);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+  
+  .animate-slide-in {
+    animation: slide-in 0.3s ease-out;
+  }
+  
+  /* Animação de digitação */
+  @keyframes typing {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-4px);
+    }
+  }
+  
+  .animate-typing {
+    animation: typing 1s infinite;
+  }
+  
+  /* Hover effects para cards de conversa */
+  .conversation-card {
+    @apply transition-all duration-200 ease-in-out;
+  }
+  
+  .conversation-card:hover {
+    @apply transform scale-[1.02] shadow-md;
+  }
+  
+  /* Estilo para mensagens de chat */
+  .chat-message {
+    @apply transition-all duration-200;
+  }
+  
+  .chat-message:hover {
+    @apply shadow-sm;
+  }
+  
+  /* Indicador de prioridade urgente */
+  .urgent-indicator {
+    @apply animate-pulse;
+  }
+  
+  /* Loading spinner personalizado */
+  @keyframes spin-slow {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  
+  .animate-spin-slow {
+    animation: spin-slow 2s linear infinite;
+  }
+  
+  /* Estilos personalizados para scrollbars */
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 3px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+  }
+  
+  /* Scrollbar para modo escuro */
+  [data-theme="dark"] .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: #4b5563;
+  }
+  
+  [data-theme="dark"] .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: #6b7280;
+  }
+  
+  /* Estilos para line-clamp */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Responsividade Mobile */
+  
+  /* Ajustes para telas pequenas */
+  @media (max-width: 640px) {
+    .container {
+      @apply px-4;
+    }
+    
+    .card {
+      @apply rounded-lg;
+    }
+    
+    .btn {
+      @apply text-sm px-3 py-2;
+    }
+    
+    .btn-lg {
+      @apply text-base px-4 py-3;
+    }
+  }
+  
+  /* Ajustes para tablets */
+  @media (min-width: 641px) and (max-width: 1024px) {
+    .container {
+      @apply px-6;
+    }
+  }
+  
+  /* Animações para menu mobile */
+  @keyframes slideInFromLeft {
+    from {
+      transform: translateX(-100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+  
+  @keyframes slideOutToLeft {
+    from {
+      transform: translateX(0);
+      opacity: 1;
+    }
+    to {
+      transform: translateX(-100%);
+      opacity: 0;
+    }
+  }
+  
+  .mobile-menu-enter {
+    animation: slideInFromLeft 0.3s ease-out;
+  }
+  
+  .mobile-menu-exit {
+    animation: slideOutToLeft 0.3s ease-in;
+  }
+  
+  /* Overlay para menu mobile */
+  .mobile-overlay {
+    @apply fixed inset-0 bg-black z-40;
+    background-color: (0, 0, 0, 0.5);
+    backdrop-filter: blur(2px);
+  }
+  
+  /* Ajustes para cards responsivos */
+  .responsive-grid {
+    @apply grid gap-4;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
+  
+  /* Ajustes para tabelas responsivas */
+  .responsive-table {
+    @apply w-full overflow-x-auto;
+  }
+  
+  .responsive-table table {
+    @apply min-w-full;
+  }
+  
+  /* Ajustes para formulários responsivos */
+  .responsive-form {
+    @apply space-y-4;
+  }
+  
+  .responsive-form .form-control {
+    @apply w-full;
+  }
+  
+  /* Ajustes para gráficos responsivos */
+  .responsive-chart {
+    @apply w-full h-64 md:h-80 lg:h-96;
+  }
+  
+  /* Ajustes para navegação mobile */
+  .mobile-nav-item {
+    @apply flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200;
+  }
+  
+  .mobile-nav-item:hover {
+    @apply bg-base-300;
+  }
+  
+  .mobile-nav-item.active {
+    @apply bg-primary text-primary-content;
+  }
+  
+  /* Ajustes para dropdowns mobile */
+  .mobile-dropdown {
+    @apply w-full;
+  }
+  
+  .mobile-dropdown .dropdown-content {
+    @apply w-full max-w-sm;
+  }
+  
+  /* Ajustes para modais mobile */
+  .mobile-modal {
+    @apply w-full h-full md:w-auto md:h-auto md:max-w-lg;
+  }
+  
+  /* Ajustes para tooltips mobile */
+  @media (max-width: 768px) {
+    .sidebar-transition [title]:hover::after {
+      display: none;
+    }
+  }
+  
+  /* Ajustes para botões mobile */
+  .mobile-btn {
+    @apply touch-manipulation;
+  }
+  
+  /* Ajustes para inputs mobile */
+  .mobile-input {
+    @apply text-base;
+  }
+  
+  /* Ajustes para espaçamento mobile */
+  .mobile-spacing {
+    @apply space-y-4 md:space-y-6;
+  }
+  
+  /* Ajustes para padding mobile */
+  .mobile-padding {
+    @apply p-4 md:p-6;
+  }
+  
+  /* Ajustes para margem mobile */
+  .mobile-margin {
+    @apply m-4 md:m-6;
+  }
+  
+  /* Ajustes para flexbox mobile */
+  .mobile-flex {
+    @apply flex-col md:flex-row;
+  }
+  
+  /* Ajustes para grid mobile */
+  .mobile-grid {
+    @apply grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4;
+  }
+  
+  /* Ajustes para texto mobile */
+  .mobile-text {
+    @apply text-sm md:text-base;
+  }
+  
+  .mobile-text-lg {
+    @apply text-base md:text-lg;
+  }
+  
+  .mobile-text-xl {
+    @apply text-lg md:text-xl;
+  }
+  
+  /* Ajustes para ícones mobile */
+  .mobile-icon {
+    @apply w-5 h-5 md:w-6 md:h-6;
+  }
+  
+  /* Ajustes para avatares mobile */
+  .mobile-avatar {
+    @apply w-8 h-8 md:w-10 md:h-10;
+  }
+  
+  /* Ajustes para badges mobile */
+  .mobile-badge {
+    @apply text-xs md:text-sm;
+  }
+  
+  /* Ajustes para loading mobile */
+  .mobile-loading {
+    @apply flex items-center justify-center p-8;
+  }
+  
+  /* Ajustes para empty state mobile */
+  .mobile-empty {
+    @apply text-center p-8;
+  }
+  
+  /* Ajustes para error state mobile */
+  .mobile-error {
+    @apply text-center p-8;
+  }
+  
+  /* Ajustes para success state mobile */
+  .mobile-success {
+    @apply text-center p-8;
+  }
+} 

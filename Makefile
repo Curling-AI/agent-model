@@ -1,22 +1,22 @@
 .PHONY: setup setup-dev run run-dev stop stop-dev deploy start-workers stop-workers
 
 setup:
-	docker compose -f docker/compose.prod.yaml build
+	docker compose -f compose.prod.yaml build
 
 setup-dev:
-	docker compose -f docker/compose.dev.yaml build
+	docker compose -f compose.dev.yaml build
 
 run:
-	docker compose -f docker/compose.prod.yaml up -d
+	docker compose -f compose.prod.yaml up -d
 
 run-dev:
-	docker compose -f docker/compose.dev.yaml up -d
+	docker compose -f compose.dev.yaml up -d
 
 stop:
-	docker compose -f docker/compose.prod.yaml down
+	docker compose -f compose.prod.yaml down
 
 stop-dev:
-	docker compose -f docker/compose.dev.yaml down
+	docker compose -f compose.dev.yaml down
 
 _pull:
 	git pull

@@ -1,0 +1,32 @@
+services:
+  frontend:
+    container_name: agent-front
+    build:
+      context: ./frontend
+      dockerfile: docker/dev.Dockerfile    
+    restart: always
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - local
+    command: npm run dev
+  backend:
+    container_name: agent-back
+    build:
+      context: ./backend
+      dockerfile: docker/dev.Dockerfile
+    restart: always
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    networks:
+      - local
+    command: npm run dev
+
+networks:
+  local:
