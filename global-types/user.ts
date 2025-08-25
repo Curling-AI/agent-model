@@ -1,50 +1,51 @@
-export interface User {
+import { BaseInterface } from ".";
+
+export interface User extends BaseInterface {
   id: number;
   name: string;
   surname: string;
   email: string;
   phone: string;
-  organizationName: string;
-  job: Job;
+  jobId: number;
   locationName: string;
   language: string;
   timezone: string;
   status: 'active' | 'inactive' | 'suspended';
-  department: Department;
+  departmentId: number;
   agentPermissions: AgentPermission[];
   crmPermissions: CrmPermission[];
   conversationPermissions: ConversationPermission[];
   managementPermissions: ManagementPermission[];
 }
 
-export interface Job {
+export interface Job extends BaseInterface {
   id: number;
   title: string;
 }
 
-export interface Department {
+export interface Department extends BaseInterface {
   id: number;
   name: string;
   description: string;
   managerName: string;
 }
 
-export interface AgentPermission {
+export interface AgentPermission extends BaseInterface {
   id: number;
   name: string;
 }
 
-export interface CrmPermission {
+export interface CrmPermission extends BaseInterface {
   id: number;
   name: string;
 }
 
-export interface ConversationPermission {
+export interface ConversationPermission extends BaseInterface {
   id: number;
   name: string;
 }
 
-export interface ManagementPermission {
+export interface ManagementPermission extends BaseInterface {
   id: number;
   name: string;
 }

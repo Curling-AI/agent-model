@@ -1,9 +1,12 @@
-import { Organization, ServiceProvider } from ".";
+import { BaseInterface, ServiceProvider } from ".";
 import { FollowUp } from "./follow_up";
 
-export interface Agent {
+export interface BaseAgent {
+  agentId: number;
+}
+
+export interface Agent extends BaseInterface {
   id: number;
-  organization: Organization;
   name: string;
   active: boolean;
   description: string;
@@ -19,12 +22,13 @@ export interface Agent {
   serviceProviders: ServiceProvider[];
 }
 
-export interface AgentPrompt {
+export interface AgentPrompt extends BaseAgent {
+  id: number;
   type: 'simple' | 'advanced';
   prompt: string;
 }
 
-export interface AgentDocument {
+export interface AgentDocument extends BaseAgent {
   id: number;
   type: 'file' | 'faq' | 'video';
   name: string;

@@ -2,9 +2,14 @@ export interface Organization {
   id: string;
   name: string;
   credit: number;
+  payment_token: string;
 }
 
-export interface CrmColumn {
+export interface BaseInterface {
+  organizationId: number;
+}
+
+export interface CrmColumn extends BaseInterface {
   id: number;
   name: string;
   isSystem: boolean;

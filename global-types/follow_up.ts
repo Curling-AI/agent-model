@@ -1,11 +1,13 @@
-import { CrmColumn } from ".";
+import { BaseInterface, CrmColumn } from ".";
+import { BaseAgent } from "./agent";
 
-export interface FollowUp {
+export interface FollowUp extends BaseInterface, BaseAgent {
   id: number;
   name: string;
   crmColumn: CrmColumn;
   trigger: FollowUpTrigger;
   description: string;
+  messageSequences: MessageSequence[];
 }
 
 export interface MessageSequence {
@@ -22,7 +24,7 @@ export interface MessageSequenceDocument {
   url: string;
 }
 
-export interface FollowUpTrigger {
+export interface FollowUpTrigger extends BaseInterface {
   id: number;
   name: string;
 }

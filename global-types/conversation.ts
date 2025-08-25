@@ -1,7 +1,8 @@
+import { BaseInterface } from ".";
 import { Agent } from "./agent";
 import { Lead } from "./lead";
 
-export interface Conversation {
+export interface Conversation extends BaseInterface {
   id: number;
   agent: Agent;
   lead: Lead;
@@ -11,7 +12,7 @@ export interface Conversation {
 
 export interface ConversationMessage {
   id: number;
-  conversation: Conversation;
+  conversationId: number;
   sender: 'human' | 'agent';
   content: string;
   timestamp: Date;

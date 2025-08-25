@@ -19,7 +19,7 @@ export default defineConfig({
   resolve: {
   alias: {
     '@': path.resolve(__dirname, 'src'),
-    '@model': path.resolve(__dirname, '../model'),
+    '@global-types': path.resolve(__dirname, '../global-types'),
   },
 }
 })
