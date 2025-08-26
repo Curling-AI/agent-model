@@ -1,8 +1,8 @@
-import React from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Plus, 
-  Zap, 
+import {
+  Plus,
+  Zap,
   MoreVertical,
   MessageSquare,
   Edit,
@@ -11,57 +11,31 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useTranslation } from '../translations';
+import { useAgentStore } from '@/store/agent';
 
 const Agents = () => {
   const navigate = useNavigate();
   const language = useLanguage();
   const t = useTranslation(language);
+  const { agents, fetchAgents, updateAgent } = useAgentStore();
 
-  // Dados de exemplo dos agentes
-  const [agents, setAgents] = React.useState([
-    {
-      id: 1,
-      name: t.salesAgent,
-      description: t.salesAgentDesc,
-      status: 'active',
-      lastActive: `2 ${t.minutesAgo}`
-    },
-    {
-      id: 2,
-      name: t.technicalSupport,
-      description: t.technicalSupportDesc,
-      status: 'active',
-      lastActive: `5 ${t.minutesAgo}`
-    },
-    {
-      id: 3,
-      name: t.marketingAgent,
-      description: t.marketingAgentDesc,
-      status: 'paused',
-      lastActive: `1${t.hourAgo}`
-    },
-    {
-      id: 4,
-      name: t.financialAgent,
-      description: t.financialAgentDesc,
-      status: 'active',
-      lastActive: `10 ${t.minutesAgo}`
-    }
-  ]);
+  useEffect(() => {
+    fetchAgents(1);
+  }, [fetchAgents]);
 
   const toggleAgentStatus = (agentId: number) => {
-    setAgents(prevAgents => 
-      prevAgents.map(agent => 
-        agent.id === agentId 
-          ? { ...agent, status: agent.status === 'active' ? 'paused' : 'active' }
-          : agent
-      )
-    );
+    agents.map(agent => {
+      if (agent.id === agentId) {
+        const updatedAgent = { ...agent, active: !agent.active };
+        updateAgent(updatedAgent);
+        return updatedAgent;
+      }
+      return agent;
+    })
   };
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="space-y-4">
         <div className="flex flex-col md:flex-row md:justify-between md:items-center">
           <div>
@@ -69,7 +43,7 @@ const Agents = () => {
             <p className="text-neutral mt-1">{t.manageAgents}</p>
           </div>
           <div className="flex flex-row items-center space-x-2 mt-4 md:mt-0">
-            <button 
+            <button
               onClick={() => navigate('/agents/test')}
               className="btn btn-primary btn-sm"
             >
@@ -100,7 +74,7 @@ const Agents = () => {
             </div>
           </div>
         </div>
-        
+
         <div className="card bg-base-100">
           <div className="card-body">
             <div className="flex items-center space-x-3">
@@ -108,20 +82,20 @@ const Agents = () => {
                 <div className="w-3 h-3 bg-success rounded-full"></div>
               </div>
               <div>
-                <h3 className="text-2xl font-bold">{agents.filter(a => a.status === 'active').length}</h3>
+                <h3 className="text-2xl font-bold">{agents.filter(a => a.active).length}</h3>
                 <p className="text-neutral text-sm">{t.activeAgents}</p>
               </div>
             </div>
           </div>
         </div>
-        
+
 
       </div>
 
       {/* Agents Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
         {/* Create New Agent Card */}
-        <div 
+        <div
           onClick={() => navigate('/agents/create')}
           className="card bg-base-100 border-2 border-dashed hover:border-primary cursor-pointer card-hover group"
         >
@@ -159,10 +133,10 @@ const Agents = () => {
 
               {/* Status and Last Active */}
               <div className="flex items-center justify-between mb-3">
-                <div className={`badge ${agent.status === 'active' ? 'badge-success' : 'badge-neutral'}`}>
-                  {agent.status === 'active' ? t.activeStatus : t.pausedStatus}
+                <div className={`badge ${agent.active ? 'badge-success' : 'badge-neutral'}`}>
+                  {agent.active ? t.activeStatus : t.pausedStatus}
                 </div>
-                <span className="text-xs text-neutral">{agent.lastActive}</span>
+                {/* <span className="text-xs text-neutral">{agent.lastActive}</span> */}
               </div>
 
 
@@ -173,14 +147,14 @@ const Agents = () => {
                 <div className="flex items-center space-x-2">
                   <span className="text-sm text-neutral">{t.status}:</span>
                   <label className="relative inline-flex items-center cursor-pointer">
-                    <input 
-                      type="checkbox" 
-                      checked={agent.status === 'active'}
+                    <input
+                      type="checkbox"
+                      checked={agent.active}
                       onChange={() => toggleAgentStatus(agent.id)}
                       className="sr-only peer"
                     />
                     <div className="w-11 h-6 bg-neutral rounded-full peer peer-checked:bg-success relative">
-                      <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform duration-200 ${agent.status === 'active' ? 'translate-x-5' : 'translate-x-0'}`}></div>
+                      <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform duration-200 ${agent.active ? 'translate-x-5' : 'translate-x-0'}`}></div>
                     </div>
                   </label>
                 </div>
