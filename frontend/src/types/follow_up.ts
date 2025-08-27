@@ -1,4 +1,4 @@
-import { BaseInterface, CrmColumn } from ".";
+import { BaseInterface, CrmColumn } from '.';
 import { BaseAgent } from "./agent";
 
 export interface FollowUp extends BaseInterface, BaseAgent {

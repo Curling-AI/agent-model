@@ -2,37 +2,36 @@
 
 import { useLanguage } from "@/context/LanguageContext";
 import { useTranslation } from "@/translations";
-import { Faq } from "@/types";
+import { AgentDocument } from "@/types/agent";
+
 import { X } from "lucide-react";
 import { useState } from "react";
 
 interface FaqModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (faq: Faq) => void;
-  faq?: Faq;
+  onSave: (document: AgentDocument) => void;
+  document?: AgentDocument;
 }
 
-const FaqModal: React.FC<FaqModalProps> = ({ isOpen, onClose, onSave, faq }) => {
+const FaqModal: React.FC<FaqModalProps> = ({ isOpen, onClose, onSave, document }) => {
   const language = useLanguage();
   const t = useTranslation(language);
-  const [formData, setFormData] = useState({
-    question: faq?.question || '',
-    answer: faq?.answer || ''
+  const [agentDocument, setAgentDocument] = useState<AgentDocument>(document || {
+    id: 0,
+    agentId: 0,
+    type: 'faq',
+    name: '',
+    content: ''
   });
 
-//   const handleSubmit = (e) => {
-//     e.preventDefault();
-//     if (formData.question.trim() && formData.answer.trim()) {
-//       onSave({
-//         ...faq,
-//         ...formData
-//       });
-//     }
-//   };
+  const handleSubmit = () => {
+    if (agentDocument) {
+      onSave(agentDocument);
+    }
+  };
 
   const handleClose = () => {
-    setFormData({ question: '', answer: '' });
     onClose();
   };
 
@@ -44,7 +43,7 @@ const FaqModal: React.FC<FaqModalProps> = ({ isOpen, onClose, onSave, faq }) => 
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-base-300">
           <div>
-            <h2 className="text-xl font-bold">{faq ? t.editFaq : t.addFaq}</h2>
+            <h2 className="text-xl font-bold">{document ? t.editFaq : t.addFaq}</h2>
             <p className="text-neutral mt-1">Configure a pergunta e resposta</p>
           </div>
           <button onClick={handleClose} className="btn btn-ghost btn-circle">
@@ -61,8 +60,8 @@ const FaqModal: React.FC<FaqModalProps> = ({ isOpen, onClose, onSave, faq }) => 
               type="text" 
               placeholder={t.questionPlaceholder}
               className="input input-bordered w-full"
-              value={formData.question}
-              onChange={(e) => setFormData(prev => ({...prev, question: e.target.value}))}
+              value={agentDocument.name}
+              onChange={(e) => setAgentDocument(prev => ({...prev, name: e.target.value}))}
               required
             />
           </div>
@@ -74,8 +73,8 @@ const FaqModal: React.FC<FaqModalProps> = ({ isOpen, onClose, onSave, faq }) => 
             <textarea 
               placeholder={t.answerPlaceholder}
               className="textarea textarea-bordered w-full h-32"
-              value={formData.answer}
-              onChange={(e) => setFormData(prev => ({...prev, answer: e.target.value}))}
+              value={agentDocument.content}
+              onChange={(e) => setAgentDocument(prev => ({...prev, content: e.target.value}))}
               required
             />
           </div>
@@ -86,11 +85,11 @@ const FaqModal: React.FC<FaqModalProps> = ({ isOpen, onClose, onSave, faq }) => 
             {t.cancel}
           </button>
           <button 
-            // onClick={handleSubmit}
-            disabled={!formData.question.trim() || !formData.answer.trim()}
+            onClick={handleSubmit}
+            disabled={!agentDocument.name.trim() || !agentDocument.content.trim()}
             className="btn btn-primary"
           >
-            {faq ? t.update : t.add}
+            {document ? t.update : t.add}
           </button>
         </div>
       </div>

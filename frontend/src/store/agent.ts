@@ -1,8 +1,8 @@
 import { create } from 'zustand';
-import { Agent } from '../../../global-types/agent.ts';
+import { Agent } from '@/types/agent';
 
 interface AgentState {
-  agent: Agent | null;
+  agent: Agent;
   agents: Agent[];
   setAgent: (agent: Agent) => void;
   setAgents: (agents: Agent[]) => void;

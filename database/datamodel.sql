@@ -65,7 +65,7 @@ CREATE TABLE agent_prompt (
 CREATE TABLE agent_document (
   id SERIAL PRIMARY KEY,
   agent_id INTEGER REFERENCES agent(id) ON DELETE CASCADE,
-  type VARCHAR(20) CHECK (type IN ('file', 'faq', 'video')),
+  type VARCHAR(20) CHECK (type IN ('file', 'faq', 'video', 'website')),
   name VARCHAR(255) NOT NULL,
   content TEXT
 );

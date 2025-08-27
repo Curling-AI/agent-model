@@ -1,4 +1,4 @@
-import { BaseInterface, ServiceProvider } from ".";
+import { BaseInterface, ServiceProvider } from '.';
 import { FollowUp } from "./follow_up";
 
 export interface BaseAgent {
@@ -25,12 +25,12 @@ export interface Agent extends BaseInterface {
 export interface AgentPrompt extends BaseAgent {
   id: number;
   type: 'simple' | 'advanced';
-  prompt: string;
+  prompt?: string;
 }
 
 export interface AgentDocument extends BaseAgent {
   id: number;
-  type: 'file' | 'faq' | 'video';
+  type: 'file' | 'faq' | 'video' | 'website';
   name: string;
   content: string;
 }

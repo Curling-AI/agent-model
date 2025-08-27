@@ -1,4 +1,4 @@
-import { BaseInterface } from ".";
+import { BaseInterface } from '.';
 
 export interface User extends BaseInterface {
   id: number;

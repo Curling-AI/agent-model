@@ -1,6 +1,6 @@
 import { useLanguage } from "@/context/LanguageContext";
 import { useTranslation } from "@/translations";
-import { FollowUp } from "@/types";
+import { FollowUp } from '@types/follow_up';
 import { Plus, Trash2, X } from "lucide-react";
 import { useState } from "react";
 

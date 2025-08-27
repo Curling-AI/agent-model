@@ -1,6 +1,5 @@
 import { LanguageContextType } from "@/types";
 
-
 export const translations = {
   pt: {
     // Header
@@ -618,10 +617,12 @@ export const translations = {
     systemPromptEditable: 'System Prompt (Editável)',
     systemPromptEditablePlaceholder: 'O prompt do template será carregado aqui. Você pode editá-lo conforme necessário...',
     systemPromptEditableHelp: 'Você pode personalizar o prompt do template selecionado conforme suas necessidades',
+    advancedTemplatePlaceholder: 'Digite o system prompt personalizado para o agente...',
     workingHours: 'Horário de Funcionamento',
     setWorkingHours: 'Definir horário de funcionamento',
     start: 'Início',
     end: 'Fim',
+    agentBehaviorPlaceholder: 'Defina como o agente deve se comportar, suas responsabilidades e estilo de comunicação',
     
     // System Prompt Templates
     attendance: 'Atendimento',
@@ -724,7 +725,11 @@ export const translations = {
     days: 'Dias',
     hours: 'Horas',
     delayPlaceholder: 'Ex: 2 dias, 3 horas',
-    
+
+    responseTime1: '1 minuto',
+    responseTime5: '5 minutos',
+    responseTime15: '15 minutos',
+
     // Message Templates
     messageTemplates: 'Templates de Mensagem',
     selectTemplate: 'Selecionar Template',
@@ -750,6 +755,12 @@ export const translations = {
     whatsappEvolutionDescription: 'Conexão via Evolution API para WhatsApp',
     hubsoft: 'Hubsoft',
     hubsoftDescription: 'Integração com sistema Hubsoft para gestão de boletos e promessas de pagamento',
+  
+    // Prompt Template Translations
+    attendancePromptTemplate: 'Você é um assistente de atendimento ao cliente. Sua função é ajudar os clientes com dúvidas, fornecer informações sobre produtos e serviços, e resolver problemas de forma eficiente e cordial. Sempre seja paciente, prestativo e mantenha um tom profissional e amigável.',
+    billingPromptTemplate: 'Você é um especialista em cobrança. Sua função é negociar pagamentos em atraso de forma respeitosa e eficaz. Você deve ser firme mas cordial, oferecer opções de pagamento flexíveis, e buscar acordos que sejam benéficos para ambas as partes. Sempre mantenha um tom profissional e empático.',
+    commercialPromptTemplate: 'Você é um representante de vendas (SDR). Sua função é qualificar leads, identificar oportunidades de negócio, e agendar reuniões com prospects qualificados. Você deve ser proativo, fazer perguntas estratégicas, e demonstrar valor da solução. Mantenha um tom entusiasta e profissional.',
+    supportPromptTemplate: 'Você é um especialista em suporte técnico. Sua função é ajudar os clientes a resolver problemas técnicos, fornecer orientações sobre o uso de produtos e serviços, e garantir uma experiência positiva. Sempre mantenha um tom paciente e prestativo.'
   },
   en: {
     // Header
@@ -1366,11 +1377,13 @@ export const translations = {
     systemPromptEditable: 'System Prompt (Editable)',
     systemPromptEditablePlaceholder: 'The template prompt will be loaded here. You can edit it as needed...',
     systemPromptEditableHelp: 'You can customize the selected template prompt according to your needs',
+    advancedTemplatePlaceholder: 'Type the custom system prompt for the agent...',
     workingHours: 'Working Hours',
     setWorkingHours: 'Set working hours',
     start: 'Start',
     end: 'End',
-    
+    agentBehaviorPlaceholder: 'Define how the agent should behave, its responsibilities, and communication style',
+
     // System Prompt Templates
     attendance: 'Customer Service',
     attendanceDesc: 'Focused on resolving doubts and providing general information',
@@ -1472,7 +1485,11 @@ export const translations = {
     days: 'Days',
     hours: 'Hours',
     delayPlaceholder: 'Ex: 2 days, 3 hours',
-    
+
+    responseTime1: '1 minute',
+    responseTime5: '5 minutes',
+    responseTime15: '15 minutes',
+
     // Message Templates
     messageTemplates: 'Message Templates',
     selectTemplate: 'Select Template',
@@ -1498,6 +1515,12 @@ export const translations = {
     whatsappEvolutionDescription: 'Connection via Evolution API for WhatsApp',
     hubsoft: 'Hubsoft',
     hubsoftDescription: 'Integration with Hubsoft system for invoice management and payment promises',
+  
+    // Prompt Template Translations
+    attendancePromptTemplate: 'You are a customer service assistant. Your role is to help customers with questions, provide information about products and services, and resolve issues efficiently and courteously. Always be patient, helpful, and maintain a professional and friendly tone.',
+    billingPromptTemplate: 'You are a billing specialist. Your role is to negotiate overdue payments respectfully and effectively. You must be firm yet cordial, offer flexible payment options, and seek agreements that are beneficial for both parties. Always maintain a professional and empathetic tone.',
+    commercialPromptTemplate: 'You are a sales representative (SDR). Your role is to qualify leads, identify business opportunities, and schedule meetings with qualified prospects. You must be proactive, ask strategic questions, and demonstrate the value of the solution. Maintain an enthusiastic and professional tone.',
+    supportPromptTemplate: 'You are a technical support specialist. Your role is to help customers resolve technical issues, provide guidance on using products and services, and ensure a positive experience. Always maintain a patient and helpful tone.'
   }
 };
 
