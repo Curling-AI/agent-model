@@ -19,14 +19,14 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useTranslation } from '../translations';
-import { Conversation, Message } from '@/types';
-import ConversationStats from '@/components/Conversations/ConversationStats';
+import ConversationStats from '@/components/conversations/ConversationStats';
+import { Conversation, ConversationMessage } from '@/types/conversation';
 
 const Conversations = () => {
   const language = useLanguage();
   const t = useTranslation(language);
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
-  const [newMessage, setNewMessage] = useState<Message | null>(null);
+  const [newMessage, setNewMessage] = useState<ConversationMessage | null>(null);
   const [filter, setFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilters, setShowFilters] = useState(false);
@@ -52,11 +52,11 @@ const Conversations = () => {
       priority: 'high',
       responseTime: `2${t.minutes}`,
       messages: [
-        { id: 1, type: 'lead', content: t.helloInterested, timestamp: '10:15' } as Message,
-        { id: 2, type: 'bot', content: t.helloMaria, timestamp: '10:16' } as Message,
-        { id: 3, type: 'lead', content: t.wantToKnowPlans, timestamp: '10:25' } as Message,
-        { id: 4, type: 'bot', content: t.perfectPlans, timestamp: '10:26' } as Message,
-        { id: 5, type: 'lead', content: t.wouldLikeToKnowMore, timestamp: '10:30' } as Message
+        { id: 1, type: 'lead', content: t.helloInterested, timestamp: '10:15' } as ConversationMessage,
+        { id: 2, type: 'bot', content: t.helloMaria, timestamp: '10:16' } as ConversationMessage,
+        { id: 3, type: 'lead', content: t.wantToKnowPlans, timestamp: '10:25' } as ConversationMessage,
+        { id: 4, type: 'bot', content: t.perfectPlans, timestamp: '10:26' } as ConversationMessage,
+        { id: 5, type: 'lead', content: t.wouldLikeToKnowMore, timestamp: '10:30' } as ConversationMessage
       ]
     },
     {
@@ -73,9 +73,9 @@ const Conversations = () => {
       priority: 'urgent',
       responseTime: `5${t.minutes}`,
       messages: [
-        { id: 1, type: 'lead', content: t.needHelpWithIntegration, timestamp: '09:30' } as Message,
-        { id: 2, type: 'bot', content: t.helpWithIntegration, timestamp: '09:31' } as Message,
-        { id: 3, type: 'lead', content: t.cannotConnectAPI, timestamp: '09:45' } as Message
+        { id: 1, type: 'lead', content: t.needHelpWithIntegration, timestamp: '09:30' } as ConversationMessage,
+        { id: 2, type: 'bot', content: t.helpWithIntegration, timestamp: '09:31' } as ConversationMessage,
+        { id: 3, type: 'lead', content: t.cannotConnectAPI, timestamp: '09:45' } as ConversationMessage
       ]
     },
     {
@@ -92,9 +92,9 @@ const Conversations = () => {
       priority: 'normal',
       responseTime: `1${t.minutes}`,
       messages: [
-        { id: 1, type: 'lead', content: t.sawYouOnInstagram, timestamp: `${t.yesterday} 15:20` } as Message,
-        { id: 2, type: 'bot', content: t.helloAna, timestamp: `${t.yesterday} 15:21` } as Message,
-        { id: 3, type: 'lead', content: t.thanksForHelp, timestamp: `${t.yesterday} 16:30` } as Message
+        { id: 1, type: 'lead', content: t.sawYouOnInstagram, timestamp: `${t.yesterday} 15:20` } as ConversationMessage,
+        { id: 2, type: 'bot', content: t.helloAna, timestamp: `${t.yesterday} 15:21` } as ConversationMessage,
+        { id: 3, type: 'lead', content: t.thanksForHelp, timestamp: `${t.yesterday} 16:30` } as ConversationMessage
       ]
     },
     {
@@ -111,9 +111,9 @@ const Conversations = () => {
       priority: 'high',
       responseTime: `1${t.minutes}`,
       messages: [
-        { id: 1, type: 'lead', content: 'Bom dia! Quero comprar o plano empresarial', timestamp: '08:15' } as Message,
-        { id: 2, type: 'bot', content: 'Excelente escolha! O plano empresarial inclui todas as funcionalidades avançadas. Qual o prazo de entrega?', timestamp: '08:16' } as Message,
-        { id: 3, type: 'lead', content: t.deliveryTime, timestamp: '08:20' } as Message
+        { id: 1, type: 'lead', content: 'Bom dia! Quero comprar o plano empresarial', timestamp: '08:15' } as ConversationMessage,
+        { id: 2, type: 'bot', content: 'Excelente escolha! O plano empresarial inclui todas as funcionalidades avançadas. Qual o prazo de entrega?', timestamp: '08:16' } as ConversationMessage,
+        { id: 3, type: 'lead', content: t.deliveryTime, timestamp: '08:20' } as ConversationMessage
       ]
     },
     {
@@ -130,9 +130,9 @@ const Conversations = () => {
       priority: 'urgent',
       responseTime: `15${t.minutes}`,
       messages: [
-        { id: 1, type: 'lead', content: 'Olá! Preciso de um orçamento personalizado para minha empresa', timestamp: `${t.yesterday} 14:30` } as Message,
-        { id: 2, type: 'bot', content: 'Perfeito! Vou te ajudar com um orçamento personalizado. Pode me contar mais sobre sua empresa?', timestamp: `${t.yesterday} 14:31` } as Message,
-        { id: 3, type: 'lead', content: 'Preciso de um orçamento personalizado', timestamp: `${t.yesterday} 14:45` } as Message
+        { id: 1, type: 'lead', content: 'Olá! Preciso de um orçamento personalizado para minha empresa', timestamp: `${t.yesterday} 14:30` } as ConversationMessage,
+        { id: 2, type: 'bot', content: 'Perfeito! Vou te ajudar com um orçamento personalizado. Pode me contar mais sobre sua empresa?', timestamp: `${t.yesterday} 14:31` } as ConversationMessage,
+        { id: 3, type: 'lead', content: 'Preciso de um orçamento personalizado', timestamp: `${t.yesterday} 14:45` } as ConversationMessage
       ]
     }
   ];
@@ -327,7 +327,7 @@ const Conversations = () => {
               filteredConversations.map(conversation => (
                 <div 
                   key={conversation.id}
-                  onClick={() => setSelectedConversation(conversation)}
+                  onClick={() => setSelectedConversation(conversation as Conversation)}
                   className={`conversation-card p-4 border-b border-base-300 cursor-pointer hover:bg-base-200 ${
                     selectedConversation?.id === conversation.id ? 'bg-primary/10 border-primary shadow-sm' : ''
                   } ${conversation.priority === 'urgent' ? 'border-l-4 border-l-error urgent-indicator' : ''}`}

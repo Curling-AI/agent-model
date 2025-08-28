@@ -13,6 +13,7 @@ interface AgentState {
   createAgent: (agent: Agent) => Promise<Agent>;
   updateAgent: (agent: Agent) => Promise<Agent>;
   deleteAgent: (id: number) => Promise<void>;
+  updateAgentAttribute: <K extends keyof Agent>(key: K, value: Agent[K]) => void;
 }
 
 export const useAgentStore = create<AgentState>((set, get) => ({
@@ -81,6 +82,14 @@ export const useAgentStore = create<AgentState>((set, get) => ({
       set({ agents: get().agents.filter(agent => agent.id !== id) });
     }
   },
+  updateAgentAttribute: <K extends keyof Agent>(key: K, value: Agent[K]) => {
+    set((state) => ({
+      agent: {
+        ...state.agent,
+        [key]: value
+      }
+    }));
+  }
 }));
 
 function fillAgent(): Agent {
