@@ -16,21 +16,26 @@ export interface Agent extends BaseInterface {
   responseTime: 0 | 1 | 5 | 15;
   scheduleAgentBegin: string;
   scheduleAgentEnd: string;
-  prompt: AgentPrompt;
+  promptType: 'simple' | 'advanced';
+  prompt?: string;
   documents: AgentDocument[];
   followUps: FollowUp[];
   serviceProviders: ServiceProvider[];
-}
-
-export interface AgentPrompt extends BaseAgent {
-  id: number;
-  type: 'simple' | 'advanced';
-  prompt?: string;
 }
 
 export interface AgentDocument extends BaseAgent {
   id: number;
   type: 'file' | 'faq' | 'video' | 'website';
   name: string;
-  content: string;
+  content?: string;
+  chunks?: Chunk[];
+}
+
+export interface Chunk {
+  id: number;
+  agentDocumentId: number;
+  text: string
+  similarity: number
+  tokens: number
+  pageNumber?: number
 }

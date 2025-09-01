@@ -26,7 +26,7 @@ const CreateAgent: React.FC = () => {
   const t = useTranslation(language);
   const [currentStep, setCurrentStep] = useState(1);
 
-  const { agent } = useAgentStore();
+  const { agent, createOrUpdateAgent } = useAgentStore();
 
   const steps = [
     { id: 1, name: t.personality, icon: User },
@@ -149,7 +149,7 @@ const CreateAgent: React.FC = () => {
             {t.createAgent}
           </button>
         ) : (
-          <button onClick={() => { nextStep(); console.log(agent); }} className="btn btn-sm btn-primary">
+          <button onClick={() => { nextStep(); createOrUpdateAgent(agent); }} className="btn btn-sm btn-primary">
             {t.next}
             <ChevronRight className="w-4 h-4 ml-1" />
           </button>

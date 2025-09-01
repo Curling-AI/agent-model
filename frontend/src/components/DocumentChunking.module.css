@@ -1,0 +1,209 @@
+.chunkingContainer {
+  background-color: var(--background-elevated);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  margin-bottom: 1px;
+  overflow: hidden;
+  transition: all 0.2s ease;
+  box-shadow: var(--card-shadow);
+}
+
+.sectionTitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+ .chunksSection {
+    margin-top: 16px;
+    margin-bottom: 16px;
+  }
+
+.chunkingHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.documentInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.documentName {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.chunkCount {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.headerActions {
+  display: flex;
+  gap: 8px;
+}
+
+.expandButton,
+.removeAllButton {
+  background: none;
+  border: none;
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.expandButton {
+  color: var(--text-secondary);
+}
+
+.expandButton:hover {
+  color: var(--text-primary);
+  background-color: var(--hover-color);
+}
+
+.removeAllButton {
+  color: var(--danger-color, #ff3b30);
+}
+
+.removeAllButton:hover {
+  background-color: rgba(255, 59, 48, 0.1);
+}
+
+.chunksGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 12px;
+  padding: 16px;
+  background-color: var(--background);
+}
+
+.chunkItem {
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background-color: var(--background-card);
+  transition: all 0.2s ease;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.chunkItem.expanded {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.chunkHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.chunkHeader:hover {
+  background-color: rgba(var(--primary-rgb, 94, 92, 230), 0.05);
+}
+
+.chunkInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.chunkId {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.chunkTokens {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.chunkActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.similarityScore {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+}
+
+.similarityLabel {
+  color: var(--text-secondary);
+}
+
+.similarityValue {
+  font-weight: 600;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+.highSimilarity {
+  color: #34c759;
+  background-color: rgba(52, 199, 89, 0.15);
+}
+
+.mediumSimilarity {
+  color: #ff9500;
+  background-color: rgba(255, 149, 0, 0.15);
+}
+
+.lowSimilarity {
+  color: #ff3b30;
+  background-color: rgba(255, 59, 48, 0.15);
+}
+
+.removeButton {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.removeButton:hover {
+  color: var(--danger-color, #ff3b30);
+  background-color: var(--hover-color);
+}
+
+.chunkContent {
+  padding: 12px;
+  border-top: 1px solid var(--border-color);
+  background-color: var(--background-card);
+}
+
+.chunkText {
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0 0 8px;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+}
+
+.pageNumber {
+  display: inline-block;
+  font-size: 11px;
+  color: var(--text-secondary);
+  padding: 2px 6px;
+  background-color: var(--hover-color);
+  border-radius: 4px;
+}

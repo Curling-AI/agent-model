@@ -14,6 +14,20 @@ export async function getById<T>(table: string, id: number): Promise<T | null> {
   return data as T;
 }
 
+// Consulta um registro pelo id
+export async function getByAgentId<T>(table: string, id: number): Promise<T | null> {
+  const { data, error } = await supabase.from(table).select('*').eq('agent_id', id).single();
+  if (error) throw error;
+  return data as T;
+}
+
+// Consulta um registro pelo id
+export async function getByOrganizationId<T>(table: string, id: number): Promise<T | null> {
+  const { data, error } = await supabase.from(table).select('*').eq('organization_id', id).single();
+  if (error) throw error;
+  return data as T;
+}
+
 // Insere um novo registro
 export async function insert<T>(table: string, payload: T): Promise<T> {
   const { data, error } = await supabase.from(table).insert(payload).select().single();

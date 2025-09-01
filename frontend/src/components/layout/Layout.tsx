@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Sidebar from './Sidebar.tsx';
 import Header from './Header';
 import { ThemeProvider } from '../../context/ThemeContext.tsx';
+import NotificationsProvider from '@/context/NotificationsProvider.tsx';
 
 
 
@@ -39,40 +40,41 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <ThemeProvider>
-      <div className="min-h-screen bg-base-100">
-        {/* Overlay para mobile */}
-        {mobileMenuOpen && (
-          <div 
-            className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
-            onClick={closeMobileMenu}
-          />
-        )}
-        
-        <Sidebar 
-          collapsed={isMobile ? false : sidebarCollapsed} 
-          onToggle={toggleSidebar}
-          isMobile={isMobile}
-          mobileOpen={mobileMenuOpen}
-          onMobileClose={closeMobileMenu}
-        />
-        
-        <div className={`sidebar-transition ${
-          isMobile 
-            ? 'ml-0' 
-            : sidebarCollapsed ? 'ml-16' : 'ml-64'
-        }`}>
-          <Header 
-            onToggleSidebar={toggleSidebar}
+    <NotificationsProvider>
+      <ThemeProvider>
+        <div className="min-h-screen bg-base-100">
+          {/* Overlay para mobile */}
+          {mobileMenuOpen && (
+            <div
+              className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+              onClick={closeMobileMenu}
+            />
+          )}
+
+          <Sidebar
+            collapsed={isMobile ? false : sidebarCollapsed}
+            onToggle={toggleSidebar}
             isMobile={isMobile}
-            mobileMenuOpen={mobileMenuOpen}
+            mobileOpen={mobileMenuOpen}
+            onMobileClose={closeMobileMenu}
           />
-          <main className="p-4 md:p-6">
-            {children}
-          </main>
+
+          <div className={`sidebar-transition ${isMobile
+              ? 'ml-0'
+              : sidebarCollapsed ? 'ml-16' : 'ml-64'
+            }`}>
+            <Header
+              onToggleSidebar={toggleSidebar}
+              isMobile={isMobile}
+              mobileMenuOpen={mobileMenuOpen}
+            />
+            <main className="p-4 md:p-6">
+              {children}
+            </main>
+          </div>
         </div>
-      </div>
-    </ThemeProvider>
+      </ThemeProvider>
+    </NotificationsProvider>
   );
 };
 

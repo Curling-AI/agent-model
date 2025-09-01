@@ -1,6 +1,6 @@
 import express, { Express } from 'express';
 import cors from 'cors';
-import { setRoutes } from './routes';
+import router from './routes';
 
 const app: Express = express();
 
@@ -10,6 +10,6 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Routes
-setRoutes(app);
+app.use('/api', router);
 
 export default app;

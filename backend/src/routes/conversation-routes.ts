@@ -8,9 +8,9 @@ import {
 
 const router = Router();
 
-router.get('/conversations', listConversations);
-router.get('/conversations/:id', getConversation);
-router.post('/conversations', createConversation);
+router.get('/', listConversations);
+router.get('/:id', getConversation);
+router.post('/', createConversation);
 router.post('/conversation-messages', createConversationMessage);
 
 export default router;

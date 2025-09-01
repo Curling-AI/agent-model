@@ -57,9 +57,9 @@ const NewAgentBehavior: React.FC = () => {
               type="radio"
               name="promptMode"
               value="simple"
-              checked={agent.prompt.type === 'simple'}
+              checked={agent.promptType === 'simple'}
               onChange={(_) => {
-                updateAgentAttribute('prompt', { id: 0, agentId: agent.id, type: 'simple' })
+                updateAgentAttribute('promptType', 'simple')
                 setSelectedTemplate('');
                 alert(selectedTemplate);
               }}
@@ -72,8 +72,8 @@ const NewAgentBehavior: React.FC = () => {
               type="radio"
               name="promptMode"
               value="advanced"
-              checked={agent.prompt.type === 'advanced'}
-              onChange={(e) => updateAgentAttribute('prompt', { id: 0, agentId: agent.id, type: 'advanced' })}
+              checked={agent.promptType === 'advanced'}
+              onChange={(_) => updateAgentAttribute('promptType', 'advanced' )}
               className="radio radio-primary mr-2"
             />
             <span>{t.advancedMode}</span>
@@ -81,7 +81,7 @@ const NewAgentBehavior: React.FC = () => {
         </div>
 
         {/* Templates */}
-        {agent.prompt.type === 'simple' && (
+        {agent.promptType === 'simple' && (
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {systemPromptTemplates.map(template => (
@@ -93,10 +93,7 @@ const NewAgentBehavior: React.FC = () => {
                     // checked={agentData.behavior.systemPrompt.selectedTemplate === template.id}
                     onChange={(e) => {
                       const template = systemPromptTemplates.find(t => t.id === e.target.value);
-                      updateAgentAttribute('prompt', {
-                        ...agent.prompt,
-                        prompt: template ? template.prompt : ''
-                      });
+                      updateAgentAttribute('prompt', template ? template.prompt : '');
                       setSelectedTemplate(e.target.value);
                     }}
                     className="hidden"
@@ -117,7 +114,7 @@ const NewAgentBehavior: React.FC = () => {
             </div>
 
             {/* Campo editável do system prompt */}
-            {agent.prompt.type && (
+            {agent.promptType && (
               <div className="mt-6">
                 <label className="label">
                   <span className="label-text font-medium">{t.systemPromptEditable}</span>
@@ -125,11 +122,8 @@ const NewAgentBehavior: React.FC = () => {
                 <textarea
                   placeholder={t.systemPromptEditablePlaceholder}
                   className="textarea textarea-bordered w-full h-48"
-                  value={agent.prompt.prompt}
-                  onChange={(e) => updateAgentAttribute('prompt', {
-                    ...agent.prompt,
-                    prompt: e.target.value
-                  })}
+                  value={agent.prompt}
+                  onChange={(e) => updateAgentAttribute('prompt', e.target.value)}
                 />
                 <div className="label">
                   <span className="label-text-alt">{t.systemPromptEditableHelp}</span>
@@ -140,17 +134,14 @@ const NewAgentBehavior: React.FC = () => {
         )}
 
         {/* Modo Avançado */}
-        {agent.prompt.type === 'advanced' && (
+        {agent.promptType === 'advanced' && (
           <div>
             <textarea
               placeholder={t.advancedTemplatePlaceholder}
               className="textarea textarea-bordered w-full h-48"
-              value={agent.prompt.prompt}
+              value={agent.prompt}
               onChange={(e) => {
-                updateAgentAttribute('prompt', {
-                  ...agent.prompt,
-                  prompt: e.target.value
-                });
+                updateAgentAttribute('prompt', e.target.value);
               }}
             />
             <div className="label">
