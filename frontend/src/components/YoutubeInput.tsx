@@ -1,32 +1,31 @@
 import { useLanguage } from "@/context/LanguageContext";
 import { useTranslation } from "@/translations";
-import { Agent, AgentDocument } from "@/types/agent";
+import { Agent, Document } from "@/types/agent";
+import { processYoutube } from "@/utils/chunk";
 import { extractYouTubeVideoId } from "@/utils/video";
 import { Trash2 } from "lucide-react";
-import React, { useState } from "react";
+import { useState } from "react";
 
-interface VideoDocument extends AgentDocument {
+interface VideoDocument extends Document {
   type: 'video';
 }
 
-interface YoutubeInputProps {
-  agent: Agent;
-}
 
-const YoutubeInput: React.FC<YoutubeInputProps> = ({ agent }) => {
+const YoutubeInput: React.FC = () => {
 
-   const language = useLanguage();
-    const t = useTranslation(language);
+  const [documents, setDocuments] = useState<Document[]>([]);
+  const language = useLanguage();
+  const t = useTranslation(language);
 
   const [url, setUrl] = useState("");
   const [videoId, setVideoId] = useState<string | null>(null);
 
-   const [isAnalyzingVideo, setIsAnalyzingVideo] = useState(false);
+  const [isAnalyzingVideo, setIsAnalyzingVideo] = useState(false);
   const [videoAnalysisProgress, setVideoAnalysisProgress] = useState(0);
   const [youtubeVideoUrl, setYoutubeVideoUrl] = useState('');
 
   
-  const [videoDocument, setVideoDocument] = useState<VideoDocument>({id: Date.now(), type: 'video', name: '', content: '', agentId: agent.id});
+  const [videoDocument, setVideoDocument] = useState<VideoDocument>({id: Date.now(), type: 'video', name: '', content: '', agentId: 0});
   
   const analyzeYouTubeVideo = async (videoUrl: string) => {
     if (!videoUrl.trim()) {
@@ -43,6 +42,10 @@ const YoutubeInput: React.FC<YoutubeInputProps> = ({ agent }) => {
 
     setIsAnalyzingVideo(true);
     setVideoAnalysisProgress(0);
+
+    const chunks = await processYoutube(videoUrl);
+
+    console.log(chunks);
 
     // Simular progresso da análise
     const progressInterval = setInterval(() => {
@@ -151,11 +154,11 @@ const YoutubeInput: React.FC<YoutubeInputProps> = ({ agent }) => {
           )}
 
           {/* Lista de vídeos adicionados */}
-          {agent.documents.length > 0 && (
+          {documents.length > 0 && (
             <div className="mt-6">
               <h4 className="font-semibold text-base-content mb-3">{t.addedVideos}</h4>
               <div className="space-y-3">
-                {agent.documents.map((video) => (
+                {documents.map((video) => (
                   <div key={video.id} className="card bg-base-200">
                     <div className="card-body p-4">
                       <div className="flex items-start justify-between">

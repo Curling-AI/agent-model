@@ -1,12 +1,26 @@
-import { getAll, getById, insert, remove, update } from '@/services/storage';
+import { getAll, getByFilter, getById, insert, remove, update } from '@/services/storage';
 import { Request, Response } from 'express';
 
 // Controller
 export const AgentController = {
   getAll: (req: Request, res: Response) => {
-    getAll('agents').then(data => {
-      res.json(data);
-    });
+    const { filter } = req.query;
+    switch (filter) {
+      case 'active':
+        getByFilter('agents', { active: true }).then(data => {
+          res.json(data);
+        });
+        break;
+      case 'paused':
+        getByFilter('agents', { active: false }).then(data => {
+          res.json(data);
+        });
+        break;
+      default:
+        getAll('agents').then(data => {
+          res.json(data);
+        });
+    }
   },
 
   getById: (req: Request, res: Response) => {

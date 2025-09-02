@@ -1,8 +1,7 @@
 import { useLanguage } from "@/context/LanguageContext";
 import { useAgentStore } from "@/store/agent";
 import { useTranslation } from "@/translations";
-import { AgentDocument } from "@/types/agent";
-import React, { useState } from "react"
+import { Document } from "@/types/agent";
 import WebsiteInput from "../WebsiteInput";
 import FileUploader from "../FileUploader";
 import YoutubeInput from "../YoutubeInput";
@@ -56,15 +55,13 @@ const NewAgentKnowledge: React.FC = () => {
 
       <WebsiteInput />
 
-      <FileUploader agent={agent} onCreateDocument={function (document: AgentDocument): void {
-        throw new Error("Function not implemented.");
-      }} onFileUpload={function (file: File): void {
+      <FileUploader agent={agent} onCreateDocument={function (document: Document): void {
         throw new Error("Function not implemented.");
       }} />
 
       <YoutubeInput agent={agent} />
 
-      <FaqInput agent={agent} onCreateDocument={function (document: AgentDocument): void {
+      <FaqInput agent={agent} onCreateDocument={function (document: Document): void {
         throw new Error("Function not implemented.");
       }} />
 

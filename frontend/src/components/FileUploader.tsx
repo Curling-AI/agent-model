@@ -1,24 +1,24 @@
 import { useLanguage } from "@/context/LanguageContext";
 import { useTranslation } from "@/translations";
-import { Agent, AgentDocument } from "@/types/agent";
+import { Agent, Document } from "@/types/agent";
+import { processFile } from "@/utils/chunk";
 import { Upload } from "lucide-react"
-import React, { useRef, useState } from "react"
+import { useRef, useState } from "react"
 
-interface FileDocument extends AgentDocument {
+interface FileDocument extends Document {
   type: 'file';
 }
 
 interface FileUploaderProps {
   agent: Agent;
   onCreateDocument: (document: FileDocument) => void;
-  onFileUpload: (file: File) => void;
   supportedFileTypes?: string[];
   maxSize?: number // in bytes;
   isLoading?: boolean;
   handleLoading?: (isLoading: boolean) => void;
 }
 
-const FileUploader: React.FC<FileUploaderProps> = ({ agent, onCreateDocument, onFileUpload,
+const FileUploader: React.FC<FileUploaderProps> = ({ agent, onCreateDocument,
   supportedFileTypes = [
     '.pdf',
     '.doc',
@@ -87,17 +87,20 @@ const FileUploader: React.FC<FileUploaderProps> = ({ agent, onCreateDocument, on
     if (files && files.length) {
       const file = files[0]
       if (validateFile(file)) {
-        onFileUpload(file)
       }
     }
   }
 
-  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const { files } = e.target
     if (files && files.length) {
       const file = files[0]
       if (validateFile(file)) {
-        onFileUpload(file)
+        const chunks = await processFile(file);
+
+        console.log(chunks);
+          // onCreateDocument(newDocument)
+    
         if (fileInputRef.current) {
           fileInputRef.current.value = ''
         }

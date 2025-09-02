@@ -18,12 +18,12 @@ export interface Agent extends BaseInterface {
   scheduleAgentEnd: string;
   promptType: 'simple' | 'advanced';
   prompt?: string;
-  documents: AgentDocument[];
+  documents: Document[];
   followUps: FollowUp[];
   serviceProviders: ServiceProvider[];
 }
 
-export interface AgentDocument extends BaseAgent {
+export interface Document extends BaseAgent {
   id: number;
   type: 'file' | 'faq' | 'video' | 'website';
   name: string;
@@ -33,7 +33,7 @@ export interface AgentDocument extends BaseAgent {
 
 export interface Chunk {
   id: number;
-  agentDocumentId: number;
+  documentId: number;
   text: string
   similarity: number
   tokens: number

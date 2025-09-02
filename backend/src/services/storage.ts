@@ -7,6 +7,13 @@ export async function getAll<T>(table: string): Promise<T[]> {
   return data as T[];
 }
 
+// Consulta todos os registros de uma tabela
+export async function getByFilter<T>(table: string, filter: Partial<T>): Promise<T[]> {
+  const { data, error } = await supabase.from(table).select('*').match(filter);
+  if (error) throw error;
+  return data as T[];
+}
+
 // Consulta um registro pelo id
 export async function getById<T>(table: string, id: number): Promise<T | null> {
   const { data, error } = await supabase.from(table).select('*').eq('id', id).single();

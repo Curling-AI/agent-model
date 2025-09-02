@@ -7,11 +7,14 @@
     "dev": "tsx --env-file=.env src/server.ts"
   },
   "dependencies": {
+    "@langchain/community": "^0.3.53",
+    "@langchain/openai": "^0.6.9",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.55.0",
     "axios": "^1.11.0",
     "cors": "^2.8.5",
     "express": "^5.1.0",
+    "langchain": "^0.3.31",
     "tsx": "^4.20.4"
   },
   "devDependencies": {

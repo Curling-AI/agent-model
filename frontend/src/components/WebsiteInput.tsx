@@ -2,10 +2,11 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useNotifications } from "@/context/NotificationsProvider";
 import { useAgentStore } from "@/store/agent";
 import { useTranslation } from "@/translations";
-import { Agent, AgentDocument } from "@/types/agent";
-import React, { useCallback, useState } from "react"
+import { Agent, Document } from "@/types/agent";
+import { processWebsite, processYoutube } from "@/utils/chunk";
+import { useCallback, useState } from "react"
 
-interface WebsiteDocument extends AgentDocument {
+interface WebsiteDocument extends Document {
   type: 'website';
 }
 
@@ -43,6 +44,9 @@ const WebsiteInput: React.FC= () => {
         return prev + 10;
       });
     }, 500);
+
+    const chunks = await processWebsite(websiteDocument.name);
+    console.log(chunks)
 
     // Simular análise completa após 5 segundos
     setTimeout(() => {

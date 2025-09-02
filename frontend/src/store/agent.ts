@@ -10,7 +10,7 @@ interface AgentState {
   clearAgent: () => void;
   newAgent: (agent: Agent) => Promise<Agent>;
   fetchAgent: (id: string) => Promise<Agent>;
-  fetchAgents: (organizationId: number) => Promise<Agent[]>;
+  fetchAgents: (organizationId: number, filter: string) => Promise<Agent[]>;
   createOrUpdateAgent: (agent: Agent) => Promise<Agent>;
   deleteAgent: (id: number) => Promise<void>;
   updateAgentAttribute: <K extends keyof Agent>(key: K, value: Agent[K]) => void;
@@ -35,8 +35,8 @@ export const useAgentStore = create<AgentState>((set, get) => ({
     }
     return null;
   },
-  fetchAgents: async (organizationId: number) => {
-    const response = await fetch(`${BASE_URL}/api/agents?organizationId=${organizationId}`);
+  fetchAgents: async (organizationId: number, filter: string = 'all') => {
+    const response = await fetch(`${BASE_URL}/api/agents?organizationId=${organizationId}&filter=${filter}`);
     const data = await response.json();
     if (data) {
       set({ agents: data });

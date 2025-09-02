@@ -1,7 +1,7 @@
 import { useLanguage } from "@/context/LanguageContext";
 import { useAgentStore } from "@/store/agent";
 import { useTranslation } from "@/translations";
-import React, { useState } from "react"
+import { useState } from "react"
 
 const NewAgentBehavior: React.FC = () => {
 
@@ -61,7 +61,6 @@ const NewAgentBehavior: React.FC = () => {
               onChange={(_) => {
                 updateAgentAttribute('promptType', 'simple')
                 setSelectedTemplate('');
-                alert(selectedTemplate);
               }}
               className="radio radio-primary mr-2"
             />

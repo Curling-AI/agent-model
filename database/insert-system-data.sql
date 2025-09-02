@@ -19,10 +19,6 @@ INSERT INTO plans (name, description, price_month, price_year, active) VALUES ('
 INSERT INTO conversation_tags (name) VALUES ('Urgente');
 INSERT INTO conversation_tags (name) VALUES ('Importante');
 
--- Criação de dados para a tabela lead_tag
-INSERT INTO lead_tags (name) VALUES ('Novo');
-INSERT INTO lead_tags (name) VALUES ('Em Negociação');
-
 -- Criação de dados para a tabela job
 INSERT INTO jobs (title) VALUES ('Desenvolvedor');
 INSERT INTO jobs (title) VALUES ('Gerente de Projetos');

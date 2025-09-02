@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Plus,
@@ -12,26 +12,42 @@ import {
 import { useLanguage } from '../context/LanguageContext';
 import { useTranslation } from '../translations';
 import { useAgentStore } from '@/store/agent';
+import { Agent } from '@/types/agent';
 
 const Agents = () => {
   const navigate = useNavigate();
   const language = useLanguage();
   const t = useTranslation(language);
-  const { agents, fetchAgents, updateAgent } = useAgentStore();
+  const [filter, setFilter] = useState('all');
+  const { agents, fetchAgents, createOrUpdateAgent, deleteAgent } = useAgentStore();
 
   useEffect(() => {
-    fetchAgents(1);
-  }, [fetchAgents]);
+    fetchAgents(1, filter);
+  }, [fetchAgents, filter]);
 
-  const toggleAgentStatus = (agentId: number) => {
-    agents.map(agent => {
+  const toggleAgentStatus = async (agentId: number) => {
+    for (const agent of agents) {
       if (agent.id === agentId) {
         const updatedAgent = { ...agent, active: !agent.active };
-        updateAgent(updatedAgent);
-        return updatedAgent;
+        await createOrUpdateAgent(updatedAgent);
+        break;
       }
-      return agent;
-    })
+    }
+    await fetchAgents(1, filter);
+  };
+
+  const handleDeleteAgent = (agentId: number) => {
+    deleteAgent(agentId);
+  };
+
+  const handleEditAgent = (agentData?: Agent) => {
+    navigate('/agents/create', { state: agentData });
+  };
+
+  const handleDuplicateAgent = (agentData: Agent) => {
+    const duplicatedAgent = { ...agentData, id: 0, organizationId: 1 };
+    createOrUpdateAgent(duplicatedAgent);
+    navigate('/agents/create', { state: duplicatedAgent });
   };
 
   return (
@@ -50,10 +66,10 @@ const Agents = () => {
               <MessageSquare className="w-4 h-4 mr-2" />
               {t.testAgents}
             </button>
-            <select className="select select-bordered select-sm bg-base-200">
-              <option>{t.allAgents}</option>
-              <option>{t.active}</option>
-              <option>{t.paused}</option>
+            <select className="select select-bordered select-sm bg-base-200" onChange={(e) => setFilter(e.target.value as 'all' | 'active' | 'paused')}>
+              <option value="all">{t.allAgents}</option>
+              <option value="active">{t.active}</option>
+              <option value="paused">{t.paused}</option>
             </select>
           </div>
         </div>
@@ -123,10 +139,10 @@ const Agents = () => {
                     <MoreVertical className="w-4 h-4" />
                   </button>
                   <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 bg-base-100 rounded-box w-52">
-                    <li><a href="#edit"><Edit className="w-4 h-4" />{t.edit}</a></li>
-                    <li><a href="#duplicate"><Copy className="w-4 h-4" />{t.duplicate}</a></li>
+                    <li><a href="#" onClick={() => handleEditAgent(agent)}><Edit className="w-4 h-4" />{t.edit}</a></li>
+                    <li><a href="#" onClick={() => handleDuplicateAgent(agent)}><Copy className="w-4 h-4" />{t.duplicate}</a></li>
                     <li><hr className="my-1" /></li>
-                    <li><a href="#delete" className="text-error"><Trash2 className="w-4 h-4" />{t.delete}</a></li>
+                    <li><a href="#" className="text-error" onClick={() => handleDeleteAgent(agent.id)}><Trash2 className="w-4 h-4" />{t.delete}</a></li>
                   </ul>
                 </div>
               </div>
