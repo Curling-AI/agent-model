@@ -8,9 +8,13 @@ export const DocumentController = {
   // Upsert (criar ou atualizar)
   upsert: async (req: Request, res: Response) => {
     try {
-      const documents = await upsertArray('documents', req.body);
+      const documents = req.body;
+      const response = await upsertArray('documents', documents.map(doc => {
+        delete doc.chunks;
+        return doc;
+      }));
 
-      if (!documents) {
+      if (!response) {
         return res.status(500).json({ error: 'Erro ao criar ou atualizar o documento.' });
       }
 
@@ -18,7 +22,7 @@ export const DocumentController = {
       //   await storeChunks(doc.chunks);
       // });
 
-      return res.status(200).json(documents);
+      return res.status(200).json(response);
     } catch (error) {
       return res.status(500).json({ error: error.message });
     }
@@ -29,7 +33,7 @@ export const DocumentController = {
     let filter = {
       'agent_id': Number(agentId), 
     };
-    if (type) {
+    if (type && type !== 'all') {
       filter['type'] = type;
     }
     try {

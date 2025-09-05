@@ -151,13 +151,11 @@ const CreateAgent: React.FC = () => {
         ) : (
           <button onClick={async () => { 
             switch (currentStep) {
-              case 3:
-                if (agent) {
-                  await saveDocuments();
-                }
+              case 1:
+              case 2:
+                await createOrUpdateAgent(agent); 
                 break;
               default:
-                await createOrUpdateAgent(agent); 
                 break;
             }
             nextStep();

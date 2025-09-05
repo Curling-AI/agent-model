@@ -6,10 +6,7 @@ import { Upload } from "lucide-react"
 import { useRef, useState } from "react"
 import { useNotifications } from "@/context/NotificationsProvider";
 import { useAgentStore } from "@/store/agent";
-
-interface FileDocument extends Document {
-  type: 'file';
-}
+import { useDocumentStore } from "@/store/document";
 
 interface FileUploaderProps {
   supportedFileTypes?: string[];
@@ -37,9 +34,11 @@ const FileUploader: React.FC<FileUploaderProps> = ({
 
   const { addNotification } = useNotifications()
 
-  const { agent, setAgent } = useAgentStore();
+  const { agent } = useAgentStore();
 
-  const [isDragging, setIsDragging] = useState(false)
+  const { createDocument } = useDocumentStore();
+
+  const [, setIsDragging] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
@@ -98,19 +97,18 @@ const FileUploader: React.FC<FileUploaderProps> = ({
       if (validateFile(file)) {
         const result = await generateChunksFromFile(file);
 
-        const newDocument: FileDocument = {
-          id: Date.now(),
+        let newDocument: Document = {
+          id: 0,
           type: 'file',
           name: file.name,
           content: result.chunks[0].pageContent,
           chunks: result.chunks,
           agentId: agent.id
         };
-        
-        setAgent({
-          ...agent,
-          documents: [...agent.documents, newDocument]
-        });
+
+        await createDocument(newDocument);
+
+        addNotification(`Arquivo "${file.name}" adicionado com sucesso.`);
 
         if (fileInputRef.current) {
           fileInputRef.current.value = ''

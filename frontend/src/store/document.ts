@@ -11,13 +11,8 @@ interface DocumentState {
   faqDocuments: Document[];
   websiteDocuments: Document[];
   setDocuments: (docs: Document[]) => void;
-  setVideoDocuments: (docs: Document[]) => void;
-  setFileDocuments: (docs: Document[]) => void;
-  setFaqDocuments: (docs: Document[]) => void;
-  setWebsiteDocuments: (docs: Document[]) => void;
   fetchDocuments: (agentId: number, type: string) => Promise<void>;
   createDocument: (docs: Document) => Promise<void>;
-  saveDocuments: () => Promise<void>;
   deleteDocument: (id: number) => Promise<void>;
 }
 
@@ -30,43 +25,27 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
   faqDocuments: [],
   websiteDocuments: [],
   setDocuments: (docs: Document[]) => set({ documents: docs }),
-  setVideoDocuments: (docs: Document[]) => {
-    set({ videoDocuments: docs });
-    set({ documents: [...get().documents, ...docs] });
-  },
-  setFileDocuments: (docs: Document[]) => {
-    set({ fileDocuments: docs });
-    set({ documents: [...get().documents, ...docs] });
-  },
-  setFaqDocuments: (docs: Document[]) => {
-    set({ faqDocuments: docs });
-    set({ documents: [...get().documents, ...docs] });
-  },
-  setWebsiteDocuments: (docs: Document[]) => {
-    set({ websiteDocuments: docs });
-    set({ documents: [...get().documents, ...docs] });
-  },
   fetchDocuments: async (agentId: number, type: string) => {
     set({ loading: true, error: null });
     try {
       const res = await fetch(`${BASE_URL}/api/documents?agentId=${agentId}&type=${type}`);
       const data = await res.json();
       if (res.ok) {
-
+        console.log('Fetched documents:', data.documents);
 
         data.documents.map((doc: Document) => {
           switch (doc.type) {
             case 'video':
-              set((state) => ({ videoDocuments: [...state.videoDocuments, doc] }));
+              set({ videoDocuments: [doc] });
               break;
             case 'file':
-              set((state) => ({ fileDocuments: [...state.fileDocuments, doc] }));
+              set({ fileDocuments: [doc] });
               break;
             case 'faq':
-              set((state) => ({ faqDocuments: [...state.faqDocuments, doc] }));
+              set({ faqDocuments: [doc] });
               break;
             case 'website':
-              set((state) => ({ websiteDocuments: [...state.websiteDocuments, doc] }));
+              set({ websiteDocuments: [doc] });
               break;
             default:
               break;
@@ -90,28 +69,13 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         body: JSON.stringify(transformDocumentsForApi([doc])),
       });
       const data = await res.json();
-      if (res.ok) {
-        set({ documents: [...get().documents, data.document], loading: false });
+  
+      if (res.ok && data) {
+        const filteredDoc = data.documents.filter((d: Document) => d.id === doc.id);
+
+        set({ documents: [filteredDoc, data.document], loading: false });
       } else {
         set({ error: data.error || 'Erro ao criar documento', loading: false });
-      }
-    } catch (error: any) {
-      set({ error: error.message, loading: false });
-    }
-  },
-
-  saveDocuments: async () => {
-    set({ loading: true, error: null });
-    console.log('Saving documents:', JSON.stringify(get().documents));
-    try {
-      const res = await fetch(`${BASE_URL}/api/documents`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(transformDocumentsForApi(get().documents)),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        set({ error: data.error || 'Erro ao salvar documentos', loading: false });
       }
     } catch (error: any) {
       set({ error: error.message, loading: false });

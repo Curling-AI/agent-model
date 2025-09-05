@@ -2,24 +2,25 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useNotifications } from "@/context/NotificationsProvider";
 import { generateChunksFromUrl } from "@/services/chunker";
 import { useAgentStore } from "@/store/agent";
+import { useDocumentStore } from "@/store/document";
 import { useTranslation } from "@/translations";
 import { Document } from "@/types/agent";
 import { useCallback, useState } from "react"
 
-interface WebsiteDocument extends Document {
-  type: 'website';
-}
 
-const WebsiteInput: React.FC= () => {
+
+const WebsiteInput: React.FC = () => {
 
   const language = useLanguage();
   const t = useTranslation(language);
 
-  const { agent, setAgent } = useAgentStore();
+  const { agent } = useAgentStore();
 
-  const [websiteDocument, setWebsiteDocument] = useState<WebsiteDocument>({id: Date.now(), type: 'website', name: '', content: '', agentId: agent.id});
+  const [websiteDocument, setWebsiteDocument] = useState<Document>({ id: 0, type: 'website', name: '', content: '', agentId: agent.id });
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisProgress, setAnalysisProgress] = useState(0);
+
+  const { createDocument } = useDocumentStore();
 
   const { addNotification } = useNotifications()
 
@@ -50,10 +51,7 @@ const WebsiteInput: React.FC= () => {
     websiteDocument.name = result.chunks[0].metadata.title;
     websiteDocument.content = result.chunks[0].metadata.source;
 
-    setAgent({
-      ...agent,
-      documents: [...agent.documents, websiteDocument]
-    });
+    await createDocument(websiteDocument);
 
     setWebsiteDocument({ ...websiteDocument, name: '' });
 

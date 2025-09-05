@@ -30,8 +30,6 @@ const DocumentChunking: React.FC<DocumentChunkingProps> = ({
 
   // const totalTokens = chunks!.reduce((sum, chunk) => sum + calculateTokens(chunk.text), 0)
 
-  console.log(chunks)
-
   const toggleChunk = (chunkId: number) => {
     if (expandedChunkId === chunkId) {
       setExpandedChunkId(null)
@@ -47,7 +45,7 @@ const DocumentChunking: React.FC<DocumentChunkingProps> = ({
     }
   }
 
-  return (
+  return chunks && chunks?.length > 0 && (
     <div className={styles.chunkingContainer}>
       <div className={styles.chunkingHeader}>
         <div className={styles.documentInfo}>

@@ -20,16 +20,15 @@ const FaqModal: React.FC<FaqModalProps> = ({ isOpen, onClose, document }) => {
   const language = useLanguage();
   const t = useTranslation(language);
   const { agent } = useAgentStore();
-  const [agentDocument, setAgentDocument] = useState<Document>(document || { id: 0, agentId: agent.id, type: 'faq', name: '', content: '' });
-  const { faqDocuments, setFaqDocuments } = useDocumentStore();
+  const { createDocument } = useDocumentStore();
+  const [faqDocument, setFaqDocument] = useState<Document>(document || { id: 0, agentId: agent.id, type: 'faq', name: '', content: '' });
 
   const handleSubmit = async () => {
-    if (agentDocument) {
-      const chunks = await generateChunksFromFaq(agentDocument.name, agentDocument.content!);
-      setFaqDocuments([
-        ...faqDocuments,
-        { ...agentDocument, chunks }
-      ])
+    if (faqDocument) {
+      const chunks = await generateChunksFromFaq(faqDocument.name, faqDocument.content!);
+
+      await createDocument({ ...faqDocument, chunks });
+      
       onClose();
     }
   };
@@ -37,10 +36,6 @@ const FaqModal: React.FC<FaqModalProps> = ({ isOpen, onClose, document }) => {
   const handleClose = () => {
     onClose();
   };
-
-  const clearDocument = () => {
-    setAgentDocument({ id: 0, agentId: agent.id, type: 'faq', name: '', content: '' });
-  }
 
   if (!isOpen) return null;
 
@@ -50,7 +45,7 @@ const FaqModal: React.FC<FaqModalProps> = ({ isOpen, onClose, document }) => {
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-base-300">
           <div>
-            <h2 className="text-xl font-bold">{agentDocument.id !== 0 ? t.editFaq : t.addFaq}</h2>
+            <h2 className="text-xl font-bold">{faqDocument.id !== 0 ? t.editFaq : t.addFaq}</h2>
             <p className="text-neutral mt-1">Configure a pergunta e resposta</p>
           </div>
           <button onClick={handleClose} className="btn btn-ghost btn-circle">
@@ -67,8 +62,8 @@ const FaqModal: React.FC<FaqModalProps> = ({ isOpen, onClose, document }) => {
             type="text"
             placeholder={t.questionPlaceholder}
             className="input input-bordered w-full"
-            value={agentDocument.name}
-            onChange={(e) => setAgentDocument(prev => ({ ...prev, name: e.target.value }))}
+            value={faqDocument.name}
+            onChange={(e) => setFaqDocument(prev => ({ ...prev, name: e.target.value }))}
             required
           />
         </div>
@@ -80,8 +75,8 @@ const FaqModal: React.FC<FaqModalProps> = ({ isOpen, onClose, document }) => {
           <textarea
             placeholder={t.answerPlaceholder}
             className="textarea textarea-bordered w-full h-32"
-            value={agentDocument.content}
-            onChange={(e) => setAgentDocument(prev => ({ ...prev, content: e.target.value }))}
+            value={faqDocument.content}
+            onChange={(e) => setFaqDocument(prev => ({ ...prev, content: e.target.value }))}
             required
           />
         </div>
@@ -93,10 +88,10 @@ const FaqModal: React.FC<FaqModalProps> = ({ isOpen, onClose, document }) => {
           </button>
           <button
             onClick={handleSubmit}
-            disabled={!agentDocument.name.trim() || !agentDocument.content!.trim()}
+            disabled={!faqDocument.name.trim() || !faqDocument.content!.trim()}
             className="btn btn-primary"
           >
-            {agentDocument.id !== 0 ? t.update : t.add}
+            {faqDocument.id !== 0 ? t.update : t.add}
           </button>
         </div>
       </div>

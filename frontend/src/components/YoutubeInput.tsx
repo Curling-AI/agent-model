@@ -2,22 +2,20 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useNotifications } from "@/context/NotificationsProvider";
 import { generateChunksFromUrl } from "@/services/chunker";
 import { useAgentStore } from "@/store/agent";
+import { useDocumentStore } from "@/store/document";
 import { useTranslation } from "@/translations";
 import { Document } from "@/types/agent";
 import { extractYouTubeVideoId } from "@/utils/video";
 import { Trash2 } from "lucide-react";
 import { useState } from "react";
 
-interface VideoDocument extends Document {
-  type: 'video';
-}
-
 const YoutubeInput: React.FC = () => {
 
   const language = useLanguage();
   const t = useTranslation(language);
 
-  const { agent, setAgent } = useAgentStore();
+  const { agent } = useAgentStore();
+  const { createDocument, deleteDocument } = useDocumentStore();
 
   const { addNotification } = useNotifications();
 
@@ -26,7 +24,7 @@ const YoutubeInput: React.FC = () => {
   const [youtubeVideoUrl, setYoutubeVideoUrl] = useState('');
 
   
-  const [videoDocument, setVideoDocument] = useState<VideoDocument>({id: Date.now(), type: 'video', name: '', content: '', agentId: agent.id});
+  const [ videoDocument ] = useState<Document>({id: -Date.now(), type: 'video', name: '', content: '', agentId: agent.id});
   
   const analyzeYouTubeVideo = async (videoUrl: string) => {
     if (!videoUrl.trim()) {
@@ -49,11 +47,8 @@ const YoutubeInput: React.FC = () => {
     videoDocument.name = `Vídeo do YouTube`;
     videoDocument.content = videoUrl;
     videoDocument.chunks = result.chunks;
-    setAgent({
-      ...agent,
-      documents: [...agent.documents, videoDocument]
-      
-    });
+
+    await createDocument(videoDocument);
 
     // Simular progresso da análise
     const progressInterval = setInterval(() => {
@@ -77,11 +72,8 @@ const YoutubeInput: React.FC = () => {
     }, 3000);
   };
 
-  const removeYouTubeVideo = (videoId: number) => {
-    setAgent({
-      ...agent,
-      documents: agent.documents.filter(video => video.id !== videoId)
-    });
+  const removeYouTubeVideo = async (videoId: number) => {
+    await deleteDocument(videoId);
   };
 
   return (
@@ -136,8 +128,7 @@ const YoutubeInput: React.FC = () => {
             </div>
           )}
 
-          {/* Lista de vídeos adicionados */}
-          {agent.documents.length > 0 && (
+          {/* {agent.documents.length > 0 && (
             <div className="mt-6">
               <h4 className="font-semibold text-base-content mb-3">{t.addedVideos}</h4>
               <div className="space-y-3">
@@ -181,7 +172,7 @@ const YoutubeInput: React.FC = () => {
                 ))}
               </div>
             </div>
-          )}
+          )} */}
         </div>
       </div>
   );
