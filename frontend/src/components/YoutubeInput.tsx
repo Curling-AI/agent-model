@@ -1,7 +1,9 @@
 import { useLanguage } from "@/context/LanguageContext";
+import { useNotifications } from "@/context/NotificationsProvider";
+import { generateChunksFromUrl } from "@/services/chunker";
+import { useAgentStore } from "@/store/agent";
 import { useTranslation } from "@/translations";
-import { Agent, Document } from "@/types/agent";
-import { processYoutube } from "@/utils/chunk";
+import { Document } from "@/types/agent";
 import { extractYouTubeVideoId } from "@/utils/video";
 import { Trash2 } from "lucide-react";
 import { useState } from "react";
@@ -10,42 +12,48 @@ interface VideoDocument extends Document {
   type: 'video';
 }
 
-
 const YoutubeInput: React.FC = () => {
 
-  const [documents, setDocuments] = useState<Document[]>([]);
   const language = useLanguage();
   const t = useTranslation(language);
 
-  const [url, setUrl] = useState("");
-  const [videoId, setVideoId] = useState<string | null>(null);
+  const { agent, setAgent } = useAgentStore();
+
+  const { addNotification } = useNotifications();
 
   const [isAnalyzingVideo, setIsAnalyzingVideo] = useState(false);
   const [videoAnalysisProgress, setVideoAnalysisProgress] = useState(0);
   const [youtubeVideoUrl, setYoutubeVideoUrl] = useState('');
 
   
-  const [videoDocument, setVideoDocument] = useState<VideoDocument>({id: Date.now(), type: 'video', name: '', content: '', agentId: 0});
+  const [videoDocument, setVideoDocument] = useState<VideoDocument>({id: Date.now(), type: 'video', name: '', content: '', agentId: agent.id});
   
   const analyzeYouTubeVideo = async (videoUrl: string) => {
     if (!videoUrl.trim()) {
-      alert('Por favor, insira uma URL válida do YouTube primeiro.');
+      addNotification('Por favor, insira uma URL válida do YouTube primeiro.');
       return;
     }
 
     // Validar se é uma URL do YouTube
     const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+/;
     if (!youtubeRegex.test(videoUrl)) {
-      alert('Por favor, insira uma URL válida do YouTube.');
+      addNotification('Por favor, insira uma URL válida do YouTube.');
       return;
     }
 
     setIsAnalyzingVideo(true);
     setVideoAnalysisProgress(0);
 
-    const chunks = await processYoutube(videoUrl);
+    const result = await generateChunksFromUrl(videoUrl);
 
-    console.log(chunks);
+    videoDocument.name = `Vídeo do YouTube`;
+    videoDocument.content = videoUrl;
+    videoDocument.chunks = result.chunks;
+    setAgent({
+      ...agent,
+      documents: [...agent.documents, videoDocument]
+      
+    });
 
     // Simular progresso da análise
     const progressInterval = setInterval(() => {
@@ -65,41 +73,16 @@ const YoutubeInput: React.FC = () => {
       setIsAnalyzingVideo(false);
       setVideoAnalysisProgress(100);
 
-      // Extrair ID do vídeo da URL
-      const videoId = extractYouTubeVideoId(videoUrl);
-      const videoTitle = `Vídeo do YouTube (${videoId})`;
-
-      // Adicionar vídeo à base de conhecimento
-      const newVideo = {
-        id: Date.now(),
-        url: videoUrl,
-        title: videoTitle,
-        description: 'Conteúdo extraído do vídeo do YouTube',
-        transcript: 'Transcrição simulada do vídeo...',
-        addedAt: new Date().toISOString()
-      };
-
-      // setAgent(prev => ({
-      //   ...prev,
-      //   knowledgeBase: {
-      //     ...prev.knowledgeBase,
-      //     youtubeVideos: [...prev.knowledgeBase.youtubeVideos, newVideo]
-      //   }
-      // }));
-
-      alert(t.videoAnalysisComplete);
+      addNotification(t.videoAnalysisComplete);
     }, 3000);
   };
 
-  // const removeYouTubeVideo = (videoId: number) => {
-  //   setAgent(prev => ({
-  //     ...prev,
-  //     knowledgeBase: {
-  //       ...prev.knowledgeBase,
-  //       youtubeVideos: prev.knowledgeBase.youtubeVideos.filter(video => video.id !== videoId)
-  //     }
-  //   }));
-  // };
+  const removeYouTubeVideo = (videoId: number) => {
+    setAgent({
+      ...agent,
+      documents: agent.documents.filter(video => video.id !== videoId)
+    });
+  };
 
   return (
     <div>
@@ -154,11 +137,11 @@ const YoutubeInput: React.FC = () => {
           )}
 
           {/* Lista de vídeos adicionados */}
-          {documents.length > 0 && (
+          {agent.documents.length > 0 && (
             <div className="mt-6">
               <h4 className="font-semibold text-base-content mb-3">{t.addedVideos}</h4>
               <div className="space-y-3">
-                {documents.map((video) => (
+                {agent.documents.map((video) => (
                   <div key={video.id} className="card bg-base-200">
                     <div className="card-body p-4">
                       <div className="flex items-start justify-between">
@@ -185,7 +168,7 @@ const YoutubeInput: React.FC = () => {
                             </svg>
                           </button>
                           <button
-                            // onClick={() => removeYouTubeVideo(video.id)}
+                            onClick={() => removeYouTubeVideo(video.id)}
                             className="btn btn-ghost btn-xs text-error"
                             title={t.removeVideo}
                           >

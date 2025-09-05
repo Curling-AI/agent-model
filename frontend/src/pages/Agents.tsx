@@ -19,7 +19,7 @@ const Agents = () => {
   const language = useLanguage();
   const t = useTranslation(language);
   const [filter, setFilter] = useState('all');
-  const { agents, fetchAgents, createOrUpdateAgent, deleteAgent } = useAgentStore();
+  const { agents, newAgent, fetchAgents, createOrUpdateAgent, deleteAgent, setAgent } = useAgentStore();
 
   useEffect(() => {
     fetchAgents(1, filter);
@@ -40,14 +40,15 @@ const Agents = () => {
     deleteAgent(agentId);
   };
 
-  const handleEditAgent = (agentData?: Agent) => {
-    navigate('/agents/create', { state: agentData });
+  const handleEditAgent = (agentData: Agent) => {
+    setAgent(agentData);
+    navigate('/agents/create');
   };
 
   const handleDuplicateAgent = (agentData: Agent) => {
     const duplicatedAgent = { ...agentData, id: 0, organizationId: 1 };
     createOrUpdateAgent(duplicatedAgent);
-    navigate('/agents/create', { state: duplicatedAgent });
+    navigate('/agents/create');
   };
 
   return (
@@ -112,7 +113,10 @@ const Agents = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
         {/* Create New Agent Card */}
         <div
-          onClick={() => navigate('/agents/create')}
+          onClick={() => {
+            newAgent();
+            navigate('/agents/create')
+          }}
           className="card bg-base-100 border-2 border-dashed hover:border-primary cursor-pointer card-hover group"
         >
           <div className="card-body items-center text-center justify-center p-6">

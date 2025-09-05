@@ -1,52 +1,55 @@
 import { useLanguage } from "@/context/LanguageContext";
 import { useAgentStore } from "@/store/agent";
 import { useTranslation } from "@/translations";
-import { Document } from "@/types/agent";
 import WebsiteInput from "../WebsiteInput";
 import FileUploader from "../FileUploader";
 import YoutubeInput from "../YoutubeInput";
 import FaqInput from "../FaqInput";
 import DocumentChunking from "../DocumentChunking";
+import { useNotifications } from "@/context/NotificationsProvider";
+import { Document } from "@/types/agent";
+import { useDocumentStore } from "@/store/document";
+import { useEffect } from "react";
 
 const NewAgentKnowledge: React.FC = () => {
 
   const language = useLanguage();
   const t = useTranslation(language);
 
-  const { agent, setAgent } = useAgentStore();
+  const { agent } = useAgentStore();
+  const { documents, setDocuments, fetchDocuments } = useDocumentStore();
+
+  const { addNotification } = useNotifications();
+
+  useEffect(() => {
+    if (agent) {
+      fetchDocuments(agent.id, 'all');
+    } else {
+      addNotification('Agente não encontrado ao buscar documentos.', 'error');
+    }
+  }, []);
 
   const removeChunk = (chunkId: number) => {
-    // setConfiguration({
-    //   processedDocuments: configuration.processedDocuments.map((doc) => ({
-    //     ...doc,
-    //     chunks: doc.chunks.filter((chunk) => chunk.id !== chunkId),
-    //     totalTokens: doc.chunks.reduce(
-    //       (sum, chunk) => (chunk.id !== chunkId ? sum + chunk.tokens : sum),
-    //       0,
-    //     ),
-    //   })),
-    // })
-    // addNotification('Chunk removido com sucesso!', 'success')
+    setDocuments(documents.map((doc) => ({
+      ...doc,
+      chunks: doc.chunks!.filter((chunk) => chunk.id !== chunkId),
+    })))
+    addNotification('Chunk removido com sucesso!', 'success')
   }
 
   const removeAllChunks = async (documentId: number) => {
-    // try {
-    //   const statusItem = processedDocumentsStatus.find((item) => item.id === documentId)
-    //   if (statusItem?.channel) {
-    //     await supabase.removeChannel(statusItem.channel)
-    //     delete processedDocChannels.current[documentId]
-    //     setProcessedDocumentsStatus((prev) => prev.filter((item) => item.id !== documentId))
-    //   }
-
-    //   await handleDeleteDocument(Number(documentId))
-    //   setConfiguration({
-    //     processedDocuments: configuration.processedDocuments.filter((doc) => doc.id !== documentId),
-    //   })
-    //   addNotification('Documento e todos os seus chunks removidos com sucesso!', 'success')
-    // } catch (error) {
-    //   console.error('Erro ao remover todos os chunks:', error)
-    //   addNotification('Erro ao remover documento e seus chunks.', 'error')
-    // }
+    try {
+      setDocuments(
+        documents.map((doc) => ({
+          ...doc,
+          chunks: doc.chunks!.filter((chunk) => chunk.id !== documentId),
+        }))
+      )
+      addNotification('Documento e todos os seus chunks removidos com sucesso!', 'success')
+    } catch (error) {
+      console.error('Erro ao remover todos os chunks:', error)
+      addNotification('Erro ao remover documento e seus chunks.', 'error')
+    }
   }
 
   return (
@@ -55,26 +58,22 @@ const NewAgentKnowledge: React.FC = () => {
 
       <WebsiteInput />
 
-      <FileUploader agent={agent} onCreateDocument={function (document: Document): void {
-        throw new Error("Function not implemented.");
-      }} />
+      <FileUploader />
 
-      <YoutubeInput agent={agent} />
+      <YoutubeInput />
 
-      <FaqInput agent={agent} onCreateDocument={function (document: Document): void {
-        throw new Error("Function not implemented.");
-      }} />
+      <FaqInput  />
 
-      {agent.documents.length > 0 && (
+      {documents.length > 0 && (
         <div style={{ fontSize: '1.1rem', fontWeight: 600 }}>
           <h3 style={{ marginTop: '16px', marginBottom: '16px' }}>Documentos Processados</h3>
-          {agent.documents.map((doc) => (
+          {documents.map((doc: Document) => (
             <DocumentChunking
               key={doc.id}
               documentId={doc.id}
               documentName={doc.name}
               chunks={doc.chunks}
-              status={'pending'}
+              status={'processed'}
               onChunkRemove={removeChunk}
               onAllChunksRemove={removeAllChunks}
             />

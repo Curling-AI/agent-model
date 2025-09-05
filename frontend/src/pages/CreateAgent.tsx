@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useTranslation } from '../translations';
@@ -19,6 +19,7 @@ import NewAgentBehavior from '@/components/agent/NewAgentBehavior';
 import NewAgentKnowledge from '@/components/agent/NewAgentKnowledge';
 import NewAgentFollowUp from '@/components/agent/NewAgentFollowUp';
 import NewAgentChannel from '@/components/agent/NewAgentChannel';
+import { useDocumentStore } from '@/store/document';
 
 const CreateAgent: React.FC = () => {
   const navigate = useNavigate();
@@ -27,7 +28,7 @@ const CreateAgent: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(1);
 
   const { agent, createOrUpdateAgent } = useAgentStore();
-
+  const { saveDocuments } = useDocumentStore();
   const steps = [
     { id: 1, name: t.personality, icon: User },
     { id: 2, name: t.behavior, icon: Brain },
@@ -49,7 +50,6 @@ const CreateAgent: React.FC = () => {
   };
 
   const handleSubmit = () => {
-    console.log('Creating agent:', agent);
     navigate('/agents');
   };
 
@@ -65,7 +65,7 @@ const CreateAgent: React.FC = () => {
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div>
-            <h1 className="text-3xl font-bold text-base-content">{t.createNewAgent}</h1>
+            <h1 className="text-3xl font-bold text-base-content">{agent.id && agent.id > 0 ? t.editAgent : t.createNewAgent}</h1>
             <p className="text-neutral mt-1">{t.configureCustomAgent}</p>
           </div>
         </div>
@@ -149,7 +149,19 @@ const CreateAgent: React.FC = () => {
             {t.createAgent}
           </button>
         ) : (
-          <button onClick={() => { nextStep(); createOrUpdateAgent(agent); }} className="btn btn-sm btn-primary">
+          <button onClick={async () => { 
+            switch (currentStep) {
+              case 3:
+                if (agent) {
+                  await saveDocuments();
+                }
+                break;
+              default:
+                await createOrUpdateAgent(agent); 
+                break;
+            }
+            nextStep();
+          }} className="btn btn-sm btn-primary">
             {t.next}
             <ChevronRight className="w-4 h-4 ml-1" />
           </button>

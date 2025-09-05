@@ -1,24 +1,24 @@
 import { useLanguage } from "@/context/LanguageContext";
+import { generateChunksFromFile } from "@/services/chunker";
 import { useTranslation } from "@/translations";
-import { Agent, Document } from "@/types/agent";
-import { processFile } from "@/utils/chunk";
+import { Document } from "@/types/agent";
 import { Upload } from "lucide-react"
 import { useRef, useState } from "react"
+import { useNotifications } from "@/context/NotificationsProvider";
+import { useAgentStore } from "@/store/agent";
 
 interface FileDocument extends Document {
   type: 'file';
 }
 
 interface FileUploaderProps {
-  agent: Agent;
-  onCreateDocument: (document: FileDocument) => void;
   supportedFileTypes?: string[];
   maxSize?: number // in bytes;
   isLoading?: boolean;
   handleLoading?: (isLoading: boolean) => void;
 }
 
-const FileUploader: React.FC<FileUploaderProps> = ({ agent, onCreateDocument,
+const FileUploader: React.FC<FileUploaderProps> = ({
   supportedFileTypes = [
     '.pdf',
     '.doc',
@@ -35,10 +35,11 @@ const FileUploader: React.FC<FileUploaderProps> = ({ agent, onCreateDocument,
   const language = useLanguage();
   const t = useTranslation(language);
 
-  const [fileDocument, setFileDocument] = useState<FileDocument>({ id: Date.now(), type: 'file', name: '', content: '', agentId: agent.id });
+  const { addNotification } = useNotifications()
+
+  const { agent, setAgent } = useAgentStore();
 
   const [isDragging, setIsDragging] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
@@ -63,18 +64,17 @@ const FileUploader: React.FC<FileUploaderProps> = ({ agent, onCreateDocument,
     const fileExtension = `.${file.name.split('.').pop()}`
 
     if (!supportedFileTypes.includes(fileType) && !supportedFileTypes.includes(fileExtension)) {
-      setError(
+      addNotification(
         `Tipo de arquivo não suportado. Por favor, envie arquivos: ${supportedFileTypes.filter((type) => type.startsWith('.')).join(', ')}`,
       )
       return false
     }
 
     if (file.size > maxSize) {
-      setError(`Arquivo muito grande. O tamanho máximo é ${formatFileSize(maxSize)}`)
+      addNotification(`Arquivo muito grande. O tamanho máximo é ${formatFileSize(maxSize)}`)
       return false
     }
 
-    setError(null)
     return true
   }
 
@@ -96,11 +96,22 @@ const FileUploader: React.FC<FileUploaderProps> = ({ agent, onCreateDocument,
     if (files && files.length) {
       const file = files[0]
       if (validateFile(file)) {
-        const chunks = await processFile(file);
+        const result = await generateChunksFromFile(file);
 
-        console.log(chunks);
-          // onCreateDocument(newDocument)
-    
+        const newDocument: FileDocument = {
+          id: Date.now(),
+          type: 'file',
+          name: file.name,
+          content: result.chunks[0].pageContent,
+          chunks: result.chunks,
+          agentId: agent.id
+        };
+        
+        setAgent({
+          ...agent,
+          documents: [...agent.documents, newDocument]
+        });
+
         if (fileInputRef.current) {
           fileInputRef.current.value = ''
         }

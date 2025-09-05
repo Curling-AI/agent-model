@@ -1,6 +1,6 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import styles from './DocumentChunking.module.css'
-import { estimateTokenCount } from '@/utils/tokenEstimator'
+// import { estimateTokenCount } from '@/utils/tokenEstimator'
 import { Trash2 } from 'lucide-react'
 import { Chunk } from '@/types/agent'
 
@@ -24,11 +24,13 @@ const DocumentChunking: React.FC<DocumentChunkingProps> = ({
   const [expandedChunkId, setExpandedChunkId] = useState<number | null>(null)
   const [isExpanded, setIsExpanded] = useState(false)
 
-  const calculateTokens = (text: string): number => {
-    return estimateTokenCount(text, 'gpt-3.5-turbo')
-  }
+  // const calculateTokens = (text: string): number => {
+  //   return estimateTokenCount(text, 'gpt-3.5-turbo')
+  // }
 
-  const totalTokens = chunks!.reduce((sum, chunk) => sum + calculateTokens(chunk.text), 0)
+  // const totalTokens = chunks!.reduce((sum, chunk) => sum + calculateTokens(chunk.text), 0)
+
+  console.log(chunks)
 
   const toggleChunk = (chunkId: number) => {
     if (expandedChunkId === chunkId) {
@@ -52,7 +54,7 @@ const DocumentChunking: React.FC<DocumentChunkingProps> = ({
           <h3 className={styles.documentName}>{documentName}</h3>
           {status === 'processed' && (
             <span className={styles.chunkCount}>
-              {chunks!.length} chunks • {totalTokens.toLocaleString()} tokens
+              {chunks!.length} chunks 
             </span>
           )}
         </div>
@@ -70,7 +72,7 @@ const DocumentChunking: React.FC<DocumentChunkingProps> = ({
 
       {(isExpanded || expandedChunkId) && (
         <div className={styles.chunksGrid}>
-          {chunks!.map((chunk) => (
+          {chunks!.map((chunk: Chunk) => (
             <div
               key={chunk.id}
               className={`${styles.chunkItem} ${expandedChunkId === chunk.id ? styles.expanded : ''}`}
@@ -78,7 +80,7 @@ const DocumentChunking: React.FC<DocumentChunkingProps> = ({
               <div className={styles.chunkHeader} onClick={() => toggleChunk(chunk.id)}>
                 <div className={styles.chunkInfo}>
                   <span className={styles.chunkId}>Chunk #{chunk.id}</span>
-                  <span className={styles.chunkTokens}>{calculateTokens(chunk.text)} tokens</span>
+                  {/* <span className={styles.chunkTokens}>{calculateTokens(chunk.text)} tokens</span> */}
                 </div>
                 <div className={styles.chunkActions}>
                   <span className={styles.similarityScore}>

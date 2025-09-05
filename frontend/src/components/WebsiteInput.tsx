@@ -1,15 +1,14 @@
 import { useLanguage } from "@/context/LanguageContext";
 import { useNotifications } from "@/context/NotificationsProvider";
+import { generateChunksFromUrl } from "@/services/chunker";
 import { useAgentStore } from "@/store/agent";
 import { useTranslation } from "@/translations";
-import { Agent, Document } from "@/types/agent";
-import { processWebsite, processYoutube } from "@/utils/chunk";
+import { Document } from "@/types/agent";
 import { useCallback, useState } from "react"
 
 interface WebsiteDocument extends Document {
   type: 'website';
 }
-
 
 const WebsiteInput: React.FC= () => {
 
@@ -25,7 +24,7 @@ const WebsiteInput: React.FC= () => {
   const { addNotification } = useNotifications()
 
   const analyzeWebsite = async () => {
-    if (!websiteDocument.name.trim()) {
+    if (!isValidUrl(websiteDocument.name)) {
       addNotification('Por favor, insira uma URL válida primeiro.');
       return;
     }
@@ -45,15 +44,24 @@ const WebsiteInput: React.FC= () => {
       });
     }, 500);
 
-    const chunks = await processWebsite(websiteDocument.name);
-    console.log(chunks)
+    const result = await generateChunksFromUrl(websiteDocument.name);
 
-    // Simular análise completa após 5 segundos
+    websiteDocument.chunks = result.chunks;
+    websiteDocument.name = result.chunks[0].metadata.title;
+    websiteDocument.content = result.chunks[0].metadata.source;
+
+    setAgent({
+      ...agent,
+      documents: [...agent.documents, websiteDocument]
+    });
+
+    setWebsiteDocument({ ...websiteDocument, name: '' });
+
     setTimeout(() => {
       clearInterval(progressInterval);
       setIsAnalyzing(false);
       setAnalysisProgress(100);
-      alert(t.siteAnalysisComplete);
+      addNotification(t.siteAnalysisComplete);
     }, 5000);
   };
 
@@ -65,84 +73,6 @@ const WebsiteInput: React.FC= () => {
       return false
     }
   }, [])
-
-  // const handleAddWebsite = async () => {
-  //   if (!configuration.websiteUrl || !isValidUrl(configuration.websiteUrl)) {
-  //     addNotification('Por favor, insira uma URL de website válida.', 'error')
-  //     return
-  //   }
-
-  //   setIsLoading(true)
-  //   try {
-  //     const response = await fetch(`/api/documents/website?url=${configuration.websiteUrl}`, {
-  //       credentials: 'include',
-  //     })
-  //     if (!response.ok) {
-  //       const errorData = await response.json()
-  //       const errorMessage =
-  //         errorData.message || `Erro ao buscar título do website (${response.status}).`
-  //       addNotification(`Falha ao adicionar website: ${errorMessage}`, 'error')
-  //       throw new Error(`HTTP error! status: ${response.status}`)
-  //     }
-
-  //     const { title } = await response.json()
-  //     const website: WebsiteDocument = {
-  //       type: 'Website',
-  //       name: title ? title : configuration.websiteUrl,
-  //       url: configuration.websiteUrl,
-  //       metadata: {},
-  //       new: true,
-  //     }
-  //     const id = await handleCreateDocument(website)
-  //     if (id !== -1) {
-  //       setConfiguration({
-  //         websites: [
-  //           ...configuration.websites,
-  //           {
-  //             id: id,
-  //             type: 'Website',
-  //             name: title ? title : configuration.websiteUrl,
-  //             url: configuration.websiteUrl,
-  //             metadata: {},
-  //             new: true,
-  //             status: 'processing',
-  //           },
-  //         ],
-  //         websiteUrl: '',
-  //       })
-  //       addNotification(
-  //         `Website '${title || configuration.websiteUrl}' adicionado com sucesso!`,
-  //         'success',
-  //       )
-
-  //       const channel = supabase
-  //         .channel(`documentUpdate_${id}`)
-  //         .on(
-  //           'postgres_changes',
-  //           { event: 'UPDATE', schema: 'public', table: 'documents', filter: `id=eq.${id}` },
-  //           (payload) => {
-  //             setNewDocumentsStatus((prev) =>
-  //               prev.map((website) =>
-  //                 website.id === id
-  //                   ? { id, channel: website.channel, status: payload.new.status }
-  //                   : website,
-  //               ),
-  //             )
-  //           },
-  //         )
-  //         .subscribe()
-  //       setNewDocumentsStatus((prev) => [
-  //         ...prev,
-  //         { id: id, channel: channel, status: 'processing' },
-  //       ])
-  //     }
-  //   } catch (error) {
-  //     console.error('Erro ao adicionar website:', error)
-  //     addNotification('Erro ao adicionar website.', 'error')
-  //   } finally {
-  //     setIsLoading(false)
-  //   }
-  // }
 
   return (
     <div>

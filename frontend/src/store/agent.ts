@@ -7,8 +7,7 @@ interface AgentState {
   agents: Agent[];
   setAgent: (agent: Agent) => void;
   setAgents: (agents: Agent[]) => void;
-  clearAgent: () => void;
-  newAgent: (agent: Agent) => Promise<Agent>;
+  newAgent: () => void;
   fetchAgent: (id: string) => Promise<Agent>;
   fetchAgents: (organizationId: number, filter: string) => Promise<Agent[]>;
   createOrUpdateAgent: (agent: Agent) => Promise<Agent>;
@@ -17,38 +16,38 @@ interface AgentState {
 }
 
 export const useAgentStore = create<AgentState>((set, get) => ({
-  agent: fillAgent(),
+  agent: emptyAgent(),
   agents: [],
+  newAgent: () => set({ agent: emptyAgent() }),
   setAgents: (agents) => set({ agents }),
-  setAgent: (agent) => set({ agent }),
-  clearAgent: () => set({ agent: fillAgent() }),
-  newAgent: async (agent: Agent) => {
+  setAgent: (agent) => {
     set({ agent });
-    return agent;
   },
   fetchAgent: async (id: string) => {
     const response = await fetch(`${BASE_URL}/api/agents/${id}`);
     const data = await response.json();
     if (data) {
-      set({ agent: data });
-      return data;
+      const agent = fillAgent(data);
+      set({ agent });
+      return new Promise(resolve => resolve(agent));
     }
-    return null;
+    return emptyAgent();
   },
   fetchAgents: async (organizationId: number, filter: string = 'all') => {
     const response = await fetch(`${BASE_URL}/api/agents?organizationId=${organizationId}&filter=${filter}`);
     const data = await response.json();
     if (data) {
-      set({ agents: data });
-      return data;
+      const agents = data.map((item: any) => fillAgent(item));
+      set({ agents });
+      return agents;
     }
     return [];
   },
   createOrUpdateAgent: async (agent: Agent) => {
-    const method = agent.id || agent.id != 0 ? 'PUT' : 'POST';
-    const url = agent.id ? `${BASE_URL}/api/agents/${agent.id}` : `${BASE_URL}/api/agents`;
+    const url = `${BASE_URL}/api/agents`;
 
     const body = JSON.stringify({
+      id: agent.id === 0 ? undefined : agent.id,
       organization_id: agent.organizationId,
       name: agent.name,
       active: agent.active,
@@ -62,22 +61,20 @@ export const useAgentStore = create<AgentState>((set, get) => ({
       prompt_type: agent.promptType,
       prompt: agent.prompt
     });
-
     const response = await fetch(url, {
-      method: method,
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: body,
     });
     const data = await response.json();
-    console.log(data);
     if (data) {
-      agent.id = data.id;
+      const agent = fillAgent(data);
       set({ agent });
-      return data;
+      return new Promise(resolve => resolve(agent));
     }
-    return null;
+    return emptyAgent();
   },
   deleteAgent: async (id: number) => {
     const response = await fetch(`${BASE_URL}/api/agents/${id}`, {
@@ -97,7 +94,7 @@ export const useAgentStore = create<AgentState>((set, get) => ({
   }
 }));
 
-function fillAgent(): Agent {
+function emptyAgent(): Agent {
   return {
     id: 0,
     organizationId: 0,
@@ -115,5 +112,26 @@ function fillAgent(): Agent {
     documents: [],
     followUps: [],
     serviceProviders: [],
+  }
+}
+
+function fillAgent(data: any): Agent {
+  return {
+    id: data.id || 0,
+    organizationId: data.organization_id || 0,
+    name: data.name || '',
+    active: data.active || false,
+    description: data.description || '',
+    greetings: data.greetings || '',
+    tone: data.tone || '',
+    voiceConfiguration: data.voice_configuration || '',
+    responseTime: data.response_time || 0,
+    scheduleAgentBegin: data.schedule_agent_begin || '',
+    scheduleAgentEnd: data.schedule_agent_end || '',
+    prompt: data.prompt || '',
+    promptType: data.prompt_type || 'simple',
+    documents: data.documents || [],
+    followUps: data.follow_ups || [],
+    serviceProviders: data.service_providers || [],
   }
 }

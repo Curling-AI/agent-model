@@ -294,3 +294,62 @@ CREATE TABLE user_management_permissions (
   created_at TIMESTAMP WITH ZONE DEFAULT now(),
   updated_at TIMESTAMP WITH ZONE DEFAULT now()
 );
+
+
+-- This script sets up a PostgreSQL database schema for storing documents with embeddings
+-- and provides a function to search for similar documents based on a query embedding.
+-- Enable the pgvector extension to work with embedding vectors
+create extension vector;
+
+-- Create a table to store your documents
+create table knowledge (
+  id bigserial primary key,
+  agent_id bigint,
+  document_id bigint,
+  content text, -- corresponds to Document.pageContent
+  metadata jsonb, -- corresponds to Document.metadata
+  embedding vector(1536) -- 1536 works for OpenAI embeddings, change if needed
+);
+
+-- Create a function to search for documents
+create function match_knowledge (
+  query_embedding vector(1536),
+  match_count int default null,
+  filter jsonb DEFAULT '{}'
+) returns table (
+  id bigint,
+  content text,
+  metadata jsonb,
+  similarity float
+)
+language plpgsql
+as $$
+#variable_conflict use_column
+begin
+  return query
+  select
+    id,
+    content,
+    metadata,
+    1 - (knowledge.embedding <=> query_embedding) as similarity
+  from knowledge
+  where metadata @> filter
+  order by knowledge.embedding <=> query_embedding
+  limit match_count;
+end;
+$$;
+
+-- Function: remove_knowledge_by_agent_id()
+CREATE OR REPLACE FUNCTION remove_knowledge_by_agent_id()
+RETURNS TRIGGER AS $$
+BEGIN
+  DELETE FROM knowledge WHERE agent_id = OLD.agent_id;
+  RETURN OLD;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger: after_document_delete
+CREATE TRIGGER after_document_delete
+AFTER DELETE ON documents
+FOR EACH ROW
+EXECUTE FUNCTION remove_knowledge_by_agent_id();

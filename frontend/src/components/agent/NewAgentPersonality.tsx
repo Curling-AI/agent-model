@@ -1,7 +1,6 @@
 import { useLanguage } from "@/context/LanguageContext";
 import { useAgentStore } from "@/store/agent";
 import { useTranslation } from "@/translations";
-import React, { useState } from "react";
 
 const NewAgentPersonality: React.FC = () => {
 
@@ -90,7 +89,8 @@ const NewAgentPersonality: React.FC = () => {
         <span className="label-text font-medium">{t.voiceSettings}</span>
       </label>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {voiceOptions.map(option => (
+        {
+        voiceOptions.map(option => (
           <label key={option.value} className="cursor-pointer">
             <input
               type="radio"

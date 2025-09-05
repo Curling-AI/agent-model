@@ -5,8 +5,7 @@ const router = Router();
 
 router.get('/', AgentController.getAll);
 router.get('/:id', AgentController.getById);
-router.post('/', AgentController.create);
-router.put('/:id', AgentController.update);
+router.post('/', AgentController.upsert);
 router.delete('/:id', AgentController.delete);
 
 export default router;

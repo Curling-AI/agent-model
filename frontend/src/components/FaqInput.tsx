@@ -1,55 +1,31 @@
 import { useLanguage } from "@/context/LanguageContext";
 import { useTranslation } from "@/translations";
-import { Agent, AgentDocument } from "@/types/agent";
-import React, { useState } from "react";
+import { Agent, Document } from "@/types/agent";
+import { useState } from "react";
 import FaqModal from "./FaqModal";
 import { Edit, Plus, Trash2 } from "lucide-react";
+import { useDocumentStore } from "@/store/document";
 
-interface FaqDocument extends AgentDocument {
+interface FaqDocument extends Document {
   type: 'faq';
 }
 
-interface FaqInputProps {
-  agent: Agent;
-  onCreateDocument: (document: FaqDocument) => void;
-}
-
-const FaqInput: React.FC<FaqInputProps> = ({ agent, onCreateDocument }) => {
+const FaqInput: React.FC = () => {
 
   const language = useLanguage();
   const t = useTranslation(language);
 
-  const [faqDocument, setFaqDocument] = useState<FaqDocument>({id: Date.now(), type: 'faq', name: '', content: '', agentId: agent.id});
   const [showFaqModal, setShowFaqModal] = useState(false);
-  const [editingFaq, setEditingFaq] = useState<AgentDocument | null>(null);
+  const [editingFaq, setEditingFaq] = useState<Document | null>(null);
+  const { faqDocuments, setFaqDocuments } = useDocumentStore();
 
-  const addFaq = (faq: AgentDocument) => {
-    const newFaq = {
-      type: 'faq',
-      name: faq.name,
-      content: faq.content
-    } as AgentDocument;
-
-    agent!.documents.push(newFaq);
-    setShowFaqModal(false);
-    setEditingFaq(null);
-  };
-
-  const editFaq = (faq: AgentDocument) => {
+  const editFaq = (faq: Document) => {
     setEditingFaq(faq);
     setShowFaqModal(true);
   };
 
-  const updateFaq = (updatedFaq: AgentDocument) => {
-    agent?.documents.map((faq: AgentDocument) =>
-      faq.id === updatedFaq.id ? updatedFaq : faq
-    );
-    setShowFaqModal(false);
-    setEditingFaq(null);
-  };
-
   const deleteFaq = (faqId: number) => {
-    agent!.documents = agent!.documents.filter((faq: AgentDocument) => faq.id !== faqId);
+    setFaqDocuments(faqDocuments.filter((faq: Document) => faq.id !== faqId));
   };
 
   return (
@@ -67,9 +43,9 @@ const FaqInput: React.FC<FaqInputProps> = ({ agent, onCreateDocument }) => {
         </button>
 
         {/* Lista de FAQs */}
-        {agent.documents.length > 0 && (
+        {faqDocuments.length > 0 && (
           <div className="space-y-3">
-            {agent.documents.map((faq) => (
+            {faqDocuments.map((faq) => (
               <div key={faq.id} className="card bg-base-200">
                 <div className="card-body p-4">
                   <div className="flex items-start justify-between">
@@ -104,9 +80,7 @@ const FaqInput: React.FC<FaqInputProps> = ({ agent, onCreateDocument }) => {
           isOpen={showFaqModal}
           onClose={() => {
             setShowFaqModal(false);
-            setEditingFaq(null);
           }}
-          onSave={editingFaq ? updateFaq : addFaq}
           document={editingFaq ?? undefined}
         />
       )}
