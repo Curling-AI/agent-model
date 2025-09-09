@@ -4,6 +4,7 @@
     "target": "ESNext", // Or a suitable target for your Node.js version
     "moduleResolution": "Node",
     "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
     "outDir": "./dist",
     "rootDir": "./src",
     "baseUrl": ".",

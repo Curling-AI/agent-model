@@ -302,7 +302,7 @@ CREATE TABLE user_management_permissions (
 create extension vector;
 
 -- Create a table to store your documents
-create table knowledge (
+create table knowledge_openai (
   id bigserial primary key,
   agent_id bigint,
   document_id bigint,
@@ -311,8 +311,17 @@ create table knowledge (
   embedding vector(1536) -- 1536 works for OpenAI embeddings, change if needed
 );
 
+create table knowledge_gemini (
+  id bigserial primary key,
+  agent_id bigint,
+  document_id bigint,
+  content text, -- corresponds to Document.pageContent
+  metadata jsonb, -- corresponds to Document.metadata
+  embedding vector(768) -- 768 works for Gemini embeddings, change if needed
+);
+
 -- Create a function to search for documents
-create function match_knowledge (
+create function match_knowledge_openai (
   query_embedding vector(1536),
   match_count int default null,
   filter jsonb DEFAULT '{}'
@@ -331,10 +340,37 @@ begin
     id,
     content,
     metadata,
-    1 - (knowledge.embedding <=> query_embedding) as similarity
-  from knowledge
+    1 - (knowledge_openai.embedding <=> query_embedding) as similarity
+  from knowledge_openai
   where metadata @> filter
-  order by knowledge.embedding <=> query_embedding
+  order by knowledge_openai.embedding <=> query_embedding
+  limit match_count;
+end;
+$$;
+
+create function match_knowledge_gemini (
+  query_embedding vector(768),
+  match_count int default null,
+  filter jsonb DEFAULT '{}'
+) returns table (
+  id bigint,
+  content text,
+  metadata jsonb,
+  similarity float
+)
+language plpgsql
+as $$
+#variable_conflict use_column
+begin
+  return query
+  select
+    id,
+    content,
+    metadata,
+    1 - (knowledge_gemini.embedding <=> query_embedding) as similarity
+  from knowledge_gemini
+  where metadata @> filter
+  order by knowledge_gemini.embedding <=> query_embedding
   limit match_count;
 end;
 $$;
@@ -343,7 +379,8 @@ $$;
 CREATE OR REPLACE FUNCTION remove_knowledge_by_agent_id()
 RETURNS TRIGGER AS $$
 BEGIN
-  DELETE FROM knowledge WHERE agent_id = OLD.agent_id;
+  DELETE FROM knowledge_openai WHERE agent_id = OLD.agent_id;
+  DELETE FROM knowledge_gemini WHERE agent_id = OLD.agent_id;
   RETURN OLD;
 END;
 $$ LANGUAGE plpgsql;

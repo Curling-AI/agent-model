@@ -36,7 +36,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({
 
   const { agent } = useAgentStore();
 
-  const { createDocument } = useDocumentStore();
+  const { createFileDocument } = useDocumentStore();
 
   const [, setIsDragging] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -95,18 +95,8 @@ const FileUploader: React.FC<FileUploaderProps> = ({
     if (files && files.length) {
       const file = files[0]
       if (validateFile(file)) {
-        const result = await generateChunksFromFile(file);
 
-        let newDocument: Document = {
-          id: 0,
-          type: 'file',
-          name: file.name,
-          content: result.chunks[0].pageContent,
-          chunks: result.chunks,
-          agentId: agent.id
-        };
-
-        await createDocument(newDocument);
+        await createFileDocument(file, agent.id);
 
         addNotification(`Arquivo "${file.name}" adicionado com sucesso.`);
 

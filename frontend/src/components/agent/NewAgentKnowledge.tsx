@@ -29,11 +29,11 @@ const NewAgentKnowledge: React.FC = () => {
 
   useEffect(() => {
     if (agent) {
-      fetchDocuments(agent.id, 'all');
+       fetchDocuments(agent.id);
     } else {
       addNotification('Agente não encontrado ao buscar documentos.', 'error');
     }
-  }, [agent, fetchDocuments]);
+  }, [documents.length]);
 
   const removeChunk = (chunkId: number) => {
     setDocuments(documents.map((doc) => ({
@@ -75,6 +75,7 @@ const NewAgentKnowledge: React.FC = () => {
           isOpen={showFaqModal}
           onClose={() => {
             setShowFaqModal(false);
+            setEditFaq(null);
           }}
           document={editFaq ?? undefined}
         />

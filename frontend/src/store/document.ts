@@ -11,8 +11,9 @@ interface DocumentState {
   faqDocuments: Document[];
   websiteDocuments: Document[];
   setDocuments: (docs: Document[]) => void;
-  fetchDocuments: (agentId: number, type: string) => Promise<void>;
+  fetchDocuments: (agentId: number, type?: string) => Promise<void>;
   createDocument: (docs: Document) => Promise<void>;
+  createFileDocument: (file: File, agentId: number) => Promise<void>;
   deleteDocument: (id: number) => Promise<void>;
 }
 
@@ -25,7 +26,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
   faqDocuments: [],
   websiteDocuments: [],
   setDocuments: (docs: Document[]) => set({ documents: docs }),
-  fetchDocuments: async (agentId: number, type: string) => {
+  fetchDocuments: async (agentId: number, type: string = 'all') => {
     set({ loading: true, error: null });
     try {
       const res = await fetch(`${BASE_URL}/api/documents?agentId=${agentId}&type=${type}`);
@@ -82,6 +83,29 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
     }
   },
 
+  createFileDocument: async (file: File, agentId: number ) => {
+    set({ loading: true, error: null });
+    try {
+      const formData = new FormData();
+      formData.append('agentId', agentId.toString());
+      formData.append('file', file);
+
+      const res = await fetch(`${BASE_URL}/api/documents/file`, {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+  
+      if (res.ok && data) {
+        set({ documents: [...get().documents, data.document], loading: false });
+      } else {
+        set({ error: data.error || 'Erro ao criar documento', loading: false });
+      }
+    } catch (error: any) {
+      set({ error: error.message, loading: false });
+    }
+  },
+
   deleteDocument: async (id: number) => {
     set({ loading: true, error: null });
     try {
@@ -105,7 +129,6 @@ function transformDocumentsForApi(documents: Document[]): any[] {
       type: doc.type,
       name: doc.name,
       content: doc.content,
-      chunks: doc.chunks,
     };
 
     if (doc.id && doc.id > 0) {

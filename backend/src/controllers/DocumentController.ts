@@ -1,26 +1,35 @@
-import { Request, Response } from 'express';
-import { getByFilter, getById, remove, removeWithAgentId, upsertArray } from '@/services/storage';
-import { SupabaseVectorStore } from '@langchain/community/vectorstores/supabase';
-import { supabase } from '@/config/supabaseClient';
-import { getEmbedding } from '@/utils/llm-embedding';
+import { getByFilter, getById, insert, remove, upsertArray } from '@/services/storage';
+import multer from 'multer';
+import { generateChunksFromFaq, generateChunksFromFile, generateChunksFromUrl, generateEmbeddingsFromChunks, generateVector } from '@/services/llm-embedding';
 
 export const DocumentController = {
-  // Upsert (criar ou atualizar)
-  upsert: async (req: Request, res: Response) => {
+  upsert: async (req: multer.Request, res: multer.Response) => {
     try {
       const documents = req.body;
       const response = await upsertArray('documents', documents.map(doc => {
-        delete doc.chunks;
         return doc;
       }));
 
       if (!response) {
-        return res.status(500).json({ error: 'Erro ao criar ou atualizar o documento.' });
+        return res.status(500).json({ error: 'Error creating or updating document' });
       }
 
-      // documents.map(async (doc: any) => {
-      //   await storeChunks(doc.chunks);
-      // });
+      let chunks = [];
+
+      switch (documents[0].type) {
+        case 'website':
+        case 'youtube':
+          chunks = await generateChunksFromUrl(documents[0].content || '');
+          break;
+        case 'faq':
+          chunks = await generateChunksFromFaq(documents[0].name, documents[0].content || '');
+          break;
+      }
+      
+      if (chunks.length > 0) {
+        const texts = chunks.map((chunk) => chunk.pageContent);
+        await generateEmbeddingsFromChunks(response['agent_id'], response['id'], texts);
+      }
 
       return res.status(200).json(response);
     } catch (error) {
@@ -28,7 +37,37 @@ export const DocumentController = {
     }
   },
 
-  list: async (req: Request, res: Response) => {
+  insertFromFile: async (req: multer.Request, res: multer.Response) => {
+    try {
+      const agentId = req.body.agentId;
+      const file = req.file;
+
+      let chunks = [];
+      const extension = req.file.originalname.split('.').pop()?.toLowerCase();
+      chunks = await generateChunksFromFile(file.path || '', extension);
+      
+      if (chunks.length > 0) {
+        const document = await insert('documents', {
+          agent_id: Number(agentId),
+          type: 'file',
+          name: file.originalname,
+          content: '',
+        });
+
+        if (!document) {
+          return res.status(500).json({ error: 'Error creating document' });
+        }
+        const texts = chunks.map((chunk) => chunk.pageContent);
+        await generateEmbeddingsFromChunks(document['agent_id'], document['id'], texts);
+      }
+
+      return res.status(200);
+    } catch (error) {
+      return res.status(500).json({ error: error.message });
+    }
+  },
+
+  list: async (req: multer.Request, res: multer.Response) => {
     const { agentId, type } = req.query;
     let filter = {
       'agent_id': Number(agentId), 
@@ -44,7 +83,7 @@ export const DocumentController = {
     }
   },
 
-  delete: async (req: Request, res: Response) => {
+  delete: async (req: multer.Request, res: multer.Response) => {
     try {
       const document = await getById('documents', Number(req.params.id));
       if (!document) return res.status(404).json({ error: 'Document not found' });
@@ -55,28 +94,3 @@ export const DocumentController = {
     }
   },
 };
-
-async function storeChunks(chunks: any[]) {
-    if (!Array.isArray(chunks) || chunks.length === 0) {
-      return { error: 'Chunks array is required.' };
-    }
-
-    const embeddings = await getEmbedding();
-
-    try {
-      const vectorStore = new SupabaseVectorStore(
-        embeddings, 
-        {
-          client: supabase,
-          tableName: 'knowledge',
-          queryName: 'match_knowledge',
-        }
-      );
-
-      await vectorStore.addDocuments(chunks);
-
-      return { message: 'Chunks inserted successfully.' };
-    } catch (error) {
-      return { error: error.message };
-    }
-}

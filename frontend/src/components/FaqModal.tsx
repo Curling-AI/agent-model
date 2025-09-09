@@ -20,14 +20,14 @@ const FaqModal: React.FC<FaqModalProps> = ({ isOpen, onClose, document }) => {
   const language = useLanguage();
   const t = useTranslation(language);
   const { agent } = useAgentStore();
-  const { createDocument } = useDocumentStore();
-  const [faqDocument, setFaqDocument] = useState<Document>(document || { id: 0, agentId: agent.id, type: 'faq', name: '', content: '' });
+  const { createDocument, fetchDocuments } = useDocumentStore();
+  const [faqDocument, setFaqDocument] = useState<Document>(document || { id: 0, type: 'faq', name: '', content: '', agentId: agent.id });
 
   const handleSubmit = async () => {
     if (faqDocument) {
-      const chunks = await generateChunksFromFaq(faqDocument.name, faqDocument.content!);
+      await createDocument({ ...faqDocument, agentId: agent.id });
 
-      await createDocument({ ...faqDocument, chunks });
+      fetchDocuments(agent.id);
       
       onClose();
     }

@@ -42,11 +42,8 @@ const YoutubeInput: React.FC = () => {
     setIsAnalyzingVideo(true);
     setVideoAnalysisProgress(0);
 
-    const result = await generateChunksFromUrl(videoUrl);
-
     videoDocument.name = `Vídeo do YouTube`;
     videoDocument.content = videoUrl;
-    videoDocument.chunks = result.chunks;
 
     await createDocument(videoDocument);
 

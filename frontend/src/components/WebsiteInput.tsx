@@ -45,12 +45,6 @@ const WebsiteInput: React.FC = () => {
       });
     }, 500);
 
-    const result = await generateChunksFromUrl(websiteDocument.name);
-
-    websiteDocument.chunks = result.chunks;
-    websiteDocument.name = result.chunks[0].metadata.title;
-    websiteDocument.content = result.chunks[0].metadata.source;
-
     await createDocument(websiteDocument);
 
     setWebsiteDocument({ ...websiteDocument, name: '' });
