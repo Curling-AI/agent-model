@@ -1,6 +1,5 @@
 import { useLanguage } from "@/context/LanguageContext";
 import { useNotifications } from "@/context/NotificationsProvider";
-import { generateChunksFromUrl } from "@/services/chunker";
 import { useAgentStore } from "@/store/agent";
 import { useDocumentStore } from "@/store/document";
 import { useTranslation } from "@/translations";
@@ -20,7 +19,7 @@ const WebsiteInput: React.FC = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisProgress, setAnalysisProgress] = useState(0);
 
-  const { createDocument } = useDocumentStore();
+  const { createDocument, fetchDocuments } = useDocumentStore();
 
   const { addNotification } = useNotifications()
 
@@ -33,7 +32,6 @@ const WebsiteInput: React.FC = () => {
     setIsAnalyzing(true);
     setAnalysisProgress(0);
 
-    // Simular progresso da análise
     const progressInterval = setInterval(() => {
       setAnalysisProgress(prev => {
         if (prev >= 100) {
@@ -45,8 +43,11 @@ const WebsiteInput: React.FC = () => {
       });
     }, 500);
 
+    websiteDocument.content = websiteDocument.name;
     await createDocument(websiteDocument);
-
+    console.log('Website document created:', websiteDocument);
+    await fetchDocuments(agent.id);
+    console.log('Documents fetched');
     setWebsiteDocument({ ...websiteDocument, name: '' });
 
     setTimeout(() => {

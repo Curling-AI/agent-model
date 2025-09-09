@@ -1,7 +1,4 @@
-// Componente Modal FAQ
-
 import { useLanguage } from "@/context/LanguageContext";
-import { generateChunksFromFaq } from "@/services/chunker";
 import { useAgentStore } from "@/store/agent";
 import { useDocumentStore } from "@/store/document";
 import { useTranslation } from "@/translations";

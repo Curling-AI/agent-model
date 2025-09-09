@@ -379,8 +379,8 @@ $$;
 CREATE OR REPLACE FUNCTION remove_knowledge_by_agent_id()
 RETURNS TRIGGER AS $$
 BEGIN
-  DELETE FROM knowledge_openai WHERE agent_id = OLD.agent_id;
-  DELETE FROM knowledge_gemini WHERE agent_id = OLD.agent_id;
+  DELETE FROM knowledge_openai WHERE agent_id = OLD.agent_id and document_id = OLD.id;
+  DELETE FROM knowledge_gemini WHERE agent_id = OLD.agent_id and document_id = OLD.id;
   RETURN OLD;
 END;
 $$ LANGUAGE plpgsql;

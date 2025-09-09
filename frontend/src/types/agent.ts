@@ -28,14 +28,11 @@ export interface Document extends BaseAgent {
   type: 'file' | 'faq' | 'video' | 'website';
   name: string;
   content?: string;
-  chunks?: Chunk[];
 }
 
-export interface Chunk {
+export interface Knowledge {
   id: number;
-  documentId: number;
-  text: string
-  similarity: number
-  tokens: number
-  pageNumber?: number
+  agentId: number;
+  documentId: number; 
+  content: string;
 }

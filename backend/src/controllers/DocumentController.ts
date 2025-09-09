@@ -6,29 +6,27 @@ export const DocumentController = {
   upsert: async (req: multer.Request, res: multer.Response) => {
     try {
       const documents = req.body;
-      const response = await upsertArray('documents', documents.map(doc => {
-        return doc;
-      }));
+      const response = await upsertArray('documents', documents);
 
       if (!response) {
         return res.status(500).json({ error: 'Error creating or updating document' });
       }
 
       let chunks = [];
-
+      
       switch (documents[0].type) {
         case 'website':
-        case 'youtube':
+        case 'video':
           chunks = await generateChunksFromUrl(documents[0].content || '');
           break;
         case 'faq':
           chunks = await generateChunksFromFaq(documents[0].name, documents[0].content || '');
           break;
       }
-      
+    
       if (chunks.length > 0) {
         const texts = chunks.map((chunk) => chunk.pageContent);
-        await generateEmbeddingsFromChunks(response['agent_id'], response['id'], texts);
+        await generateEmbeddingsFromChunks(response[0]['agent_id'], response[0]['id'], texts);
       }
 
       return res.status(200).json(response);

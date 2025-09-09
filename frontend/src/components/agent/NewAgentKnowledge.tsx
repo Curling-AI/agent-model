@@ -12,6 +12,7 @@ import { useDocumentStore } from "@/store/document";
 import { useEffect, useState } from "react";
 import { Edit, Trash2 } from "lucide-react";
 import FaqModal from "../FaqModal";
+import { useKnowledgeStore } from "@/store/knowledge";
 
 const NewAgentKnowledge: React.FC = () => {
 
@@ -19,13 +20,15 @@ const NewAgentKnowledge: React.FC = () => {
   const t = useTranslation(language);
 
   const { agent } = useAgentStore();
-  const { documents, setDocuments, fetchDocuments, deleteDocument } = useDocumentStore();
+  const { documents, fetchDocuments, deleteDocument } = useDocumentStore();
 
   const { addNotification } = useNotifications();
 
   const [showFaqModal, setShowFaqModal] = useState(false);
 
   const [editFaq, setEditFaq] = useState<Document | null>(null);
+
+  const { knowledgeList, fetchKnowledge, upsertKnowledge, deleteKnowledge } = useKnowledgeStore();
 
   useEffect(() => {
     if (agent) {
@@ -35,28 +38,31 @@ const NewAgentKnowledge: React.FC = () => {
     }
   }, [documents.length]);
 
-  const removeChunk = (chunkId: number) => {
-    setDocuments(documents.map((doc) => ({
-      ...doc,
-      chunks: doc.chunks!.filter((chunk) => chunk.id !== chunkId),
-    })))
+  useEffect(() => {
+    if (agent) {
+      fetchKnowledge({ agentId: agent.id });
+    } else {
+      addNotification('Agente não encontrado ao buscar chunks de conhecimento.', 'error');
+    }
+  }, [knowledgeList.length]);
+
+  const removeKnowledge = (knowledgeId: number) => {
+    deleteKnowledge(knowledgeId);
     addNotification('Chunk removido com sucesso!', 'success')
   }
 
-  const removeAllChunks = async (documentId: number) => {
+  const removeAllKnowledge = async (documentId: number) => {
     try {
-      setDocuments(
-        documents.map((doc) => ({
-          ...doc,
-          chunks: doc.chunks!.filter((chunk) => chunk.id !== documentId),
-        }))
-      )
-      addNotification('Documento e todos os seus chunks removidos com sucesso!', 'success')
+      deleteKnowledge(documentId);
+      addNotification('Todos os chunks removidos com sucesso!', 'success')
     } catch (error) {
       console.error('Erro ao remover todos os chunks:', error)
       addNotification('Erro ao remover documento e seus chunks.', 'error')
     }
   }
+
+  console.log('documents', documents);
+      console.log('knowledgeList', knowledgeList);
 
   return (
     <div className="space-y-6">
@@ -81,43 +87,42 @@ const NewAgentKnowledge: React.FC = () => {
         />
       )}
 
-      {/* Lista de FAQs */}
-        {documents.length > 0 && (
-          <div className="space-y-3">
-            {documents.map((doc) => (
-              <div key={doc.id} className="card bg-base-200">
-                <div className="card-body p-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-base-content mb-2">{doc.name}</h4>
-                      <p className="text-sm text-neutral">{doc.content}</p>
-                    </div>
-                    <div className="flex items-center space-x-2 ml-4">
-                      { doc.type === 'faq' && (
-                        <button
-                          onClick={() => {
-                            setEditFaq(doc); 
-                            setShowFaqModal(true);
-                          }}
-                          className="btn btn-ghost btn-xs"
-                        >
-                          <Edit className="w-3 h-3" />
-                        </button>
-                      )}
+      {documents.length > 0 && (
+        <div className="space-y-3">
+          {documents.map((doc) => (
+            <div key={doc.id} className="card bg-base-200">
+              <div className="card-body p-4">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-base-content mb-2">{doc.name}</h4>
+                    <p className="text-sm text-neutral">{doc.content}</p>
+                  </div>
+                  <div className="flex items-center space-x-2 ml-4">
+                    { doc.type === 'faq' && (
                       <button
-                        onClick={async () => await deleteDocument(doc.id)}
-                        className="btn btn-ghost btn-xs text-error"
+                        onClick={() => {
+                          setEditFaq(doc); 
+                          setShowFaqModal(true);
+                        }}
+                        className="btn btn-ghost btn-xs"
                       >
-                        <Trash2 className="w-3 h-3" />
+                        <Edit className="w-3 h-3" />
                       </button>
-                    </div>
+                    )}
+                    <button
+                      onClick={async () => await deleteDocument(doc.id)}
+                      className="btn btn-ghost btn-xs text-error"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
-        )}
-
+            </div>
+          ))}
+        </div>
+      )}
+      
       {documents.length > 0 && (
         <div style={{ fontSize: '1.1rem', fontWeight: 600 }}>
           <h3 style={{ marginTop: '16px', marginBottom: '16px' }}>Documentos Processados</h3>
@@ -126,10 +131,9 @@ const NewAgentKnowledge: React.FC = () => {
               key={doc.id}
               documentId={doc.id}
               documentName={doc.name}
-              chunks={doc.chunks}
-              status={'processed'}
-              onChunkRemove={removeChunk}
-              onAllChunksRemove={removeAllChunks}
+              knowledge={ knowledgeList.filter(k => k.documentId === doc.id) }
+              onChunkRemove={removeKnowledge}
+              onAllChunksRemove={removeAllKnowledge}
             />
           ))}
         </div>

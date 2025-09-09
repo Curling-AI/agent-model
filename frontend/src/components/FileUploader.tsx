@@ -1,7 +1,5 @@
 import { useLanguage } from "@/context/LanguageContext";
-import { generateChunksFromFile } from "@/services/chunker";
 import { useTranslation } from "@/translations";
-import { Document } from "@/types/agent";
 import { Upload } from "lucide-react"
 import { useRef, useState } from "react"
 import { useNotifications } from "@/context/NotificationsProvider";
@@ -36,7 +34,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({
 
   const { agent } = useAgentStore();
 
-  const { createFileDocument } = useDocumentStore();
+  const { createFileDocument, fetchDocuments } = useDocumentStore();
 
   const [, setIsDragging] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -97,6 +95,8 @@ const FileUploader: React.FC<FileUploaderProps> = ({
       if (validateFile(file)) {
 
         await createFileDocument(file, agent.id);
+
+        await fetchDocuments(agent.id);
 
         addNotification(`Arquivo "${file.name}" adicionado com sucesso.`);
 

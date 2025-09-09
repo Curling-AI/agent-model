@@ -1,12 +1,9 @@
 import { useLanguage } from "@/context/LanguageContext";
 import { useNotifications } from "@/context/NotificationsProvider";
-import { generateChunksFromUrl } from "@/services/chunker";
 import { useAgentStore } from "@/store/agent";
 import { useDocumentStore } from "@/store/document";
 import { useTranslation } from "@/translations";
 import { Document } from "@/types/agent";
-import { extractYouTubeVideoId } from "@/utils/video";
-import { Trash2 } from "lucide-react";
 import { useState } from "react";
 
 const YoutubeInput: React.FC = () => {
@@ -15,7 +12,7 @@ const YoutubeInput: React.FC = () => {
   const t = useTranslation(language);
 
   const { agent } = useAgentStore();
-  const { createDocument, deleteDocument } = useDocumentStore();
+  const { createDocument, fetchDocuments } = useDocumentStore();
 
   const { addNotification } = useNotifications();
 
@@ -47,7 +44,8 @@ const YoutubeInput: React.FC = () => {
 
     await createDocument(videoDocument);
 
-    // Simular progresso da análise
+    await fetchDocuments(agent.id);
+
     const progressInterval = setInterval(() => {
       setVideoAnalysisProgress(prev => {
         if (prev >= 100) {
@@ -59,7 +57,6 @@ const YoutubeInput: React.FC = () => {
       });
     }, 300);
 
-    // Simular análise completa após 3 segundos
     setTimeout(() => {
       clearInterval(progressInterval);
       setIsAnalyzingVideo(false);
@@ -67,10 +64,6 @@ const YoutubeInput: React.FC = () => {
 
       addNotification(t.videoAnalysisComplete);
     }, 3000);
-  };
-
-  const removeYouTubeVideo = async (videoId: number) => {
-    await deleteDocument(videoId);
   };
 
   return (
@@ -81,7 +74,6 @@ const YoutubeInput: React.FC = () => {
         <p className="text-sm text-neutral mb-4">{t.youtubeVideosDesc}</p>
 
         <div className="space-y-4">
-          {/* Input para URL do vídeo */}
           <div className="flex space-x-3">
             <input
               type="url"
@@ -110,7 +102,6 @@ const YoutubeInput: React.FC = () => {
             </button>
           </div>
 
-          {/* Barra de Progresso */}
           {isAnalyzingVideo && (
             <div className="mt-4">
               <div className="flex justify-between text-sm text-neutral mb-2">
@@ -124,52 +115,6 @@ const YoutubeInput: React.FC = () => {
               ></progress>
             </div>
           )}
-
-          {/* {agent.documents.length > 0 && (
-            <div className="mt-6">
-              <h4 className="font-semibold text-base-content mb-3">{t.addedVideos}</h4>
-              <div className="space-y-3">
-                {agent.documents.map((video) => (
-                  <div key={video.id} className="card bg-base-200">
-                    <div className="card-body p-4">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-2 mb-2">
-                            <div className="w-8 h-8 bg-red-500 rounded flex items-center justify-center">
-                              <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
-                              </svg>
-                            </div>
-                            <h5 className="font-semibold text-base-content">{''}</h5>
-                          </div>
-                          <p className="text-sm text-neutral mb-2">{''}</p>
-                          <p className="text-xs text-neutral">{t.addedOn} {new Date('').toLocaleDateString('pt-BR')}</p>
-                        </div>
-                        <div className="flex items-center space-x-2 ml-4">
-                          <button
-                            onClick={() => window.open('', '_blank')}
-                            className="btn btn-ghost btn-xs"
-                            title={t.openVideo}
-                          >
-                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                            </svg>
-                          </button>
-                          <button
-                            onClick={() => removeYouTubeVideo(video.id)}
-                            className="btn btn-ghost btn-xs text-error"
-                            title={t.removeVideo}
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )} */}
         </div>
       </div>
   );

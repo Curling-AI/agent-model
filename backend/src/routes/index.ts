@@ -6,6 +6,7 @@ import systemRoutes from './system-routes';
 import conversationRoutes from './conversation-routes';
 import chunkRoutes from './chunk-routes';
 import documentRoutes from './document-routes';
+import knowledgeRoutes from './knowledge-routes';
 
 const router = Router();
 
@@ -16,5 +17,6 @@ router.use('/conversations', conversationRoutes);
 router.use('/auth', authRoutes);
 router.use('/chunks', chunkRoutes);
 router.use('/documents', documentRoutes);
+router.use('/knowledge', knowledgeRoutes);
 
 export default router;

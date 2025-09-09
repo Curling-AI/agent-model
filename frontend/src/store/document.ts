@@ -32,8 +32,6 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       const res = await fetch(`${BASE_URL}/api/documents?agentId=${agentId}&type=${type}`);
       const data = await res.json();
       if (res.ok) {
-        console.log('Fetched documents:', data.documents);
-
         data.documents.map((doc: Document) => {
           switch (doc.type) {
             case 'video':
@@ -52,6 +50,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
               break;
           }
         });
+        
         set({ documents: data.documents, loading: false });
       } else {
         set({ error: data.error || 'Erro ao carregar documentos', loading: false });

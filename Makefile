@@ -10,7 +10,7 @@ run:
 	docker compose -f compose.prod.yaml up -d
 
 run-dev:
-	docker compose -f compose.dev.yaml up -d
+	docker compose -f compose.dev.yaml up -d --remove-orphans
 
 stop:
 	docker compose -f compose.prod.yaml down

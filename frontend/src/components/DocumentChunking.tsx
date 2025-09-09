@@ -2,13 +2,12 @@ import { useState } from 'react'
 import styles from './DocumentChunking.module.css'
 // import { estimateTokenCount } from '@/utils/tokenEstimator'
 import { Trash2 } from 'lucide-react'
-import { Chunk } from '@/types/agent'
+import { Knowledge } from '@/types/agent'
 
 interface DocumentChunkingProps {
   documentId: number
   documentName: string
-  chunks?: Chunk[]
-  status: 'pending' | 'processing' | 'processed' | 'failed'
+  knowledge?: Knowledge[]
   onChunkRemove: (chunkId: number) => void
   onAllChunksRemove: (documentId: number) => void
 }
@@ -16,19 +15,12 @@ interface DocumentChunkingProps {
 const DocumentChunking: React.FC<DocumentChunkingProps> = ({
   documentId,
   documentName,
-  chunks,
-  status,
+  knowledge,
   onChunkRemove,
   onAllChunksRemove,
 }) => {
   const [expandedChunkId, setExpandedChunkId] = useState<number | null>(null)
   const [isExpanded, setIsExpanded] = useState(false)
-
-  // const calculateTokens = (text: string): number => {
-  //   return estimateTokenCount(text, 'gpt-3.5-turbo')
-  // }
-
-  // const totalTokens = chunks!.reduce((sum, chunk) => sum + calculateTokens(chunk.text), 0)
 
   const toggleChunk = (chunkId: number) => {
     if (expandedChunkId === chunkId) {
@@ -44,20 +36,20 @@ const DocumentChunking: React.FC<DocumentChunkingProps> = ({
       setExpandedChunkId(null)
     }
   }
-
-  return chunks && chunks?.length > 0 && (
+  
+  return knowledge && knowledge?.length > 0 && (
     <div className={styles.chunkingContainer}>
       <div className={styles.chunkingHeader}>
         <div className={styles.documentInfo}>
           <h3 className={styles.documentName}>{documentName}</h3>
-          {status === 'processed' && (
+          {(
             <span className={styles.chunkCount}>
-              {chunks!.length} chunks 
+              {knowledge!.length} chunks
             </span>
           )}
         </div>
         <div className={styles.headerActions}>
-          {status === 'processed' && (
+          {(
             <button className={styles.expandButton} onClick={toggleExpand}>
               {isExpanded ? 'Recolher' : 'Expandir'}
             </button>
@@ -70,7 +62,7 @@ const DocumentChunking: React.FC<DocumentChunkingProps> = ({
 
       {(isExpanded || expandedChunkId) && (
         <div className={styles.chunksGrid}>
-          {chunks!.map((chunk: Chunk) => (
+          {knowledge!.map((chunk: Knowledge) => (
             <div
               key={chunk.id}
               className={`${styles.chunkItem} ${expandedChunkId === chunk.id ? styles.expanded : ''}`}
@@ -83,7 +75,7 @@ const DocumentChunking: React.FC<DocumentChunkingProps> = ({
                 <div className={styles.chunkActions}>
                   <span className={styles.similarityScore}>
                     <span className={styles.similarityLabel}>Semelhança:</span>
-                    <span
+                    {/* <span
                       className={`${styles.similarityValue} ${
                         chunk.similarity > 90
                           ? styles.highSimilarity
@@ -93,7 +85,7 @@ const DocumentChunking: React.FC<DocumentChunkingProps> = ({
                       }`}
                     >
                       {chunk.similarity}%
-                    </span>
+                    </span> */}
                   </span>
                   <button
                     className={styles.removeButton}
@@ -109,10 +101,10 @@ const DocumentChunking: React.FC<DocumentChunkingProps> = ({
 
               {expandedChunkId === chunk.id && (
                 <div className={styles.chunkContent}>
-                  <p className={styles.chunkText}>{chunk.text}</p>
-                  {chunk.pageNumber && (
+                  <p className={styles.chunkText}>{chunk.content}</p>
+                  {/* {chunk.pageNumber && (
                     <span className={styles.pageNumber}>Página {chunk.pageNumber}</span>
-                  )}
+                  )} */}
                 </div>
               )}
             </div>

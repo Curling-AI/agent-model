@@ -8,8 +8,8 @@ export async function getAll<T>(table: string): Promise<T[]> {
 }
 
 // Consulta todos os registros de uma tabela
-export async function getByFilter<T>(table: string, filter: Partial<T>): Promise<T[]> {
-  const { data, error } = await supabase.from(table).select('*').match(filter).order('name', { ascending: true });
+export async function getByFilter<T>(table: string, filter: Partial<T>, sortField: string = 'id'): Promise<T[]> {
+  const { data, error } = await supabase.from(table).select('*').match(filter).order(sortField, { ascending: true });
   if (error) throw error;
   return data as T[];
 }

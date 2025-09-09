@@ -8,7 +8,7 @@ import { DocumentLoader } from '@langchain/core/document_loaders/base';
 import fs from 'fs';
 import { OpenAIEmbeddings } from "@langchain/openai";
 import { GoogleGenerativeAIEmbeddings } from "@langchain/google-genai";
-import { insert } from '@/services/storage';
+import { insert, upsertArray } from '@/services/storage';
 import { TaskType } from '@google/generative-ai';
 import { Embeddings } from '@langchain/core/embeddings';
 
@@ -31,8 +31,9 @@ export const generateChunksFromUrl = async (url: string) => {
       chunkSize: 1000,
       chunkOverlap: 200,
     });
+    
     const chunks = await splitter.splitDocuments(docs);
-   
+
     return chunks;
   } catch (error) {
     throw new Error(`Error generating chunks from URL: ${error.message}`);
@@ -106,15 +107,20 @@ export const generateChunksFromFaq = async (question: string, answer: string) =>
 };
 
 export async function generateVector(embeddings, agentId: number, documentId: number, chunks: any[]) {
-  const generatedEmbeddings = await embeddings.embedDocuments(chunks);
+  try {
+    const generatedEmbeddings = await embeddings.embedDocuments(chunks);
 
-  const inserts = chunks.map((chunk, index) => ({
-    content: chunk,
-    embedding: generatedEmbeddings[index],
-    agent_id: agentId,
-    document_id: documentId,
-  }));
-  return inserts;
+    const inserts = chunks.map((chunk, index) => ({
+      content: chunk,
+      embedding: generatedEmbeddings[index],
+      agent_id: agentId,
+      document_id: documentId,
+    }));
+    // console.log('Inserts:', inserts);
+    return inserts;
+  } catch (error) {
+    throw new Error(`Error generating vector: ${error.message}`); 
+  }
 }
 
 function getEmbedding() {
@@ -158,11 +164,11 @@ export async function generateEmbeddingsFromChunks(agentId: number, documentId: 
 
     if (embeddings instanceof OpenAIEmbeddings) {
     
-      await insert('knowledge_openai', generateVector(embeddings, agentId, documentId, chunks));
+      await upsertArray('knowledge_openai', await generateVector(embeddings, agentId, documentId, chunks));
 
     } else if (embeddings instanceof GoogleGenerativeAIEmbeddings) {
 
-      await insert('knowledge_gemini', generateVector(embeddings, agentId, documentId, chunks));
+      await upsertArray('knowledge_gemini', await generateVector(embeddings, agentId, documentId, chunks));
 
     } else {
       throw new Error(JSON.stringify({ error: "API não suportada." }));

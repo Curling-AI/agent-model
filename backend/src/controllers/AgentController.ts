@@ -7,12 +7,12 @@ export const AgentController = {
     const { filter } = req.query;
     switch (filter) {
       case 'active':
-        getByFilter('agents', { active: true }).then(data => {
+        getByFilter('agents', { active: true }, 'name').then(data => {
           res.json(data);
         });
         break;
       case 'paused':
-        getByFilter('agents', { active: false }).then(data => {
+        getByFilter('agents', { active: false }, 'name').then(data => {
           res.json(data);
         });
         break;
