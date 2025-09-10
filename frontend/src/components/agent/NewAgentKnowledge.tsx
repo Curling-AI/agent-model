@@ -47,22 +47,27 @@ const NewAgentKnowledge: React.FC = () => {
   }, [knowledgeList.length]);
 
   const removeKnowledge = (knowledgeId: number) => {
-    deleteKnowledge(knowledgeId);
+    const knowledge = knowledgeList.filter((k) => {
+      documents.find(d => d.id === k.documentId && k.id !== knowledgeId)
+    });
+    
+    if (knowledge.length === 1) {
+      deleteDocument(knowledge[0].documentId);
+    } else {
+      deleteKnowledge(knowledgeId);
+    }
     addNotification('Chunk removido com sucesso!', 'success')
   }
 
   const removeAllKnowledge = async (documentId: number) => {
     try {
-      deleteKnowledge(documentId);
+      deleteDocument(documentId);
       addNotification('Todos os chunks removidos com sucesso!', 'success')
     } catch (error) {
       console.error('Erro ao remover todos os chunks:', error)
       addNotification('Erro ao remover documento e seus chunks.', 'error')
     }
   }
-
-  console.log('documents', documents);
-      console.log('knowledgeList', knowledgeList);
 
   return (
     <div className="space-y-6">

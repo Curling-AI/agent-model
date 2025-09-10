@@ -94,9 +94,10 @@ const FileUploader: React.FC<FileUploaderProps> = ({
       const file = files[0]
       if (validateFile(file)) {
 
-        await createFileDocument(file, agent.id);
-
-        await fetchDocuments(agent.id);
+        createFileDocument(file, agent.id).then(async () => {
+          console.log('File uploaded successfully');
+          await fetchDocuments(agent.id);
+        });
 
         addNotification(`Arquivo "${file.name}" adicionado com sucesso.`);
 

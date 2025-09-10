@@ -59,7 +59,7 @@ export const DocumentController = {
         await generateEmbeddingsFromChunks(document['agent_id'], document['id'], texts);
       }
 
-      return res.status(200);
+      return res.status(200).json(document);
     } catch (error) {
       return res.status(500).json({ error: error.message });
     }
