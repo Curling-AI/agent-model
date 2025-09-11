@@ -1,7 +1,4 @@
 import { Request, Response } from 'express';
-import { supabase } from '../config/supabaseClient';
-import { SupabaseVectorStore } from '@langchain/community/vectorstores/supabase';
-import { OpenAIEmbeddings } from '@langchain/openai';
 import { YoutubeLoader } from '@langchain/community/document_loaders/web/youtube';
 import { CheerioWebBaseLoader } from '@langchain/community/document_loaders/web/cheerio';
 import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';

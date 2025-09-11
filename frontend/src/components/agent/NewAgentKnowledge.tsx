@@ -1,17 +1,17 @@
 import { useLanguage } from "@/context/LanguageContext";
 import { useAgentStore } from "@/store/agent";
 import { useTranslation } from "@/translations";
-import WebsiteInput from "../WebsiteInput";
+import WebsiteInput from "../input/WebsiteInput";
 import FileUploader from "../FileUploader";
-import YoutubeInput from "../YoutubeInput";
-import FaqInput from "../FaqInput";
+import YoutubeInput from "../input/YoutubeInput";
+import FaqInput from "../input/FaqInput";
 import DocumentChunking from "../DocumentChunking";
 import { useNotifications } from "@/context/NotificationsProvider";
 import { Document } from "@/types/agent";
 import { useDocumentStore } from "@/store/document";
 import { useEffect, useState } from "react";
 import { Edit, Trash2 } from "lucide-react";
-import FaqModal from "../FaqModal";
+import FaqModal from "../modal/FaqModal";
 import { useKnowledgeStore } from "@/store/knowledge";
 
 const NewAgentKnowledge: React.FC = () => {

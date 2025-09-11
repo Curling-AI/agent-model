@@ -3,41 +3,32 @@ import { useAgentStore } from "@/store/agent";
 import { useTranslation } from "@/translations";
 import { FollowUp } from "@/types/follow_up";
 import { Edit, MessageSquare, Plus, Trash2 } from "lucide-react";
-import React, { useState } from "react"
-import FollowUpModal from "../FollowUpModal";
+import { useEffect, useState } from "react"
+import FollowUpModal from "../modal/FollowUpModal";
+import { useSystemStore } from "@/store/system";
+import { useFollowUpStore } from "@/store/follow-up";
 
 const NewAgentFollowUp: React.FC = () => {
 
   const language = useLanguage();
   const t = useTranslation(language);
 
-  const { agent, setAgent, updateAgent } = useAgentStore();
+  const { agent, setAgent } = useAgentStore();
 
+  const { fetchCrmColumns, fetchFollowUpTriggers } = useSystemStore();
+
+  const { followUps, fetchFollowUps, followUpMessages, fetchFollowUpMessages } = useFollowUpStore();
+
+  const [automaticFollowUpsEnabled, setAutomaticFollowUpsEnabled] = useState(true);
   const [showFollowUpModal, setShowFollowUpModal] = useState(false);
   const [editingFollowUp, setEditingFollowUp] = useState<FollowUp | null>(null);
 
-  const addFollowUp = (followUp: FollowUp) => {
-    agent.followUps.push(followUp);
-    setAgent(agent);
-    setShowFollowUpModal(false);
-    setEditingFollowUp(null);
-  };
-
-  const editFollowUp = (followUp: FollowUp) => {
-    setEditingFollowUp(followUp);
-    setShowFollowUpModal(true);
-  };
-
-  const updateFollowUp = (updatedFollowUp: FollowUp) => {
-    setAgent({
-      ...agent,
-      followUps: agent.followUps.map((followUp: FollowUp) =>
-        followUp.id === updatedFollowUp.id ? updatedFollowUp : followUp
-      )
-    });
-    setShowFollowUpModal(false);
-    setEditingFollowUp(null);
-  };
+  useEffect(() => {
+    fetchCrmColumns();
+    fetchFollowUpTriggers();
+    fetchFollowUps(agent.id);
+    followUps.map((fu) => fetchFollowUpMessages(fu.id));
+  }, []);
 
   const deleteFollowUp = (followUpId: number) => {
     setAgent({
@@ -57,14 +48,14 @@ const NewAgentFollowUp: React.FC = () => {
           <input
             type="checkbox"
             className="checkbox checkbox-primary"
-            checked={agent.followUps.length > 0}
-          // onChange={(e) => updateAgentData('followUps', { enabled: e.target.checked })}
+            checked={automaticFollowUpsEnabled}
+            onChange={(e) => setAutomaticFollowUpsEnabled(e.target.checked)}
           />
           <span>{t.enableFollowUps}</span>
         </label>
       </div>
 
-      {agent.followUps.length > 0 && (
+      {(followUps.length > 0 || automaticFollowUpsEnabled) && (
         <div className="space-y-4">
           <div className="alert bg-base-200 border border-base-300">
             <div className="flex">
@@ -82,10 +73,10 @@ const NewAgentFollowUp: React.FC = () => {
           </button>
 
           {/* Lista de Sequências */}
-          {agent.followUps.length > 0 && (
+          {agent.followUps.length > 0 && followUpMessages.length && (
             <div className="space-y-3">
               <h4 className="font-semibold text-base-content">{t.createdSequences}</h4>
-              {agent.followUps[0].messageSequences.map((sequence) => (
+              {followUpMessages.map((sequence) => (
                 <div key={sequence.id} className="card bg-base-200">
                   <div className="card-body p-4">
                     <div className="flex items-start justify-between">
@@ -98,7 +89,7 @@ const NewAgentFollowUp: React.FC = () => {
                             Delay: `${sequence.days ?? 0}d ${sequence.hours ?? 0}h ${sequence.minutes ?? 0}m`
 
                           </span>
-                          {/* <span>{sequence..length} mensagens</span> */}
+                          <span>{1} mensagens</span>
                         </div>
                       </div>
                       <div className="flex items-center space-x-2 ml-4">
@@ -131,8 +122,7 @@ const NewAgentFollowUp: React.FC = () => {
             setShowFollowUpModal(false);
             setEditingFollowUp(null);
           }}
-          onSave={editingFollowUp ? updateFollowUp : addFollowUp}
-          followUp={editingFollowUp}
+          followUp={editingFollowUp ?? undefined}
         />
       )}
     </div>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Users, 
   Building2, 
@@ -14,8 +14,8 @@ import {
 import { useLanguage } from '../context/LanguageContext';
 import { useTranslation } from '../translations';
 import { Department, Permission, User } from '@/types';
-import UserModal from '@/components/UserModal';
-import DepartmentModal from '@/components/DepartmentModal';
+import UserModal from '@/components/modal/UserModal';
+import DepartmentModal from '@/components/modal/DepartmentModal';
 
 type Tab = {
   id: string;

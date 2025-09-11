@@ -7,21 +7,27 @@ export interface FollowUp extends BaseInterface, BaseAgent {
   crmColumn: CrmColumn;
   trigger: FollowUpTrigger;
   description: string;
-  messageSequences: MessageSequence[];
+  messages: FollowUpMessage[];
 }
 
-export interface MessageSequence {
+export interface FollowUpMessage {
   id: number;
+  followUpId: number;
   message: string;
+  delayType: 'immediate' | 'custom';
   days: number;
   hours: number;
   minutes: number;
-  documents: MessageSequenceDocument[];
+  documents: FollowUpMessageDocument[];
 }
 
-export interface MessageSequenceDocument {
+export interface FollowUpMessageDocument {
   id: number;
+  followUpMessageId: number;
+  type: string;
+  name: string;
   url: string;
+  file: File;
 }
 
 export interface FollowUpTrigger extends BaseInterface {

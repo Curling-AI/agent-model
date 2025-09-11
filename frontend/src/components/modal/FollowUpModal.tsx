@@ -1,6 +1,8 @@
 import { useLanguage } from "@/context/LanguageContext";
+import { useFollowUpStore } from "@/store/follow-up";
+import { useSystemStore } from "@/store/system";
 import { useTranslation } from "@/translations";
-import { FollowUp } from '@types/follow_up';
+import { FollowUp, FollowUpMessage, FollowUpMessageDocument } from "@/types/follow_up";
 import { Plus, Trash2, X } from "lucide-react";
 import { useState } from "react";
 
@@ -8,45 +10,24 @@ import { useState } from "react";
 interface FollowUpModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (data: any) => void;
-  followUp?: any;
+  followUp?: FollowUp;
 }
 
-const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, onSave, followUp }) => {
+const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, followUp }) => {
   const language = useLanguage();
   const t = useTranslation(language);
-  const [formData, setFormData] = useState<FollowUp>({
-    name: followUp?.name || '',
-    description: followUp?.description || '',
-    crmColumn: followUp?.crmColumn || 'new_leads',
-    trigger: followUp?.trigger || 'new_lead',
-    delay: followUp?.delay || { type: 'immediate', days: 0, hours: 0, minutes: 0 },
-    messages: followUp?.messages || [{ 
-      id: 1, 
-      content: '', 
-      template: 'custom',
-      attachments: [],
-      delay: { type: 'immediate', days: 0, hours: 0, minutes: 0 }
-    }]
+  const { crmColumns, followUpTriggers } = useSystemStore();
+  const { followUpMessages, followUpMessageDocuments, setFollowUpMessages, setFollowUpMessageDocuments } = useFollowUpStore();
+  const [followUpData, setFollowUpData] = useState<FollowUp>(followUp || {
+    id: 0,
+    name: "",
+    description: "",
+    organizationId: 0,
+    agentId: 0,
+    crmColumn: crmColumns[0],
+    trigger: followUpTriggers[0],
+    messages: []
   });
-
-  const crmColumnOptions = [
-    { value: 'new_leads', label: t.newLeads },
-    { value: 'qualified', label: t.qualified },
-    { value: 'proposal_sent', label: t.proposalSent },
-    { value: 'negotiation', label: t.negotiation },
-    { value: 'closed', label: t.closed }
-  ];
-
-  const triggerOptions = [
-    { value: 'new_lead', label: t.newLeadTrigger },
-    { value: 'lead_qualified', label: t.leadQualifiedTrigger },
-    { value: 'proposal_sent', label: t.proposalSentTrigger },
-    { value: 'payment_received', label: t.paymentReceivedTrigger },
-    { value: 'follow_up_reminder', label: t.followUpReminderTrigger },
-    { value: 'birthday', label: t.birthdayTrigger },
-    { value: 'custom', label: t.customTrigger }
-  ];
 
   const messageTemplateOptions = [
     { value: 'custom', label: t.customMessage },
@@ -66,115 +47,78 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, onSave, 
     { value: '7d', label: t.oneWeek }
   ];
 
-//   const addMessage = () => {
-//     const newId = Math.max(...formData.messages.map(m => m.id), 0) + 1;
-//     setFormData(prev => ({
-//       ...prev,
-//       messages: [...prev.messages, { 
-//         id: newId, 
-//         content: '', 
-//         template: 'custom',
-//         attachments: [],
-//         delay: { type: 'immediate', days: 0, hours: 0, minutes: 0 }
-//       }]
-//     }));
-//   };
+  console.log(crmColumns);
+  console.log(followUpTriggers);
 
-//   const removeMessage = (messageId: number) => {
-//     if (formData.messages.length > 1) {
-//       setFormData(prev => ({
-//         ...prev,
-//         messages: prev.messages.filter(m => m.id !== messageId)
-//       }));
-//     }
-//   };
+  const addMessage = () => {
+    setFollowUpMessages([...followUpMessages,
+    {
+      id: 0,
+      followUpId: 0,
+      message: '',
+      template: 'custom',
+      documents: [],
+      delayType: 'immediate',
+      days: 0,
+      hours: 0,
+      minutes: 0
+    } as FollowUpMessage]);
+  };
 
-//   const updateMessage = (messageId: number, field: string, value: any) => {
-//     setFormData(prev => ({
-//       ...prev,
-//       messages: prev.messages.map(m => 
-//         m.id === messageId ? { ...m, [field]: value } : m
-//       )
-//     }));
-//   };
+  const removeMessage = (messageId: number) => {
+    if (followUpMessages.length > 1) {
+      setFollowUpMessages([...followUpMessages.filter(m => m.id !== messageId)]);
+    }
+  };
 
-//   const addAttachment = (messageId: number, type: string, file: File) => {
-//     const attachment = {
-//       id: Date.now(),
-//       type,
-//       name: file.name,
-//       size: file.size,
-//       url: URL.createObjectURL(file)
-//     };
-    
-//     setFormData(prev => ({
-//       ...prev,
-//       messages: prev.messages.map(m => 
-//         m.id === messageId ? { 
-//           ...m, 
-//           attachments: [...m.attachments, attachment] 
-//         } : m
-//       )
-//     }));
-//   };
+  const updateMessage = (messageId: number, field: string, value: any) => {
+    setFollowUpMessages([
+      ...followUpMessages.map(m =>
+        m.id === messageId ? { ...m, [field]: value } : m
+      )
+    ]);
+  };
 
-//   const removeAttachment = (messageId: number, attachmentId: number) => {
-//     setFormData(prev => ({
-//       ...prev,
-//       messages: prev.messages.map(m => 
-//         m.id === messageId ? { 
-//           ...m, 
-//           attachments: m.attachments.filter(a => a.id !== attachmentId) 
-//         } : m
-//       )
-//     }));
-//   };
+  const addAttachment = (messageId: string, type: string, file: File) => {
+    const attachment = {
+      id: 0,
+      followUpMessageId: 0,
+      url: '',
+      file: file,
+    } as FollowUpMessageDocument;
 
-//   const handleTemplateChange = (messageId: number, templateValue: string) => {
-//     const templates = {
-//       welcome: 'Olá! Bem-vindo à nossa empresa. Como posso ajudá-lo hoje?',
-//       follow_up: 'Oi! Só passando para ver como está indo. Precisa de alguma ajuda?',
-//       reminder: 'Lembrete: Não se esqueça do nosso compromisso agendado.',
-//       offer: 'Temos uma oferta especial para você! Que tal dar uma olhada?'
-//     };
-    
-//     setFormData(prev => ({
-//       ...prev,
-//       messages: prev.messages.map(m => 
-//         m.id === messageId ? { 
-//           ...m, 
-//           template: templateValue,
-//           content: templateValue === 'custom' ? m.content : templates[templateValue] || ''
-//         } : m
-//       )
-//     }));
-//   };
+    setFollowUpMessageDocuments([...followUpMessageDocuments, attachment]);
+  };
 
-//   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-//     e.preventDefault();
-//     if (formData.name.trim() && formData.messages.some(m => m.content.trim())) {
-//       onSave({
-//         ...followUp,
-//         ...formData
-//       });
-//     }
-//   };
+  const removeAttachment = (messageId: number, attachmentId: number) => {
+    if (followUpMessageDocuments.length > 1) {
+      setFollowUpMessageDocuments([...followUpMessageDocuments.filter(a => a.id !== attachmentId)]);
+    }
+  };
+
+  const handleTemplateChange = (message: FollowUpMessage, templateValue: 'welcome' | 'follow_up' | 'reminder' | 'offer' | 'custom') => {
+    const templates = {
+      welcome: 'Olá! Bem-vindo à nossa empresa. Como posso ajudá-lo hoje?',
+      follow_up: 'Oi! Só passando para ver como está indo. Precisa de alguma ajuda?',
+      reminder: 'Lembrete: Não se esqueça do nosso compromisso agendado.',
+      offer: 'Temos uma oferta especial para você! Que tal dar uma olhada?'
+    };
+
+    setFollowUpMessages([
+      ...followUpMessages.map(m =>
+        m.id === message.id ? {
+          ...m,
+          message: templateValue === 'custom' ? m.message : templates[templateValue] || ''
+        } : m
+      )
+    ]);
+  };
+  
+  const handleSubmit = () => {
+    // Handle form submission
+  };
 
   const handleClose = () => {
-    setFormData({
-      name: '',
-      description: '',
-      crmColumn: 'new_leads',
-      trigger: 'new_lead',
-      delay: { type: 'immediate', days: 0, hours: 0, minutes: 0 },
-      messages: [{ 
-        id: 1, 
-        content: '', 
-        template: 'custom',
-        attachments: [],
-        delay: { type: 'immediate', days: 0, hours: 0, minutes: 0 }
-      }]
-    });
     onClose();
   };
 
@@ -195,18 +139,17 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, onSave, 
         </div>
 
         {/* Content */}
-        {/* <form onSubmit={handleSubmit} className="p-6 overflow-y-auto max-h-[60vh] space-y-6"> */}
+        <div className="p-6 overflow-y-auto max-h-[60vh] space-y-6">
           <div className="grid md:grid-cols-2 gap-6">
             <div>
               <label className="label">
                 <span className="label-text font-medium">{t.sequenceName}</span>
               </label>
-              <input 
-                type="text" 
+              <input
+                type="text"
                 placeholder={t.sequenceNamePlaceholder}
                 className="input input-bordered w-full"
-                value={formData.name}
-                onChange={(e) => setFormData(prev => ({...prev, name: e.target.value}))}
+                value={followUpData.name}
                 required
               />
             </div>
@@ -215,13 +158,16 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, onSave, 
               <label className="label">
                 <span className="label-text font-medium">{t.crmColumns}</span>
               </label>
-              <select 
+              <select
                 className="select select-bordered w-full"
-                value={formData.crmColumn}
-                onChange={(e) => setFormData(prev => ({...prev, crmColumn: e.target.value}))}
-              >
-                {crmColumnOptions.map(option => (
-                  <option key={option.value} value={option.value}>{option.label}</option>
+                value={followUpData.crmColumn?.id || ''}
+                onChange={(e) => setFollowUpData({
+                  ...followUpData,
+                  crmColumn: crmColumns.find(c => c.id === e.target.value)
+                })}>
+
+                {crmColumns.length > 0 && crmColumns.map(option => (
+                  <option key={option.id} value={option.id}>{option.name}</option>
                 ))}
               </select>
             </div>
@@ -231,13 +177,13 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, onSave, 
             <label className="label">
               <span className="label-text font-medium">{t.triggers}</span>
             </label>
-            <select 
+            <select
               className="select select-bordered w-full"
-              value={formData.trigger}
-              onChange={(e) => setFormData(prev => ({...prev, trigger: e.target.value}))}
+              value={followUpData.trigger.id || ''}
+              onChange={(e) => setFollowUpData(prev => ({ ...prev, trigger: followUpTriggers.find(t => t.id === e.target.value) }))}
             >
-              {triggerOptions.map(option => (
-                <option key={option.value} value={option.value}>{option.label}</option>
+              {followUpTriggers.length > 0 && followUpTriggers.map(option => (
+                <option key={option.id} value={option.name}>{option.name}</option>
               ))}
             </select>
           </div>
@@ -246,11 +192,11 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, onSave, 
             <label className="label">
               <span className="label-text font-medium">{t.sequenceDescription}</span>
             </label>
-            <textarea 
+            <textarea
               placeholder={t.sequenceDescriptionPlaceholder}
               className="textarea textarea-bordered w-full h-20"
-              value={formData.description}
-              onChange={(e) => setFormData(prev => ({...prev, description: e.target.value}))}
+              value={followUpData.description}
+              onChange={(e) => setFollowUpData({ ...followUpData, description: e.target.value })}
             />
           </div>
 
@@ -259,32 +205,32 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, onSave, 
               <span className="label-text font-medium">{t.sequenceMessages}</span>
             </label>
             <div className="space-y-4">
-              {formData.messages.map((message, index) => (
+              {followUpMessages.map((message, index) => (
                 <div key={message.id} className="card bg-base-200">
                   <div className="card-body p-4">
                     <div className="flex items-start justify-between mb-3">
                       <h4 className="font-semibold">{t.messageNumber} {index + 1}</h4>
-                      {formData.messages.length > 1 && (
-                        <button 
+                      {followUpMessages.length > 1 && (
+                        <button
                           type="button"
-                        //   onClick={() => removeMessage(message.id)}
+                          //   onClick={() => removeMessage(message.id)}
                           className="btn btn-ghost btn-xs text-error"
                         >
                           <Trash2 className="w-3 h-3" />
                         </button>
                       )}
                     </div>
-                    
+
                     <div className="space-y-4">
                       {/* Template Selection */}
                       <div>
                         <label className="label">
                           <span className="label-text font-medium">{t.messageTemplates}</span>
                         </label>
-                        <select 
+                        <select
                           className="select select-bordered w-full"
-                          value={message.template}
-                        //   onChange={(e) => handleTemplateChange(message.id, e.target.value)}
+                          value={message.message}
+                          onChange={(e) => handleTemplateChange(message, e.target.value as 'welcome' | 'follow_up' | 'reminder' | 'offer' | 'custom')}
                         >
                           {messageTemplateOptions.map(option => (
                             <option key={option.value} value={option.value}>{option.label}</option>
@@ -297,11 +243,11 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, onSave, 
                         <label className="label">
                           <span className="label-text">{t.message}</span>
                         </label>
-                        <textarea 
+                        <textarea
                           placeholder={t.messagePlaceholder}
                           className="textarea textarea-bordered w-full h-24"
-                          value={message.content}
-                        //   onChange={(e) => updateMessage(message.id, 'content', e.target.value)}
+                          value={message.message}
+                          onChange={(e) => updateMessage(message.id, 'message', e.target.value)}
                           required
                         />
                       </div>
@@ -314,7 +260,7 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, onSave, 
                         <div className="flex flex-wrap gap-2 mb-2">
                           <button
                             type="button"
-                            // onClick={() => document.getElementById(`doc-${message.id}`).click()}
+                            onClick={() => document.getElementById(`doc-${message.id}`)!.click()}
                             className="btn btn-outline btn-sm"
                           >
                             <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -326,13 +272,13 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, onSave, 
                             id={`doc-${message.id}`}
                             type="file"
                             accept=".pdf,.doc,.docx,.txt"
-                            // onChange={(e) => e.target.files[0] && addAttachment(message.id, 'document', e.target.files[0])}
+                            onChange={(e) => e.target.files && addAttachment(message.id.toString(), 'document', e.target.files[0])}
                             className="hidden"
                           />
-                          
+
                           <button
                             type="button"
-                            // onClick={() => document.getElementById(`video-${message.id}`).click()}
+                            onClick={() => document.getElementById(`video-${message.id}`)!.click()}
                             className="btn btn-outline btn-sm"
                           >
                             <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -344,13 +290,13 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, onSave, 
                             id={`video-${message.id}`}
                             type="file"
                             accept="video/*"
-                            // onChange={(e) => e.target.files[0] && addAttachment(message.id, 'video', e.target.files[0])}
+                            onChange={(e) => e.target.files && addAttachment(message.id.toString(), 'video', e.target.files[0])}
                             className="hidden"
                           />
-                          
+
                           <button
                             type="button"
-                            // onClick={() => document.getElementById(`audio-${message.id}`).click()}
+                            onClick={() => document.getElementById(`audio-${message.id}`)!.click()}
                             className="btn btn-outline btn-sm"
                           >
                             <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -366,19 +312,18 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, onSave, 
                             className="hidden"
                           />
                         </div>
-                        
+
                         {/* Display Attachments */}
-                        {message.attachments.length > 0 && (
+                        {followUpMessageDocuments.length > 0 && (
                           <div className="space-y-2 mt-2">
                             <div className="text-sm font-medium text-neutral mb-2">{t.attachments}:</div>
-                            {message.attachments.map(attachment => (
+                            {followUpMessageDocuments.map(attachment => (
                               <div key={attachment.id} className="flex items-center justify-between p-3 bg-base-300 rounded-lg border border-base-400">
                                 <div className="flex items-center space-x-2">
-                                  <div className={`w-8 h-8 rounded flex items-center justify-center ${
-                                    attachment.type === 'document' ? 'bg-blue-100 text-blue-600' :
-                                    attachment.type === 'video' ? 'bg-red-100 text-red-600' :
-                                    'bg-green-100 text-green-600'
-                                  }`}>
+                                  <div className={`w-8 h-8 rounded flex items-center justify-center ${attachment.type === 'document' ? 'bg-blue-100 text-blue-600' :
+                                      attachment.type === 'video' ? 'bg-red-100 text-red-600' :
+                                        'bg-green-100 text-green-600'
+                                    }`}>
                                     {attachment.type === 'document' && (
                                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -396,15 +341,15 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, onSave, 
                                     )}
                                   </div>
                                   <div>
-                                    <div className="text-sm font-medium">{attachment.name}</div>
-                                    <div className="text-xs text-neutral">
+                                    <div className="text-sm font-medium">{attachment.file.name}</div>
+                                    {/* <div className="text-xs text-neutral">
                                       {(attachment.size / 1024 / 1024).toFixed(2)} MB
-                                    </div>
+                                    </div> */}
                                   </div>
                                 </div>
                                 <button
                                   type="button"
-                                //   onClick={() => removeAttachment(message.id, attachment.id)}
+                                  onClick={() => removeAttachment(message.id, attachment.id)}
                                   className="btn btn-ghost btn-xs text-error hover:bg-error hover:text-white"
                                   title={t.removeAttachment}
                                 >
@@ -422,19 +367,16 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, onSave, 
                           <span className="label-text font-medium">{t.delay}</span>
                         </label>
                         <div className="space-y-3">
-                          <select 
+                          <select
                             className="select select-bordered w-full"
-                            value={message.delay.type}
-                            // onChange={(e) => updateMessage(message.id, 'delay', { 
-                            //   ...message.delay, 
-                            //   type: e.target.value 
-                            // })}
+                            value={message.delayType}
+                            onChange={(e) => updateMessage(message.id, 'delayType', e.target.value)}
                           >
                             <option value="immediate">{t.immediate}</option>
                             <option value="custom">{t.customDelay}</option>
                           </select>
-                          
-                          {message.delay.type === 'custom' && (
+
+                          {message.delayType === 'custom' && (
                             <div className="grid md:grid-cols-3 gap-2">
                               <div>
                                 <label className="label">
@@ -445,11 +387,8 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, onSave, 
                                   min="0"
                                   className="input input-bordered w-full"
                                   placeholder="0"
-                                  value={message.delay.days}
-                                //   onChange={(e) => updateMessage(message.id, 'delay', { 
-                                //     ...message.delay, 
-                                //     days: parseInt(e.target.value) || 0
-                                //   })}
+                                  value={message.days}
+                                  onChange={(e) => updateMessage(message.id, 'days', parseInt(e.target.value) || 0)}
                                 />
                               </div>
                               <div>
@@ -462,11 +401,8 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, onSave, 
                                   max="23"
                                   className="input input-bordered w-full"
                                   placeholder="0"
-                                  value={message.delay.hours}
-                                //   onChange={(e) => updateMessage(message.id, 'delay', { 
-                                //     ...message.delay, 
-                                //     hours: parseInt(e.target.value) || 0
-                                //   })}
+                                  value={message.hours}
+                                  onChange={(e) => updateMessage(message.id, 'hours', parseInt(e.target.value) || 0)}
                                 />
                               </div>
                               <div>
@@ -479,22 +415,19 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, onSave, 
                                   max="59"
                                   className="input input-bordered w-full"
                                   placeholder="0"
-                                  value={message.delay.minutes}
-                                //   onChange={(e) => updateMessage(message.id, 'delay', { 
-                                //     ...message.delay, 
-                                //     minutes: parseInt(e.target.value) || 0
-                                //   })}
+                                  value={message.minutes}
+                                  onChange={(e) => updateMessage(message.id, 'minutes', parseInt(e.target.value) || 0)}
                                 />
                               </div>
                             </div>
                           )}
-                          
-                          {message.delay.type === 'custom' && (
+
+                          {message.delayType === 'custom' && (
                             <div className="text-xs text-neutral mt-1">
-                              {message.delay.days > 0 && `${message.delay.days} ${message.delay.days === 1 ? t.days.slice(0, -1) : t.days}`}
-                              {message.delay.hours > 0 && `${message.delay.days > 0 ? ', ' : ''}${message.delay.hours} ${message.delay.hours === 1 ? t.hours.slice(0, -1) : t.hours}`}
-                              {message.delay.minutes > 0 && `${(message.delay.days > 0 || message.delay.hours > 0) ? ', ' : ''}${message.delay.minutes} ${message.delay.minutes === 1 ? t.minutes.slice(0, -1) : t.minutes}`}
-                              {message.delay.days === 0 && message.delay.hours === 0 && message.delay.minutes === 0 && t.delayPlaceholder}
+                              {message.days > 0 && `${message.days} ${message.days === 1 ? t.days.slice(0, -1) : t.days}`}
+                              {message.hours > 0 && `${message.days > 0 ? ', ' : ''}${message.hours} ${message.hours === 1 ? t.hours.slice(0, -1) : t.hours}`}
+                              {message.minutes > 0 && `${(message.days > 0 || message.hours > 0) ? ', ' : ''}${message.minutes} ${message.minutes === 1 ? t.minutes.slice(0, -1) : t.minutes}`}
+                              {message.days === 0 && message.hours === 0 && message.minutes === 0 && t.delayPlaceholder}
                             </div>
                           )}
                         </div>
@@ -503,8 +436,8 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, onSave, 
                   </div>
                 </div>
               ))}
-              
-              <button 
+
+              <button
                 type="button"
                 // onClick={addMessage}
                 className="btn btn-outline btn-sm"
@@ -514,15 +447,16 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, onSave, 
               </button>
             </div>
           </div>
+        </div>
 
         {/* Footer */}
         <div className="flex items-center justify-end space-x-3 p-6 border-t border-base-300">
           <button onClick={handleClose} className="btn btn-ghost">
             {t.cancel}
           </button>
-          <button 
-            // onClick={handleSubmit}
-            // disabled={!formData.name.trim() || !formData.messages.some(m => m.content.trim())}
+          <button
+            onClick={handleSubmit}
+            disabled={!followUpData.name.trim() || !followUpMessages.some(m => m.message.trim())}
             className="btn btn-primary"
           >
             {followUp ? t.update : t.create}
