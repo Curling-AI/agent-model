@@ -1,4 +1,4 @@
-import { getByAgentId, getByFilter, getById, remove, upsert } from '@/services/storage';
+import { getByFilter, getById, remove, upsertArray } from '@/services/storage';
 import { Request, Response } from 'express';
 
 
@@ -8,7 +8,7 @@ export const FollowUpMessageController = {
 upsert: async (req: Request, res: Response) => {
   try {
     const followUpMessage = req.body;
-    const result = await upsert('follow_up_messages', followUpMessage);
+    const result = await upsertArray('follow_up_messages', followUpMessage);
     res.json(result);
   } catch (err) {
     res.status(500).json({ error: 'Failed to upsert follow up message', details: err });

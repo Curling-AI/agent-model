@@ -10,22 +10,22 @@ interface FollowUpState {
   followUpMessageDocuments: FollowUpMessageDocument[];
 
   fetchFollowUps: (agentId: number) => Promise<void>;
-  addOrUpdateFollowUp: (followUp: Omit<FollowUp, 'id'> & { id?: string }) => Promise<void>;
+  addOrUpdateFollowUp: (followUp: Omit<FollowUp, 'id'> & { id?: number }) => Promise<void>;
   deleteFollowUp: (id: number) => Promise<void>;
   setFollowUps: (followUps: FollowUp[]) => void;
 
   fetchFollowUpMessages: (followUpId: number) => Promise<void>;
-  addOrUpdateFollowUpMessage: (msg: Omit<FollowUpMessage, 'id'> & { id?: number }) => Promise<void>;
+  addOrUpdateFollowUpMessage: (msg: Omit<FollowUpMessage[], 'id'> & { id?: number }) => Promise<void>;
   deleteFollowUpMessage: (id: number) => Promise<void>;
   setFollowUpMessages: (msgs: FollowUpMessage[]) => void;
 
   fetchFollowUpMessageDocuments: (messageId: number) => Promise<void>;
-  addOrUpdateFollowUpMessageDocument: (doc: Omit<FollowUpMessageDocument, 'id'> & { id?: number }) => Promise<void>;
+  addOrUpdateFollowUpMessageDocument: (doc: Omit<FollowUpMessageDocument[], 'id'> & { id?: number }) => Promise<void>;
   deleteFollowUpMessageDocument: (id: number) => Promise<void>;
   setFollowUpMessageDocuments: (docs: FollowUpMessageDocument[]) => void;
 }
 
-export const useFollowUpStore = create<FollowUpState>((set) => ({
+export const useFollowUpStore = create<FollowUpState>((set,get) => ({
   followUps: [],
   followUpMessages: [],
   followUpMessageDocuments: [],
@@ -38,6 +38,10 @@ export const useFollowUpStore = create<FollowUpState>((set) => ({
     const res = await fetch(`${BASE_URL}/api/follow-ups?agentId=${agentId}`);
     if (!res.ok) throw new Error('Erro ao buscar follow ups');
     const data = await res.json();
+    if (!data) {
+      set({ followUps: [] });
+      return;
+    }
     set({ followUps: data });
   },
   addOrUpdateFollowUp: async (followUp) => {
@@ -57,6 +61,8 @@ export const useFollowUpStore = create<FollowUpState>((set) => ({
           ),
         };
       }
+      followUp.messages.map(m => m.followUpId = saved.id);
+      get().addOrUpdateFollowUpMessage(followUp.messages);
       return { followUps: [...state.followUps, saved] };
     });
   },
@@ -75,11 +81,11 @@ export const useFollowUpStore = create<FollowUpState>((set) => ({
     const data = await res.json();
     set({ followUpMessages: data });
   },
-  addOrUpdateFollowUpMessage: async (msg) => {
+  addOrUpdateFollowUpMessage: async (msgs: FollowUpMessage[]) => {
     const res = await fetch(`${BASE_URL}/api/follow-ups/messages`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(msg),
+      body: JSON.stringify([msgs]),
     });
     if (!res.ok) throw new Error('Erro ao salvar mensagem');
     const saved = await res.json();
@@ -110,11 +116,11 @@ export const useFollowUpStore = create<FollowUpState>((set) => ({
     const data = await res.json();
     set({ followUpMessageDocuments: data });
   },
-  addOrUpdateFollowUpMessageDocument: async (doc) => {
+  addOrUpdateFollowUpMessageDocument: async (docs: FollowUpMessageDocument[]) => {
     const res = await fetch(`${BASE_URL}/api/follow-ups/messages/documents`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(doc),
+      body: JSON.stringify([docs]),
     });
     if (!res.ok) throw new Error('Erro ao salvar documento');
     const saved = await res.json();

@@ -1,18 +1,22 @@
+import { CrmColumn, Plan, ServiceProvider } from '@/types';
+import { ConversationTag } from '@/types/conversation';
+import { FollowUpTrigger } from '@/types/follow_up';
+import { AgentPermission, ConversationPermission, CrmPermission, Department, Job, ManagementPermission } from '@/types/user';
 import { BASE_URL } from '@/utils/constants';
 import { create } from 'zustand';
 
 type SystemStore = {
-  jobs: any[];
-  departments: any[];
-  conversationTags: any[];
-  plans: any[];
-  crmColumns: any[];
-  crmPermissions: any[];
-  serviceProviders: any[];
-  conversationPermissions: any[];
-  managementPermissions: any[];
-  agentPermissions: any[];
-  followUpTriggers: any[];
+  jobs: Job[];
+  departments: Department[];
+  conversationTags: ConversationTag[];
+  plans: Plan[];
+  crmColumns: CrmColumn[];
+  crmPermissions: CrmPermission[];
+  serviceProviders: ServiceProvider[];
+  conversationPermissions: ConversationPermission[];
+  managementPermissions: ManagementPermission[];
+  agentPermissions: AgentPermission[];
+  followUpTriggers: FollowUpTrigger[];
   loading: boolean;
   error: string | null;
   fetchJobs: () => Promise<void>;
@@ -28,7 +32,7 @@ type SystemStore = {
   fetchFollowUpTriggers: () => Promise<void>;
 };
 
-export const useSystemStore = create<SystemStore>((set, get) => ({
+export const useSystemStore = create<SystemStore>((set) => ({
   jobs: [],
   departments: [],
   conversationTags: [],
@@ -49,7 +53,7 @@ export const useSystemStore = create<SystemStore>((set, get) => ({
       const res = await fetch(`${BASE_URL}/api/system-params/jobs`);
       if (!res.ok) throw new Error('Erro ao buscar jobs');
       const data = await res.json();
-      set(state => ({ jobs: { ...state.jobs, jobs: data }, loading: false }));
+      set({ jobs: data, loading: false });
     } catch (error: any) {
       set({ loading: false, error: error.message });
     }
@@ -61,7 +65,7 @@ export const useSystemStore = create<SystemStore>((set, get) => ({
       const res = await fetch(`${BASE_URL}/api/system-params/departments`);
       if (!res.ok) throw new Error('Erro ao buscar departments');
       const data = await res.json();
-      set(state => ({ departments: { ...state.departments, departments: data }, loading: false }));
+      set({ departments: data, loading: false });
     } catch (error: any) {
       set({ loading: false, error: error.message });
     }
@@ -73,7 +77,7 @@ export const useSystemStore = create<SystemStore>((set, get) => ({
       const res = await fetch(`${BASE_URL}/api/system-params/conversation-tags`);
       if (!res.ok) throw new Error('Erro ao buscar conversationTags');
       const data = await res.json();
-      set(state => ({ conversationTags: { ...state.conversationTags, conversationTags: data }, loading: false }));
+      set({ conversationTags: data, loading: false });
     } catch (error: any) {
       set({ loading: false, error: error.message });
     }
@@ -85,7 +89,7 @@ export const useSystemStore = create<SystemStore>((set, get) => ({
       const res = await fetch(`${BASE_URL}/api/system-params/plans`);
       if (!res.ok) throw new Error('Erro ao buscar plans');
       const data = await res.json();
-      set(state => ({ plans: { ...state.plans, plans: data }, loading: false }));
+      set({ plans: data, loading: false });
     } catch (error: any) {
       set({ loading: false, error: error.message });
     }
@@ -97,7 +101,7 @@ export const useSystemStore = create<SystemStore>((set, get) => ({
       const res = await fetch(`${BASE_URL}/api/system-params/crm-columns`);
       if (!res.ok) throw new Error('Erro ao buscar crmColumns');
       const data = await res.json();
-      set(state => ({ crmColumns: { ...state.crmColumns, crmColumns: data }, loading: false }));
+      set({ crmColumns: data, loading: false });
     } catch (error: any) {
       set({ loading: false, error: error.message });
     }
@@ -109,7 +113,7 @@ export const useSystemStore = create<SystemStore>((set, get) => ({
       const res = await fetch(`${BASE_URL}/api/system-params/crm-permissions`);
       if (!res.ok) throw new Error('Erro ao buscar crmPermissions');
       const data = await res.json();
-      set(state => ({ crmPermissions: { ...state.crmPermissions, crmPermissions: data }, loading: false }));
+      set({ crmPermissions: data, loading: false });
     } catch (error: any) {
       set({ loading: false, error: error.message });
     }
@@ -121,7 +125,7 @@ export const useSystemStore = create<SystemStore>((set, get) => ({
       const res = await fetch(`${BASE_URL}/api/system-params/service-providers`);
       if (!res.ok) throw new Error('Erro ao buscar serviceProviders');
       const data = await res.json();
-      set(state => ({ serviceProviders: { ...state.serviceProviders, serviceProviders: data }, loading: false }));
+      set({ serviceProviders: data, loading: false });
     } catch (error: any) {
       set({ loading: false, error: error.message });
     }
@@ -133,7 +137,7 @@ export const useSystemStore = create<SystemStore>((set, get) => ({
       const res = await fetch(`${BASE_URL}/api/system-params/conversation-permissions`);
       if (!res.ok) throw new Error('Erro ao buscar conversationPermissions');
       const data = await res.json();
-      set(state => ({ conversationPermissions: { ...state.conversationPermissions, conversationPermissions: data }, loading: false }));
+      set({ conversationPermissions: data, loading: false });
     } catch (error: any) {
       set({ loading: false, error: error.message });
     }
@@ -145,7 +149,7 @@ export const useSystemStore = create<SystemStore>((set, get) => ({
       const res = await fetch(`${BASE_URL}/api/system-params/management-permissions`);
       if (!res.ok) throw new Error('Erro ao buscar managementPermissions');
       const data = await res.json();
-      set(state => ({ managementPermissions: { ...state.managementPermissions, managementPermissions: data }, loading: false }));
+      set({ managementPermissions: data, loading: false });
     } catch (error: any) {
       set({ loading: false, error: error.message });
     }
@@ -157,7 +161,7 @@ export const useSystemStore = create<SystemStore>((set, get) => ({
       const res = await fetch(`${BASE_URL}/api/system-params/agent-permissions`);
       if (!res.ok) throw new Error('Erro ao buscar agentPermissions');
       const data = await res.json();
-      set(state => ({ agentPermissions: { ...state.agentPermissions, agentPermissions: data }, loading: false }));
+      set({ agentPermissions: data, loading: false });
     } catch (error: any) {
       set({ loading: false, error: error.message });
     }
@@ -169,7 +173,7 @@ export const useSystemStore = create<SystemStore>((set, get) => ({
       const res = await fetch(`${BASE_URL}/api/system-params/follow-up-triggers`);
       if (!res.ok) throw new Error('Erro ao buscar followUpTriggers');
       const data = await res.json();
-      set(state => ({ followUpTriggers: { ...state.followUpTriggers, followUpTriggers: data }, loading: false }));
+      set({ followUpTriggers: data, loading: false });
     } catch (error: any) {
       set({ loading: false, error: error.message });
     }

@@ -4,7 +4,8 @@ import { useSystemStore } from "@/store/system";
 import { useTranslation } from "@/translations";
 import { FollowUp, FollowUpMessage, FollowUpMessageDocument } from "@/types/follow_up";
 import { Plus, Trash2, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { FileUtils } from "@/utils/file";
 
 // Componente Modal Follow-up
 interface FollowUpModalProps {
@@ -17,7 +18,9 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, followUp
   const language = useLanguage();
   const t = useTranslation(language);
   const { crmColumns, followUpTriggers } = useSystemStore();
-  const { followUpMessages, followUpMessageDocuments, setFollowUpMessages, setFollowUpMessageDocuments } = useFollowUpStore();
+  const { followUpMessages, followUpMessageDocuments, setFollowUpMessages, setFollowUpMessageDocuments, addOrUpdateFollowUp } = useFollowUpStore();
+
+  const [negativeId, setNegativeId] = useState(-1);
   const [followUpData, setFollowUpData] = useState<FollowUp>(followUp || {
     id: 0,
     name: "",
@@ -47,13 +50,16 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, followUp
     { value: '7d', label: t.oneWeek }
   ];
 
-  console.log(crmColumns);
-  console.log(followUpTriggers);
+  useEffect(() => {
+    if (followUpMessages.length === 0) {
+      addMessage();
+    }
+  }, [followUp]);
 
   const addMessage = () => {
     setFollowUpMessages([...followUpMessages,
     {
-      id: 0,
+      id: negativeId,
       followUpId: 0,
       message: '',
       template: 'custom',
@@ -63,6 +69,7 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, followUp
       hours: 0,
       minutes: 0
     } as FollowUpMessage]);
+    setNegativeId(negativeId - 1);
   };
 
   const removeMessage = (messageId: number) => {
@@ -79,21 +86,20 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, followUp
     ]);
   };
 
-  const addAttachment = (messageId: string, type: string, file: File) => {
+  const addAttachment = async (messageId: number, type: string, file: File) => {
     const attachment = {
-      id: 0,
-      followUpMessageId: 0,
-      url: '',
-      file: file,
+      id: negativeId,
+      followUpMessageId: messageId,
+      name: file.name,
+      type: type as 'document' | 'video' | 'audio',
+      content: await FileUtils.fileToBase64(file),
     } as FollowUpMessageDocument;
-
     setFollowUpMessageDocuments([...followUpMessageDocuments, attachment]);
+    setNegativeId(negativeId - 1);
   };
 
-  const removeAttachment = (messageId: number, attachmentId: number) => {
-    if (followUpMessageDocuments.length > 1) {
-      setFollowUpMessageDocuments([...followUpMessageDocuments.filter(a => a.id !== attachmentId)]);
-    }
+  const removeAttachment = (attachmentId: number) => {
+    setFollowUpMessageDocuments([...followUpMessageDocuments.filter(a => a.id !== attachmentId)]);
   };
 
   const handleTemplateChange = (message: FollowUpMessage, templateValue: 'welcome' | 'follow_up' | 'reminder' | 'offer' | 'custom') => {
@@ -113,9 +119,13 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, followUp
       )
     ]);
   };
-  
+
   const handleSubmit = () => {
-    // Handle form submission
+    followUpMessages.map(m => {
+      m.documents = followUpMessageDocuments.filter(d => d.followUpMessageId === m.id);
+    });
+    followUpData.messages = followUpMessages;
+    addOrUpdateFollowUp(followUpData);
   };
 
   const handleClose = () => {
@@ -150,6 +160,7 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, followUp
                 placeholder={t.sequenceNamePlaceholder}
                 className="input input-bordered w-full"
                 value={followUpData.name}
+                onChange={(e) => setFollowUpData({ ...followUpData, name: e.target.value })}
                 required
               />
             </div>
@@ -163,7 +174,7 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, followUp
                 value={followUpData.crmColumn?.id || ''}
                 onChange={(e) => setFollowUpData({
                   ...followUpData,
-                  crmColumn: crmColumns.find(c => c.id === e.target.value)
+                  crmColumn: crmColumns.find(c => c.id === Number(e.target.value)) || crmColumns[0]
                 })}>
 
                 {crmColumns.length > 0 && crmColumns.map(option => (
@@ -179,11 +190,11 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, followUp
             </label>
             <select
               className="select select-bordered w-full"
-              value={followUpData.trigger.id || ''}
-              onChange={(e) => setFollowUpData(prev => ({ ...prev, trigger: followUpTriggers.find(t => t.id === e.target.value) }))}
+              value={followUpData.trigger?.id || ''}
+              onChange={(e) => setFollowUpData({ ...followUpData, trigger: followUpTriggers.find(t => t.id === Number(e.target.value)) || followUpTriggers[0] })}
             >
               {followUpTriggers.length > 0 && followUpTriggers.map(option => (
-                <option key={option.id} value={option.name}>{option.name}</option>
+                <option key={option.id} value={option.id}>{option.name}</option>
               ))}
             </select>
           </div>
@@ -210,10 +221,10 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, followUp
                   <div className="card-body p-4">
                     <div className="flex items-start justify-between mb-3">
                       <h4 className="font-semibold">{t.messageNumber} {index + 1}</h4>
-                      {followUpMessages.length > 1 && (
+                      {followUpMessages.length > 0 && (
                         <button
                           type="button"
-                          //   onClick={() => removeMessage(message.id)}
+                          onClick={() => removeMessage(message.id)}
                           className="btn btn-ghost btn-xs text-error"
                         >
                           <Trash2 className="w-3 h-3" />
@@ -272,7 +283,7 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, followUp
                             id={`doc-${message.id}`}
                             type="file"
                             accept=".pdf,.doc,.docx,.txt"
-                            onChange={(e) => e.target.files && addAttachment(message.id.toString(), 'document', e.target.files[0])}
+                            onChange={(e) => e.target.files && addAttachment(message.id, 'document', e.target.files[0])}
                             className="hidden"
                           />
 
@@ -290,7 +301,7 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, followUp
                             id={`video-${message.id}`}
                             type="file"
                             accept="video/*"
-                            onChange={(e) => e.target.files && addAttachment(message.id.toString(), 'video', e.target.files[0])}
+                            onChange={(e) => e.target.files && addAttachment(message.id, 'video', e.target.files[0])}
                             className="hidden"
                           />
 
@@ -308,7 +319,7 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, followUp
                             id={`audio-${message.id}`}
                             type="file"
                             accept="audio/*"
-                            // onChange={(e) => e.target.files[0] && addAttachment(message.id, 'audio', e.target.files[0])}
+                            onChange={(e) => e.target.files && addAttachment(message.id, 'audio', e.target.files[0])}
                             className="hidden"
                           />
                         </div>
@@ -317,46 +328,49 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, followUp
                         {followUpMessageDocuments.length > 0 && (
                           <div className="space-y-2 mt-2">
                             <div className="text-sm font-medium text-neutral mb-2">{t.attachments}:</div>
-                            {followUpMessageDocuments.map(attachment => (
-                              <div key={attachment.id} className="flex items-center justify-between p-3 bg-base-300 rounded-lg border border-base-400">
-                                <div className="flex items-center space-x-2">
-                                  <div className={`w-8 h-8 rounded flex items-center justify-center ${attachment.type === 'document' ? 'bg-blue-100 text-blue-600' :
+                            {followUpMessageDocuments.map(attachment => {
+                              if (attachment.followUpMessageId !== message.id) return null;
+                              return (
+                                <div key={attachment.id} className="flex items-center justify-between p-3 bg-base-300 rounded-lg border border-base-400">
+                                  <div className="flex items-center space-x-2">
+                                    <div className={`w-8 h-8 rounded flex items-center justify-center ${attachment.type === 'document' ? 'bg-blue-100 text-blue-600' :
                                       attachment.type === 'video' ? 'bg-red-100 text-red-600' :
                                         'bg-green-100 text-green-600'
-                                    }`}>
-                                    {attachment.type === 'document' && (
-                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                      </svg>
-                                    )}
-                                    {attachment.type === 'video' && (
-                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                      </svg>
-                                    )}
-                                    {attachment.type === 'audio' && (
-                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-                                      </svg>
-                                    )}
-                                  </div>
-                                  <div>
-                                    <div className="text-sm font-medium">{attachment.file.name}</div>
-                                    {/* <div className="text-xs text-neutral">
+                                      }`}>
+                                      {attachment.type === 'document' && (
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                        </svg>
+                                      )}
+                                      {attachment.type === 'video' && (
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                        </svg>
+                                      )}
+                                      {attachment.type === 'audio' && (
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                                        </svg>
+                                      )}
+                                    </div>
+                                    <div>
+                                      <div className="text-sm font-medium">{attachment.name}</div>
+                                      {/* <div className="text-xs text-neutral">
                                       {(attachment.size / 1024 / 1024).toFixed(2)} MB
                                     </div> */}
+                                    </div>
                                   </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => removeAttachment(attachment.id)}
+                                    className="btn btn-ghost btn-xs text-error hover:bg-error hover:text-white"
+                                    title={t.removeAttachment}
+                                  >
+                                    <X className="w-3 h-3" />
+                                  </button>
                                 </div>
-                                <button
-                                  type="button"
-                                  onClick={() => removeAttachment(message.id, attachment.id)}
-                                  className="btn btn-ghost btn-xs text-error hover:bg-error hover:text-white"
-                                  title={t.removeAttachment}
-                                >
-                                  <X className="w-3 h-3" />
-                                </button>
-                              </div>
-                            ))}
+                              )
+                            })}
                           </div>
                         )}
                       </div>
@@ -439,7 +453,7 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, followUp
 
               <button
                 type="button"
-                // onClick={addMessage}
+                onClick={addMessage}
                 className="btn btn-outline btn-sm"
               >
                 <Plus className="w-4 h-4 mr-2" />

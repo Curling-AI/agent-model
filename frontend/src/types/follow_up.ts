@@ -26,8 +26,7 @@ export interface FollowUpMessageDocument {
   followUpMessageId: number;
   type: string;
   name: string;
-  url: string;
-  file: File;
+  content: string;
 }
 
 export interface FollowUpTrigger extends BaseInterface {
