@@ -1,5 +1,6 @@
 import { FollowUp, FollowUpMessage, FollowUpMessageDocument } from '@/types/follow_up';
 import { BASE_URL } from '@/utils/constants';
+import { FileUtils } from '@/utils/file';
 import { create } from 'zustand';
 
 
@@ -25,7 +26,7 @@ interface FollowUpState {
   setFollowUpMessageDocuments: (docs: FollowUpMessageDocument[]) => void;
 }
 
-export const useFollowUpStore = create<FollowUpState>((set,get) => ({
+export const useFollowUpStore = create<FollowUpState>((set, get) => ({
   followUps: [],
   followUpMessages: [],
   followUpMessageDocuments: [],
@@ -42,29 +43,33 @@ export const useFollowUpStore = create<FollowUpState>((set,get) => ({
       set({ followUps: [] });
       return;
     }
-    set({ followUps: data });
+    
+    set({ followUps: mapSupabaseRowToFollowUp(data) });
   },
-  addOrUpdateFollowUp: async (followUp) => {
+  addOrUpdateFollowUp: async (followUp: FollowUp) => {
     const res = await fetch(`${BASE_URL}/api/follow-ups`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(followUp),
+      body: JSON.stringify(mapFollowUpToSupabaseRow(followUp)),
     });
     if (!res.ok) throw new Error('Erro ao salvar follow up');
     const saved = await res.json();
-    set((state) => {
-      const exists = state.followUps.find((f) => f.id === saved.id);
+
+    if (get().followUps.length > 0) {
+      const exists = get().followUps.find((f) => f.id === saved.id);
       if (exists) {
         return {
-          followUps: state.followUps.map((f) =>
+          followUps: get().followUps.map((f) =>
             f.id === saved.id ? saved : f
           ),
         };
       }
-      followUp.messages.map(m => m.followUpId = saved.id);
-      get().addOrUpdateFollowUpMessage(followUp.messages);
-      return { followUps: [...state.followUps, saved] };
-    });
+    }
+
+    followUp.messages.map(m => m.followUpId = saved.id);
+    get().addOrUpdateFollowUpMessage(followUp.messages);
+
+    return saved;
   },
   deleteFollowUp: async (id: number) => {
     const res = await fetch(`${BASE_URL}/api/follow-ups/${id}`, { method: 'DELETE' });
@@ -79,27 +84,35 @@ export const useFollowUpStore = create<FollowUpState>((set,get) => ({
     const res = await fetch(`${BASE_URL}/api/follow-ups/${followUpId}/messages`);
     if (!res.ok) throw new Error('Erro ao buscar mensagens');
     const data = await res.json();
-    set({ followUpMessages: data });
+    set({ followUpMessages: mapSupabaseRowToFollowUpMessage(data) });
   },
   addOrUpdateFollowUpMessage: async (msgs: FollowUpMessage[]) => {
-    const res = await fetch(`${BASE_URL}/api/follow-ups/messages`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify([msgs]),
-    });
-    if (!res.ok) throw new Error('Erro ao salvar mensagem');
-    const saved = await res.json();
-    set((state) => {
-      const exists = state.followUpMessages.find((m) => m.id === saved.id);
-      if (exists) {
-        return {
-          followUpMessages: state.followUpMessages.map((m) =>
-            m.id === saved.id ? saved : m
-          ),
-        };
+    msgs.map(async m => {
+      const res = await fetch(`${BASE_URL}/api/follow-ups/messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify([mapFollowUpMessageToSupabaseRow(m)]),
+      });
+      if (!res.ok) throw new Error('Erro ao salvar mensagem');
+     
+      const saved = await res.json();
+     
+      m.documents?.map(doc => doc.followUpMessageId = saved[0].id);
+     
+      get().addOrUpdateFollowUpMessageDocument(m.documents || []);
+
+      if (get().followUpMessages.length > 0) {
+        const exists = get().followUpMessages.find((m) => m.id === saved.id);
+        if (exists) {
+          return {
+            followUpMessages: get().followUpMessages.map((m) =>
+              m.id === saved.id ? saved : m
+            ),
+          };
+        }
       }
-      return { followUpMessages: [...state.followUpMessages, saved] };
-    });
+      return saved;
+    })
   },
   deleteFollowUpMessage: async (id: number) => {
     const res = await fetch(`${BASE_URL}/api/follow-ups/messages/${id}`, { method: 'DELETE' });
@@ -111,29 +124,35 @@ export const useFollowUpStore = create<FollowUpState>((set,get) => ({
 
   // Métodos para FollowUpMessageDocument
   fetchFollowUpMessageDocuments: async (messageId: number) => {
-    const res = await fetch(`${BASE_URL}/api/follow-up/messages/${messageId}/documents`);
+    const res = await fetch(`${BASE_URL}/api/follow-ups/messages/${messageId}/documents`);
     if (!res.ok) throw new Error('Erro ao buscar documentos');
     const data = await res.json();
-    set({ followUpMessageDocuments: data });
+    set({ followUpMessageDocuments: mapSupabaseRowToFollowUpMessageDocument(data) });
   },
   addOrUpdateFollowUpMessageDocument: async (docs: FollowUpMessageDocument[]) => {
-    const res = await fetch(`${BASE_URL}/api/follow-ups/messages/documents`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify([docs]),
-    });
-    if (!res.ok) throw new Error('Erro ao salvar documento');
-    const saved = await res.json();
-    set((state) => {
-      const exists = state.followUpMessageDocuments.find((d) => d.id === saved.id);
-      if (exists) {
-        return {
-          followUpMessageDocuments: state.followUpMessageDocuments.map((d) =>
-            d.id === saved.id ? saved : d
-          ),
-        };
+    const bucket = import.meta.env.VITE_SUPABASE_STORAGE_NAME ?? "";
+    if (!bucket) {
+      throw new Error("SUPABASE_STORAGE_NAME environment variable is not defined");
+    }
+    docs.map(async d => {
+      if (d.url == '' && d.file) {
+        d.url = (await FileUtils.uploadToSupabaseStorage(d.file, bucket, `follow-up/`)) ?? '';
+        if (d.url == '') {
+          throw new Error("Erro ao fazer upload do arquivo");
+        }
+        delete d.file;
+
+        const res = await fetch(`${BASE_URL}/api/follow-ups/messages/documents`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(docs.map((d) => mapFollowUpMessageDocumentToSupabaseRow(d))),
+        });
+        if (!res.ok) throw new Error('Erro ao salvar documento');
       }
-      return { followUpMessageDocuments: [...state.followUpMessageDocuments, saved] };
+    });
+
+    docs.map(d => {
+      return get().fetchFollowUpMessageDocuments(d.followUpMessageId!);
     });
   },
   deleteFollowUpMessageDocument: async (id: number) => {
@@ -144,3 +163,75 @@ export const useFollowUpStore = create<FollowUpState>((set,get) => ({
     }));
   },
 }));
+
+function mapFollowUpToSupabaseRow(followUp: FollowUp) {
+  return {
+    id: followUp.id! <= 0 ? undefined : followUp.id,
+    name: followUp.name,
+    description: followUp.description,
+    organization_id: followUp.organizationId,
+    agent_id: followUp.agentId,
+    crm_column_id: followUp.crmColumn?.id,
+    trigger_id: followUp.trigger?.id,
+  };
+}
+
+function mapFollowUpMessageToSupabaseRow(message: FollowUpMessage) {
+  return {
+    id: message.id! <= 0 ? undefined : message.id,
+    follow_up_id: message.followUpId,
+    message: message.message,
+    delay_type: message.delayType,
+    days: message.days,
+    hours: message.hours,
+    minutes: message.minutes,
+  };
+}
+
+function mapFollowUpMessageDocumentToSupabaseRow(document: FollowUpMessageDocument) {
+  return {
+    id: document.id! <= 0 ? undefined : document.id,
+    follow_up_message_id: document.followUpMessageId,
+    name: document.name,
+    type: document.type,
+    url: document.url,
+  };
+}
+
+function mapSupabaseRowToFollowUp(rows: []): FollowUp[] {
+  const followUps = rows.map((row: any) => ({
+    id: row.id,
+    name: row.name,
+    description: row.description,
+    organizationId: row.organization_id,
+    agentId: row.agent_id,
+    crmColumn: row.crm_column_id,
+    trigger: row.trigger_id,
+  })) as FollowUp[];
+  return followUps;
+}
+
+function mapSupabaseRowToFollowUpMessage(rows: []): FollowUpMessage[] {
+  const messages = rows.map((row: any) => ({
+    id: row.id,
+    followUpId: row.follow_up_id,
+    message: row.message,
+    delayType: row.delay_type,
+    days: row.days,
+    hours: row.hours,
+    minutes: row.minutes,
+    documents: [],
+  }));
+  return messages;
+}
+
+function mapSupabaseRowToFollowUpMessageDocument(rows: []): FollowUpMessageDocument[] {
+  const documents = rows.map((row: any) => ({
+    id: row.id,
+    followUpMessageId: row.follow_up_message_id,
+    name: row.name,
+    type: row.type,
+    url: row.url,
+  }));
+  return documents;
+}

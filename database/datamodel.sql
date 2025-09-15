@@ -127,7 +127,7 @@ CREATE TABLE follow_up_message_documents (
   id SERIAL PRIMARY KEY,
   follow_up_message_id INTEGER REFERENCES follow_up_messages(id) ON DELETE CASCADE,
   name VARCHAR(255) NOT NULL,
-  content TEXT NOT NULL,
+  url VARCHAR(255) NOT NULL,
   type VARCHAR(20) CHECK (type IN ('document', 'video', 'audio')),
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()

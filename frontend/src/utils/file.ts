@@ -1,3 +1,4 @@
+import { supabase } from '../config/supabaseClient'
 
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif']
 const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/quicktime', 'video/avi', 'video/x-ms-wmv']
@@ -105,5 +106,39 @@ export const FileUtils = {
       }
       reader.onerror = (error) => reject(error)
     })
+  },
+
+  async uploadToSupabaseStorage(
+    file: File,
+    bucket: string,
+    path: string = ''
+  ): Promise<string | null> {
+    const filePath = `${path}${Date.now()}_${file.name}`;
+
+    // Upload do arquivo
+    const { error } = await supabase.storage.from(bucket).upload(filePath, file, {
+      cacheControl: '3600',
+      upsert: false,
+    });
+
+    if (error) {
+      console.error('Erro ao fazer upload:', error.message);
+      return null;
+    }
+
+    const { data } = supabase.storage.from(bucket).getPublicUrl(filePath);
+    return data.publicUrl || null;
+  },
+
+  async removeFromSupabaseStorage(
+    bucket: string,
+    filePath: string
+  ): Promise<boolean> {
+    const { error } = await supabase.storage.from(bucket).remove([filePath]);
+    if (error) {
+      console.error('Erro ao remover arquivo:', error.message);
+      return false;
+    }
+    return true;
   }
 }

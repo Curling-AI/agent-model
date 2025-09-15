@@ -15,9 +15,9 @@ const NewAgentFollowUp: React.FC = () => {
 
   const { agent, setAgent } = useAgentStore();
 
-  const { fetchCrmColumns, fetchFollowUpTriggers } = useSystemStore();
+  const { followUpTriggers, fetchCrmColumns, fetchFollowUpTriggers } = useSystemStore();
 
-  const { followUps, fetchFollowUps, followUpMessages, fetchFollowUpMessages } = useFollowUpStore();
+  const { followUps, fetchFollowUps, followUpMessages, fetchFollowUpMessages, deleteFollowUp } = useFollowUpStore();
 
   const [automaticFollowUpsEnabled, setAutomaticFollowUpsEnabled] = useState(true);
   const [showFollowUpModal, setShowFollowUpModal] = useState(false);
@@ -27,18 +27,16 @@ const NewAgentFollowUp: React.FC = () => {
     fetchCrmColumns();
     fetchFollowUpTriggers();
     fetchFollowUps(agent.id);
-    followUps.map((fu) => fetchFollowUpMessages(fu.id));
+
+    if (followUps.length > 0) {
+      followUps.map((fu) => fetchFollowUpMessages(fu.id!));
+    }
   }, []);
-
-  const deleteFollowUp = (followUpId: number) => {
-    setAgent({
-      ...agent,
-      followUps: agent.followUps.filter((followUp: FollowUp) =>
-          followUp.id === followUpId ? null : followUp
-      ),
-    });
+  
+  const handleDeleteFollowUp = (followUpId: number) => {
+    deleteFollowUp(followUpId);
   };
-
+  
   return (
     <div className="space-y-6">
       <h3 className="text-xl font-semibold mb-4">{t.automaticFollowUps}</h3>
@@ -73,34 +71,35 @@ const NewAgentFollowUp: React.FC = () => {
           </button>
 
           {/* Lista de Sequências */}
-          {agent.followUps.length > 0 && followUpMessages.length && (
+          {followUps.length > 0 && followUpMessages.length > 0 && (
             <div className="space-y-3">
               <h4 className="font-semibold text-base-content">{t.createdSequences}</h4>
-              {followUpMessages.map((sequence) => (
+              {followUps.map((sequence) => (
                 <div key={sequence.id} className="card bg-base-200">
                   <div className="card-body p-4">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <h5 className="font-semibold text-base-content mb-1">{''}</h5>
-                        <p className="text-sm text-neutral mb-2">{''}</p>
+                        <h5 className="font-semibold text-base-content mb-1">{sequence.name}</h5>
+                        <p className="text-sm text-neutral mb-2">{sequence.description}</p>
                         <div className="flex items-center space-x-4 text-xs text-neutral">
-                          <span>Trigger: {''}</span>
+                          <span>Trigger: {followUpTriggers.find(t => t.id === Number(sequence.trigger))?.name}</span>
                           <span>
-                            Delay: `${sequence.days ?? 0}d ${sequence.hours ?? 0}h ${sequence.minutes ?? 0}m`
-
+                            {/* Delay: `{sequence.messages[0].days ?? 0}d {sequence.messages[0].hours ?? 0}h {sequence.messages[0].minutes ?? 0}m` */}
                           </span>
-                          <span>{1} mensagens</span>
                         </div>
                       </div>
                       <div className="flex items-center space-x-2 ml-4">
                         <button
-                          // onClick={() => editFollowUp(sequence)}
+                          onClick={() => {
+                            setEditingFollowUp(sequence);
+                            setShowFollowUpModal(true);
+                          }}
                           className="btn btn-ghost btn-xs"
                         >
                           <Edit className="w-3 h-3" />
                         </button>
                         <button
-                          onClick={() => deleteFollowUp(sequence.id)}
+                          onClick={() => handleDeleteFollowUp(sequence.id!)}
                           className="btn btn-ghost btn-xs text-error"
                         >
                           <Trash2 className="w-3 h-3" />

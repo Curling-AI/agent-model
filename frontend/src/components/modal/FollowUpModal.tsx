@@ -6,6 +6,7 @@ import { FollowUp, FollowUpMessage, FollowUpMessageDocument } from "@/types/foll
 import { Plus, Trash2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { FileUtils } from "@/utils/file";
+import { useAgentStore } from "@/store/agent";
 
 // Componente Modal Follow-up
 interface FollowUpModalProps {
@@ -15,18 +16,24 @@ interface FollowUpModalProps {
 }
 
 const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, followUp }) => {
+  const bucket = import.meta.env.VITE_SUPABASE_STORAGE_NAME ?? "";
+  if (!bucket) {
+    throw new Error("SUPABASE_STORAGE_NAME environment variable is not defined");
+  }
+  
   const language = useLanguage();
   const t = useTranslation(language);
+  const { agent } = useAgentStore();
   const { crmColumns, followUpTriggers } = useSystemStore();
-  const { followUpMessages, followUpMessageDocuments, setFollowUpMessages, setFollowUpMessageDocuments, addOrUpdateFollowUp } = useFollowUpStore();
+  const { followUpMessages, followUpMessageDocuments, setFollowUpMessages, setFollowUpMessageDocuments, addOrUpdateFollowUp, fetchFollowUps } = useFollowUpStore();
 
   const [negativeId, setNegativeId] = useState(-1);
   const [followUpData, setFollowUpData] = useState<FollowUp>(followUp || {
     id: 0,
     name: "",
     description: "",
-    organizationId: 0,
-    agentId: 0,
+    organizationId: 1,
+    agentId: agent.id,
     crmColumn: crmColumns[0],
     trigger: followUpTriggers[0],
     messages: []
@@ -92,14 +99,18 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, followUp
       followUpMessageId: messageId,
       name: file.name,
       type: type as 'document' | 'video' | 'audio',
-      content: await FileUtils.fileToBase64(file),
+      url: '',
+      file: file,
     } as FollowUpMessageDocument;
     setFollowUpMessageDocuments([...followUpMessageDocuments, attachment]);
     setNegativeId(negativeId - 1);
   };
 
-  const removeAttachment = (attachmentId: number) => {
-    setFollowUpMessageDocuments([...followUpMessageDocuments.filter(a => a.id !== attachmentId)]);
+  const removeAttachment = async (attachmentId: number, url: string) => {
+    const wasRemoved = await FileUtils.removeFromSupabaseStorage(bucket, url);
+    if (wasRemoved) {
+       setFollowUpMessageDocuments([...followUpMessageDocuments.filter(a => a.id !== attachmentId)]);
+    }
   };
 
   const handleTemplateChange = (message: FollowUpMessage, templateValue: 'welcome' | 'follow_up' | 'reminder' | 'offer' | 'custom') => {
@@ -126,6 +137,8 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, followUp
     });
     followUpData.messages = followUpMessages;
     addOrUpdateFollowUp(followUpData);
+    fetchFollowUps(agent.id!);
+    onClose();
   };
 
   const handleClose = () => {
@@ -224,7 +237,7 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, followUp
                       {followUpMessages.length > 0 && (
                         <button
                           type="button"
-                          onClick={() => removeMessage(message.id)}
+                          onClick={() => removeMessage(message.id!)}
                           className="btn btn-ghost btn-xs text-error"
                         >
                           <Trash2 className="w-3 h-3" />
@@ -258,7 +271,7 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, followUp
                           placeholder={t.messagePlaceholder}
                           className="textarea textarea-bordered w-full h-24"
                           value={message.message}
-                          onChange={(e) => updateMessage(message.id, 'message', e.target.value)}
+                          onChange={(e) => updateMessage(message.id!, 'message', e.target.value)}
                           required
                         />
                       </div>
@@ -283,7 +296,7 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, followUp
                             id={`doc-${message.id}`}
                             type="file"
                             accept=".pdf,.doc,.docx,.txt"
-                            onChange={(e) => e.target.files && addAttachment(message.id, 'document', e.target.files[0])}
+                            onChange={(e) => e.target.files && addAttachment(message.id!, 'document', e.target.files[0])}
                             className="hidden"
                           />
 
@@ -301,7 +314,7 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, followUp
                             id={`video-${message.id}`}
                             type="file"
                             accept="video/*"
-                            onChange={(e) => e.target.files && addAttachment(message.id, 'video', e.target.files[0])}
+                            onChange={(e) => e.target.files && addAttachment(message.id!, 'video', e.target.files[0])}
                             className="hidden"
                           />
 
@@ -319,7 +332,7 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, followUp
                             id={`audio-${message.id}`}
                             type="file"
                             accept="audio/*"
-                            onChange={(e) => e.target.files && addAttachment(message.id, 'audio', e.target.files[0])}
+                            onChange={(e) => e.target.files && addAttachment(message.id!, 'audio', e.target.files[0])}
                             className="hidden"
                           />
                         </div>
@@ -362,7 +375,7 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, followUp
                                   </div>
                                   <button
                                     type="button"
-                                    onClick={() => removeAttachment(attachment.id)}
+                                    onClick={() => removeAttachment(attachment.id!, attachment.url)}
                                     className="btn btn-ghost btn-xs text-error hover:bg-error hover:text-white"
                                     title={t.removeAttachment}
                                   >
@@ -384,7 +397,7 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, followUp
                           <select
                             className="select select-bordered w-full"
                             value={message.delayType}
-                            onChange={(e) => updateMessage(message.id, 'delayType', e.target.value)}
+                            onChange={(e) => updateMessage(message.id!, 'delayType', e.target.value)}
                           >
                             <option value="immediate">{t.immediate}</option>
                             <option value="custom">{t.customDelay}</option>
@@ -402,7 +415,7 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, followUp
                                   className="input input-bordered w-full"
                                   placeholder="0"
                                   value={message.days}
-                                  onChange={(e) => updateMessage(message.id, 'days', parseInt(e.target.value) || 0)}
+                                  onChange={(e) => updateMessage(message.id!, 'days', parseInt(e.target.value) || 0)}
                                 />
                               </div>
                               <div>
@@ -416,7 +429,7 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, followUp
                                   className="input input-bordered w-full"
                                   placeholder="0"
                                   value={message.hours}
-                                  onChange={(e) => updateMessage(message.id, 'hours', parseInt(e.target.value) || 0)}
+                                  onChange={(e) => updateMessage(message.id!, 'hours', parseInt(e.target.value) || 0)}
                                 />
                               </div>
                               <div>
@@ -430,7 +443,7 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, followUp
                                   className="input input-bordered w-full"
                                   placeholder="0"
                                   value={message.minutes}
-                                  onChange={(e) => updateMessage(message.id, 'minutes', parseInt(e.target.value) || 0)}
+                                  onChange={(e) => updateMessage(message.id!, 'minutes', parseInt(e.target.value) || 0)}
                                 />
                               </div>
                             </div>

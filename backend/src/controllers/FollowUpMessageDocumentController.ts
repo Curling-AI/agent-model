@@ -18,9 +18,9 @@ upsert: async (req: Request, res: Response) => {
 // List FollowUpMessageDocuments with optional agent filter
 list: async (req: Request, res: Response) => {
   try {
-    const messageId = req.query.messageId as string | undefined;
+    const messageId = req.params.messageId as string | undefined;
     const result = await getByFilter('follow_up_message_documents', { follow_up_message_id: Number(messageId) });
-    res.json({ result });
+    res.json(result);
   } catch (err) {
     res.status(500).json({ error: 'Failed to list follow up message documents', details: err });
   }

@@ -21,7 +21,7 @@ list: async (req: Request, res: Response) => {
     const agentId = req.query.agentId as string | undefined;
     const result = await getByFilter('follow_ups', { agent_id: Number(agentId) });
 
-    res.json({ result });
+    res.json(result);
   } catch (err) {
     res.status(500).json({ error: 'Failed to list follow ups', details: err });
   }
