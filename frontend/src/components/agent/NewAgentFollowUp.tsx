@@ -13,11 +13,11 @@ const NewAgentFollowUp: React.FC = () => {
   const language = useLanguage();
   const t = useTranslation(language);
 
-  const { agent, setAgent } = useAgentStore();
+  const { agent } = useAgentStore();
 
   const { followUpTriggers, fetchCrmColumns, fetchFollowUpTriggers } = useSystemStore();
 
-  const { followUps, fetchFollowUps, followUpMessages, fetchFollowUpMessages, deleteFollowUp } = useFollowUpStore();
+  const { followUps, fetchFollowUps, followUpMessages, deleteFollowUp } = useFollowUpStore();
 
   const [automaticFollowUpsEnabled, setAutomaticFollowUpsEnabled] = useState(true);
   const [showFollowUpModal, setShowFollowUpModal] = useState(false);
@@ -26,16 +26,21 @@ const NewAgentFollowUp: React.FC = () => {
   useEffect(() => {
     fetchCrmColumns();
     fetchFollowUpTriggers();
-    fetchFollowUps(agent.id);
-
-    if (followUps.length > 0) {
-      followUps.map((fu) => fetchFollowUpMessages(fu.id!));
-    }
   }, []);
-  
+
+  useEffect(() => {
+    fetchFollowUps(agent.id);
+  }, [fetchFollowUps, agent.id]);
+
   const handleDeleteFollowUp = (followUpId: number) => {
     deleteFollowUp(followUpId);
   };
+
+  const handleFollowUpModalClose = () => {
+    setShowFollowUpModal(false);
+    setEditingFollowUp(null);
+    fetchFollowUps(agent.id);
+  }
   
   return (
     <div className="space-y-6">
@@ -71,7 +76,7 @@ const NewAgentFollowUp: React.FC = () => {
           </button>
 
           {/* Lista de Sequências */}
-          {followUps.length > 0 && followUpMessages.length > 0 && (
+          {followUps.length > 0 && (
             <div className="space-y-3">
               <h4 className="font-semibold text-base-content">{t.createdSequences}</h4>
               {followUps.map((sequence) => (
@@ -84,8 +89,11 @@ const NewAgentFollowUp: React.FC = () => {
                         <div className="flex items-center space-x-4 text-xs text-neutral">
                           <span>Trigger: {followUpTriggers.find(t => t.id === Number(sequence.trigger))?.name}</span>
                           <span>
-                            {/* Delay: `{sequence.messages[0].days ?? 0}d {sequence.messages[0].hours ?? 0}h {sequence.messages[0].minutes ?? 0}m` */}
+                            {sequence.messages.length > 0 && sequence.messages[0].delayType === 'custom' && (
+                              <>Delay: {sequence.messages[0].days ?? 0}d {sequence.messages[0].hours ?? 0}h {sequence.messages[0].minutes ?? 0}m</>
+                            )}
                           </span>
+                          <span>{sequence.messages.length} {t.messages}</span>
                         </div>
                       </div>
                       <div className="flex items-center space-x-2 ml-4">
@@ -117,10 +125,7 @@ const NewAgentFollowUp: React.FC = () => {
       {showFollowUpModal && (
         <FollowUpModal
           isOpen={showFollowUpModal}
-          onClose={() => {
-            setShowFollowUpModal(false);
-            setEditingFollowUp(null);
-          }}
+          onClose={() => handleFollowUpModalClose()}
           followUp={editingFollowUp ?? undefined}
         />
       )}

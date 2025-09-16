@@ -20,12 +20,12 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, followUp
   if (!bucket) {
     throw new Error("SUPABASE_STORAGE_NAME environment variable is not defined");
   }
-  
+
   const language = useLanguage();
   const t = useTranslation(language);
   const { agent } = useAgentStore();
   const { crmColumns, followUpTriggers } = useSystemStore();
-  const { followUpMessages, followUpMessageDocuments, setFollowUpMessages, setFollowUpMessageDocuments, addOrUpdateFollowUp, fetchFollowUps } = useFollowUpStore();
+  const { followUpMessages, addOrUpdateFollowUp, deleteFollowUpMessage, deleteFollowUpMessageDocument } = useFollowUpStore();
 
   const [negativeId, setNegativeId] = useState(-1);
   const [followUpData, setFollowUpData] = useState<FollowUp>(followUp || {
@@ -34,8 +34,8 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, followUp
     description: "",
     organizationId: 1,
     agentId: agent.id,
-    crmColumn: crmColumns[0],
-    trigger: followUpTriggers[0],
+    crmColumn: crmColumns[0].id,
+    trigger: followUpTriggers[0].id,
     messages: []
   });
 
@@ -58,39 +58,51 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, followUp
   ];
 
   useEffect(() => {
-    if (followUpMessages.length === 0) {
+    if (followUpData.id == 0) {
       addMessage();
     }
   }, [followUp]);
 
   const addMessage = () => {
-    setFollowUpMessages([...followUpMessages,
-    {
-      id: negativeId,
-      followUpId: 0,
-      message: '',
-      template: 'custom',
-      documents: [],
-      delayType: 'immediate',
-      days: 0,
-      hours: 0,
-      minutes: 0
-    } as FollowUpMessage]);
+    setFollowUpData({
+      ...followUpData,
+      messages: [
+        ...followUpData.messages,
+        {
+          id: negativeId,
+          followUpId: 0,
+          message: '',
+          template: 'custom',
+          documents: [],
+          delayType: 'immediate',
+          days: 0,
+          hours: 0,
+          minutes: 0
+        } as FollowUpMessage]
+    });
     setNegativeId(negativeId - 1);
   };
 
-  const removeMessage = (messageId: number) => {
-    if (followUpMessages.length > 1) {
-      setFollowUpMessages([...followUpMessages.filter(m => m.id !== messageId)]);
+  const removeMessage = async (messageId: number) => {
+    if (followUpData.messages.length > 1) {
+      console.log("Removing message with ID:", messageId);
+      if (messageId > 0) {
+        await deleteFollowUpMessage(messageId);
+      }
+      setFollowUpData({
+        ...followUpData,
+        messages: [...followUpData.messages.filter(m => m.id !== messageId)]
+      });
     }
   };
 
   const updateMessage = (messageId: number, field: string, value: any) => {
-    setFollowUpMessages([
-      ...followUpMessages.map(m =>
+    setFollowUpData({
+      ...followUpData,
+      messages: followUpData.messages.map(m =>
         m.id === messageId ? { ...m, [field]: value } : m
       )
-    ]);
+    });
   };
 
   const addAttachment = async (messageId: number, type: string, file: File) => {
@@ -102,14 +114,28 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, followUp
       url: '',
       file: file,
     } as FollowUpMessageDocument;
-    setFollowUpMessageDocuments([...followUpMessageDocuments, attachment]);
+
+
+    followUpData.messages.find(m => m.id === messageId)?.documents?.push(attachment);
+
+    setFollowUpData(followUpData);
     setNegativeId(negativeId - 1);
   };
 
   const removeAttachment = async (attachmentId: number, url: string) => {
     const wasRemoved = await FileUtils.removeFromSupabaseStorage(bucket, url);
     if (wasRemoved) {
-       setFollowUpMessageDocuments([...followUpMessageDocuments.filter(a => a.id !== attachmentId)]);
+      await deleteFollowUpMessageDocument(attachmentId);
+
+      setFollowUpData({
+        ...followUpData,
+        messages: [
+          ...followUpData.messages.map(m => ({
+            ...m,
+            documents: [...m.documents?.filter(d => d.id !== attachmentId)!]
+          }))
+        ]
+      });
     }
   };
 
@@ -121,23 +147,19 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, followUp
       offer: 'Temos uma oferta especial para você! Que tal dar uma olhada?'
     };
 
-    setFollowUpMessages([
-      ...followUpMessages.map(m =>
+    setFollowUpData({
+      ...followUpData,
+      messages: followUpData.messages.map(m =>
         m.id === message.id ? {
           ...m,
           message: templateValue === 'custom' ? m.message : templates[templateValue] || ''
         } : m
       )
-    ]);
+    });
   };
 
-  const handleSubmit = () => {
-    followUpMessages.map(m => {
-      m.documents = followUpMessageDocuments.filter(d => d.followUpMessageId === m.id);
-    });
-    followUpData.messages = followUpMessages;
-    addOrUpdateFollowUp(followUpData);
-    fetchFollowUps(agent.id!);
+  const handleSubmit = async () => {
+    await addOrUpdateFollowUp(followUpData);
     onClose();
   };
 
@@ -184,10 +206,10 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, followUp
               </label>
               <select
                 className="select select-bordered w-full"
-                value={followUpData.crmColumn?.id || ''}
+                value={followUpData.crmColumn || ''}
                 onChange={(e) => setFollowUpData({
                   ...followUpData,
-                  crmColumn: crmColumns.find(c => c.id === Number(e.target.value)) || crmColumns[0]
+                  crmColumn: Number(e.target.value)
                 })}>
 
                 {crmColumns.length > 0 && crmColumns.map(option => (
@@ -203,8 +225,8 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, followUp
             </label>
             <select
               className="select select-bordered w-full"
-              value={followUpData.trigger?.id || ''}
-              onChange={(e) => setFollowUpData({ ...followUpData, trigger: followUpTriggers.find(t => t.id === Number(e.target.value)) || followUpTriggers[0] })}
+              value={followUpData.trigger || ''}
+              onChange={(e) => setFollowUpData({ ...followUpData, trigger: Number(e.target.value) })}
             >
               {followUpTriggers.length > 0 && followUpTriggers.map(option => (
                 <option key={option.id} value={option.id}>{option.name}</option>
@@ -229,12 +251,12 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, followUp
               <span className="label-text font-medium">{t.sequenceMessages}</span>
             </label>
             <div className="space-y-4">
-              {followUpMessages.map((message, index) => (
+              {followUpData.messages.map((message, index) => (
                 <div key={message.id} className="card bg-base-200">
                   <div className="card-body p-4">
                     <div className="flex items-start justify-between mb-3">
                       <h4 className="font-semibold">{t.messageNumber} {index + 1}</h4>
-                      {followUpMessages.length > 0 && (
+                      {followUpData.messages.length > 0 && (
                         <button
                           type="button"
                           onClick={() => removeMessage(message.id!)}
@@ -338,10 +360,10 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, followUp
                         </div>
 
                         {/* Display Attachments */}
-                        {followUpMessageDocuments.length > 0 && (
+                        {message.documents!.length > 0 && (
                           <div className="space-y-2 mt-2">
                             <div className="text-sm font-medium text-neutral mb-2">{t.attachments}:</div>
-                            {followUpMessageDocuments.map(attachment => {
+                            {message.documents!.map(attachment => {
                               if (attachment.followUpMessageId !== message.id) return null;
                               return (
                                 <div key={attachment.id} className="flex items-center justify-between p-3 bg-base-300 rounded-lg border border-base-400">
@@ -483,7 +505,7 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, followUp
           </button>
           <button
             onClick={handleSubmit}
-            disabled={!followUpData.name.trim() || !followUpMessages.some(m => m.message.trim())}
+            disabled={!followUpData.name.trim() || !followUpData.messages.some(m => m.message.trim())}
             className="btn btn-primary"
           >
             {followUp ? t.update : t.create}

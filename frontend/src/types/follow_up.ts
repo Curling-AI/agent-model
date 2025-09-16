@@ -4,8 +4,8 @@ import { BaseAgent } from "./agent";
 export interface FollowUp extends BaseInterface, BaseAgent {
   id?: number;
   name: string;
-  crmColumn: CrmColumn;
-  trigger: FollowUpTrigger;
+  crmColumn: number;
+  trigger: number;
   description: string;
   messages: FollowUpMessage[];
 }
