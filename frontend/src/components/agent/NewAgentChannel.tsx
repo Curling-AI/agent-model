@@ -1,13 +1,13 @@
 import { useLanguage } from "@/context/LanguageContext";
 import { useAgentStore } from "@/store/agent";
+import { useSystemStore } from "@/store/system";
 import { useTranslation } from "@/translations";
-import React from "react"
 
 const NewAgentChannel: React.FC = () => {
   const language = useLanguage();
   const t = useTranslation(language);
-
-  // const { agent, setAgent, updateAgent } = useAgentStore();
+  const { fetchServiceProviders } = useSystemStore();
+  const { agent, setAgent, updateAgent } = useAgentStore();
 
   const channelOptions = [
     {
@@ -32,10 +32,6 @@ const NewAgentChannel: React.FC = () => {
       status: 'disconnected'
     }
   ];
-
-
-
-  
 
   const connectChannel = (channelId: number) => {
     // Simular processo de conexão
@@ -111,7 +107,7 @@ const NewAgentChannel: React.FC = () => {
                           </div> */}
                 </div>
 
-                {/* {isConnected ? (
+                {false ? (
                           <button
                             // onClick={() => disconnectChannel(channel.id)}
                             className="btn btn-outline btn-error w-full"
@@ -125,7 +121,7 @@ const NewAgentChannel: React.FC = () => {
                           >
                             {t.connect}
                           </button>
-                        )} */}
+                        )}
               </div>
             </div>
           );

@@ -93,7 +93,12 @@ const NewAgentFollowUp: React.FC = () => {
                               <>Delay: {sequence.messages[0].days ?? 0}d {sequence.messages[0].hours ?? 0}h {sequence.messages[0].minutes ?? 0}m</>
                             )}
                           </span>
-                          <span>{sequence.messages.length} {t.messages}</span>
+                          {sequence.messages.length === 1 && (
+                            <span>{sequence.messages.length} {t.message}</span>
+                          )}
+                          {sequence.messages.length > 1 && (
+                            <span>{sequence.messages.length} {t.messages}</span>
+                          )}
                         </div>
                       </div>
                       <div className="flex items-center space-x-2 ml-4">
