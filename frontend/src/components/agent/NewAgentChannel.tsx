@@ -2,36 +2,23 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useAgentStore } from "@/store/agent";
 import { useSystemStore } from "@/store/system";
 import { useTranslation } from "@/translations";
+import { useEffect } from "react";
+import WPOficialButton from "@/components/WPOficialButton";
+import { FacebookAccessToken } from "@/types/facebook";
+import { useIntegrationStore } from "@/store/integration";
 
 const NewAgentChannel: React.FC = () => {
   const language = useLanguage();
   const t = useTranslation(language);
-  const { fetchServiceProviders } = useSystemStore();
-  const { agent, setAgent, updateAgent } = useAgentStore();
+  const { serviceProviders, fetchServiceProviders } = useSystemStore();
+  const { agent } = useAgentStore();
+  const { subscribeFacebookApp, registerFacebookNumber, upsertIntegration } = useIntegrationStore();
 
-  const channelOptions = [
-    {
-      id: 'whatsapp_business',
-      name: t.whatsappBusinessOfficial,
-      icon: '🟢',
-      description: t.whatsappBusinessDescription,
-      status: 'disconnected'
-    },
-    {
-      id: 'whatsapp_evolution',
-      name: t.whatsappEvolutionAPI,
-      icon: '🟢',
-      description: t.whatsappEvolutionDescription,
-      status: 'disconnected'
-    },
-    {
-      id: 'hubsoft',
-      name: t.hubsoft,
-      icon: '🔵',
-      description: t.hubsoftDescription,
-      status: 'disconnected'
-    }
-  ];
+  const isConnected = true;
+
+  useEffect(() => {
+    fetchServiceProviders();
+  }, [fetchServiceProviders]);
 
   const connectChannel = (channelId: number) => {
     // Simular processo de conexão
@@ -65,12 +52,36 @@ const NewAgentChannel: React.FC = () => {
     // }, 1000);
   };
 
+  const handleConnectWhatsappOficial = async (data: FacebookAccessToken) => {
+    await subscribeFacebookApp(data)
+
+    const result = await upsertIntegration({
+      agentId: agent.id,
+      serviceProviderId: 1,
+      metadata: {
+        accessToken: data.access_token,
+        tokenType: data.token_type,
+        expiresIn: data.expires_in,
+        phoneNumberId: data.phone_number_id,
+        businessId: data.business_id,
+        wabaId: data.waba_id,
+      }
+    })
+
+    if (!result.data) {
+      console.error('Não foi possível conectar ao WhatsApp Oficial')
+    } else {
+      const result = await registerFacebookNumber(data.phone_number_id, data.access_token)
+      console.log('Número do WhatsApp Oficial registrado com sucesso:', result)
+    }
+  }
+
   return (
     <div className="space-y-6">
       <h3 className="text-xl font-semibold mb-4">{t.serviceChannels}</h3>
 
       <div className="grid md:grid-cols-2 gap-6">
-        {channelOptions.map(channel => {
+        {serviceProviders.map(channel => {
           // const isConnected = agent.serviceProviders.includes(channel);
 
           return (
@@ -78,13 +89,13 @@ const NewAgentChannel: React.FC = () => {
               <div className="card-body p-6">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center space-x-3">
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center overflow-hidden ${channel.id === 'hubsoft' ? '' : 'bg-green-500'
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center overflow-hidden ${channel.id > 2 ? '' : 'bg-green-500'
                       }`} style={{
                         minWidth: '48px',
                         minHeight: '48px',
-                        backgroundColor: channel.id === 'hubsoft' ? '#4884e4' : undefined
+                        backgroundColor: channel.id > 2  ? '#4884e4' : undefined
                       }}>
-                      {channel.id === 'hubsoft' ? (
+                      {channel.id > 2 ? (
                         <img
                           src="/images/hubsoft-logo.png"
                           alt="Hubsoft Logo"
@@ -99,29 +110,42 @@ const NewAgentChannel: React.FC = () => {
                     </div>
                     <div>
                       <h4 className="font-semibold text-base-content">{channel.name}</h4>
-                      <p className="text-sm text-neutral mt-1">{channel.description}</p>
+                      <p className="text-sm text-neutral mt-1">{channel.description_pt}</p>
                     </div>
                   </div>
-                  {/* <div className={`badge ${isConnected ? 'badge-success' : 'badge-neutral'}`}>
+                  <div className={`badge ${isConnected ? 'badge-success' : 'badge-neutral'}`}>
                             {isConnected ? t.connected : t.disconnected}
-                          </div> */}
+                          </div>
                 </div>
 
+                { 
+                   channel.id === 1 ? (
+                      <WPOficialButton
+                        visible={false}
+                        appId={process.env.NEXT_PUBLIC_FACEBOOK_APP_ID || ''}
+                        graphApiVersion={process.env.NEXT_PUBLIC_FACEBOOK_GRAPH_API_VERSION || ''}
+                        configurationId={process.env.NEXT_PUBLIC_FACEBOOK_CONFIGURATION_ID || ''}
+                        featureType={process.env.NEXT_PUBLIC_FACEBOOK_FEATURE_TYPE || ''}
+                        onLoginSuccess={handleConnectWhatsappOficial}
+                      />
+                ) : null}
+
                 {false ? (
-                          <button
-                            // onClick={() => disconnectChannel(channel.id)}
-                            className="btn btn-outline btn-error w-full"
-                          >
-                            {t.disconnect}
-                          </button>
-                        ) : (
-                          <button
-                            // onClick={() => connectChannel(channel.id)}
-                            className="btn btn-primary w-full"
-                          >
-                            {t.connect}
-                          </button>
-                        )}
+                  <button
+                    onClick={() => disconnectChannel(channel.id)}
+                    className="btn btn-outline btn-error w-full"
+                  >
+                    {t.disconnect}
+                  </button>
+                ) : (
+                  
+                  <button
+                    onClick={() => connectChannel(channel.id)}
+                    className="btn btn-primary w-full"
+                  >
+                    {t.connect}
+                  </button>
+                )}
               </div>
             </div>
           );

@@ -28,30 +28,30 @@ services:
       - local
     command: npm run dev
   
-  evolution-api:
-    container_name: evolution_api
-    image: atendai/evolution-api:latest
-    restart: always
-    ports:
-      - "8080:8080"
-    env_file:
-      - .env
-    volumes:
-      - evolution_store:/evolution/store
-      - evolution_instances:/evolution/instances
+  # evolution-api:
+  #   container_name: evolution_api
+  #   image: atendai/evolution-api:latest
+  #   restart: always
+  #   ports:
+  #     - "8080:8080"
+  #   env_file:
+  #     - .env
+  #   volumes:
+  #     - evolution_store:/evolution/store
+  #     - evolution_instances:/evolution/instances
 
-  db:
-    container_name: evolution_db
-    image: postgres:15
-    restart: always
-    environment:
-      POSTGRES_USER: 'admin'
-      POSTGRES_PASSWORD: '123456'
-      POSTGRES_DB: 'evolution'
-    ports:
-      - '5432:5432'
-    volumes:
-      - ./pgdata:/var/lib/postgresql/data
+  # db:
+  #   container_name: evolution_db
+  #   image: postgres:15
+  #   restart: always
+  #   environment:
+  #     POSTGRES_USER: 'admin'
+  #     POSTGRES_PASSWORD: '123456'
+  #     POSTGRES_DB: 'evolution'
+  #   ports:
+  #     - '5432:5432'
+  #   volumes:
+  #     - ./pgdata:/var/lib/postgresql/data
 
 networks:
   local:

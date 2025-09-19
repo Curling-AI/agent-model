@@ -22,7 +22,8 @@ CREATE TABLE crm_columns (
 CREATE TABLE service_providers (
   id SERIAL PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
-  webhook_url VARCHAR(255),
+  description_pt VARCHAR(255),
+  description_en VARCHAR(255),
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
 );
@@ -78,11 +79,12 @@ CREATE TABLE documents (
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
--- Tabela Agent_ServiceProvider (relacionamento entre Agent e ServiceProvider)
-CREATE TABLE agent_service_providers (
+-- Tabela Integrations
+CREATE TABLE integrations (
+  id SERIAL PRIMARY KEY,
   agent_id INTEGER REFERENCES agents(id) ON DELETE CASCADE,
   service_provider_id INTEGER REFERENCES service_providers(id) ON DELETE CASCADE,
-  PRIMARY KEY (agent_id, service_provider_id),
+  metadata jsonb,
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
 );

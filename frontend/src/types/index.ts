@@ -18,7 +18,8 @@ export interface CrmColumn extends BaseInterface {
 export interface ServiceProvider {
   id: number;
   name: string;
-  webhookUrl: string;
+  description_pt: string;
+  description_en: string;
 }
 
 export interface Plan {

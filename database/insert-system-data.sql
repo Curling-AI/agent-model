@@ -6,9 +6,9 @@ INSERT INTO crm_columns (name, is_system) VALUES ('Em Negociação', TRUE);
 INSERT INTO crm_columns (name, is_system) VALUES ('Fechados', TRUE);
 
 -- Criação de dados para a tabela service_provider
-INSERT INTO service_providers (name, webhook_url) VALUES ('Whatsapp Oficial', '');
-INSERT INTO service_providers (name, webhook_url) VALUES ('Whatsapp Evolution', '');
-INSERT INTO service_providers (name, webhook_url) VALUES ('Google Calendar', '');
+INSERT INTO service_providers (name, description_pt, description_en) VALUES ('Whatsapp Oficial', 'Conexão direta com WhatsApp Business API oficial', 'Official WhatsApp Business API connection');
+INSERT INTO service_providers (name, description_pt, description_en) VALUES ('Whatsapp Evolution', 'Conexão via Evolution API para WhatsApp', 'Connection via Evolution API for WhatsApp');
+INSERT INTO service_providers (name, description_pt, description_en) VALUES ('Google Calendar', 'Aplicação de integração com Google Calendar', 'Google Calendar integration application');
 
 -- Criação de dados para a tabela plan
 INSERT INTO plans (name, description, price_month, price_year, active) VALUES ('Starter', 'Description for Basic Plan', 49.00, 490.00, TRUE);

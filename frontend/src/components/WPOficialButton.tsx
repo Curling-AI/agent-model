@@ -1,8 +1,6 @@
-import React, { ButtonHTMLAttributes, ReactNode, useEffect, useCallback } from 'react'
-import styles from './WPOficialButton.module.css'
+import{ ButtonHTMLAttributes, useEffect, useCallback } from 'react'
 import { FacebookAccessToken } from '@/types/facebook'
-import { useAnimation } from '@/context/AnimationContext'
-import { useIntegrationsStore } from '@/store/integrations'
+import { useIntegrationStore } from '@/store/integration'
 
 // Declaração de tipo global para a variável FB do SDK do Facebook
 declare global {
@@ -37,13 +35,7 @@ interface WhatsAppSignupButtonProps extends ButtonHTMLAttributes<HTMLButtonEleme
   graphApiVersion: string
   configurationId: string
   featureType: string
-  children: ReactNode
-  variant?: 'primary' | 'secondary' | 'tertiary' | 'danger' | 'success' | 'warning'
-  size?: 'small' | 'medium' | 'large'
-  stretch?: boolean
-  icon?: ReactNode
-  iconPosition?: 'left' | 'right'
-  disabled?: boolean
+  visible?: boolean
   onLoginSuccess?: (data: FacebookAccessToken) => void
 }
 
@@ -66,53 +58,16 @@ let facebookAccessToken: FacebookAccessToken = {
   waba_id: '',
 }
 
-const WhatsAppSignupButton: React.FC<WhatsAppSignupButtonProps> = ({
+const WPOficialButton: React.FC<WhatsAppSignupButtonProps> = ({
   appId,
   graphApiVersion,
   configurationId,
   featureType,
-  children,
-  variant = 'primary',
-  size = 'medium',
-  stretch = false,
-  icon,
-  iconPosition = 'left',
-  disabled = false,
-  className = '',
+  visible = true,
   onLoginSuccess = () => {},
   ...props
 }) => {
-  const { shouldReduceMotion } = useAnimation()
-
-  // Mapeamento de variantes para classes CSS
-  const variantClassMap = {
-    primary: styles.primary,
-    secondary: styles.secondary,
-    tertiary: styles.tertiary,
-    danger: styles.danger,
-    success: styles.success,
-    warning: styles.warning,
-  }
-
-  // Mapeamento de tamanhos para classes CSS
-  const sizeClassMap = {
-    small: styles.small,
-    medium: styles.medium,
-    large: styles.large,
-  }
-
-  // Criação da classe combinada
-  const combinedClassName = `
-    ${styles.button}
-    ${variantClassMap[variant]}
-    ${sizeClassMap[size]}
-    ${stretch ? styles.stretch : ''}
-    ${disabled ? styles.disabled : ''}
-    ${shouldReduceMotion ? styles.reducedMotion : ''}
-    ${className}
-  `.trim()
-
-  const { getFacebookAccessToken } = useIntegrationsStore()
+  const { getFacebookAccessToken } = useIntegrationStore()
 
   const fbLoginCallback = useCallback(
     (response: FacebookLoginResponse) => {
@@ -162,7 +117,6 @@ const WhatsAppSignupButton: React.FC<WhatsAppSignupButtonProps> = ({
   }, [fbLoginCallback, configurationId, featureType])
 
   useEffect(() => {
-    // Função para carregar o SDK do Facebook
     const loadFacebookSDK = () => {
       if (document.getElementById('facebook-jssdk')) {
         return // SDK já carregado
@@ -219,18 +173,12 @@ const WhatsAppSignupButton: React.FC<WhatsAppSignupButtonProps> = ({
   }, [appId, graphApiVersion])
 
   return (
-    <button
-      className={combinedClassName}
-      disabled={disabled}
+    <button style={{ visibility: visible ? 'visible' : 'hidden' }}
       data-apple-button
       {...props}
       onClick={launchWhatsAppSignup}
-    >
-      {icon && iconPosition === 'left' && <span className={styles.iconLeft}>{icon}</span>}
-      <span className={styles.label}>{children}</span>
-      {icon && iconPosition === 'right' && <span className={styles.iconRight}>{icon}</span>}
-    </button>
+    />
   )
 }
 
-export default WhatsAppSignupButton
+export default WPOficialButton

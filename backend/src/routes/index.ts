@@ -8,6 +8,8 @@ import documentRoutes from './document-routes';
 import knowledgeRoutes from './knowledge-routes';
 import systemRoutes from './system-param-routes';
 import followUpRoutes from './follow-up-routes';
+import integrationRoutes from './integration-routes';
+import facebookRoutes from './facebook-routes';
 
 const router = Router();
 
@@ -20,5 +22,7 @@ router.use('/documents', documentRoutes);
 router.use('/knowledge', knowledgeRoutes);
 router.use('/follow-ups', followUpRoutes);
 router.use('/system-params', systemRoutes);
+router.use('/integrations', integrationRoutes);
+router.use('/facebook', facebookRoutes);
 
 export default router;
