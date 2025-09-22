@@ -1,12 +1,13 @@
 import { create } from 'zustand';
 import { FacebookAccessToken } from "@/types/facebook";
 import { Integration } from '@/types/integration';
+import { BASE_URL } from '@/utils/constants';
 
 interface IntegrationState {
   integrations: Integration[];
   fetchIntegrations: (agentId: number) => Promise<void>;
   upsertIntegration: (integration: Partial<Integration>) => Promise<any>;
-  deleteIntegration: (id: number) => Promise<void>;
+  deleteIntegration: (agentId: number, channelId: number) => Promise<void>;
   getFacebookAccessToken: (code: string) => Promise<{ success: boolean; error?: string; data?: FacebookAccessToken }>;
   subscribeFacebookApp: (data: FacebookAccessToken) => Promise<{ success: boolean; error?: string }>;
   registerFacebookNumber: (phoneNumberId: string, facebookAccessToken: string) => Promise<{ success: boolean; error?: string }>;
@@ -16,15 +17,16 @@ export const useIntegrationStore = create<IntegrationState>((set, get) => ({
   integrations: [],
 
   fetchIntegrations: async (agentId: number) => {
-    const res = await fetch(`/api/integrations/agent/${agentId}`);
+    const res = await fetch(`${BASE_URL}/api/integrations?agentId=${agentId}`);
     if (res.ok) {
       const data = await res.json();
-      set({ integrations: data });
+      
+      set({ integrations: data.map((item: any) => mapToIntegration(item)) } );
     }
   },
 
   upsertIntegration: async (integration) => {
-    const res = await fetch('/api/integrations', {
+    const res = await fetch(`${BASE_URL}/api/integrations`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(integration),
@@ -45,37 +47,45 @@ export const useIntegrationStore = create<IntegrationState>((set, get) => ({
     }
   },
 
-  deleteIntegration: async (id) => {
-    const res = await fetch(`/api/integrations/${id}`, { method: 'DELETE' });
+  deleteIntegration: async (agentId: number, serviceProviderId: number) => {
+    const res = await fetch(`${BASE_URL}/api/integrations?agentId=${agentId}&serviceProviderId=${serviceProviderId}`, { method: 'DELETE' });
     if (res.ok) {
       set((state) => ({
-        integrations: state.integrations.filter(i => i.id !== id),
+        integrations: state.integrations.filter(i => i.serviceProviderId !== serviceProviderId && i.agentId !== agentId),
       }));
     }
   },
 
   getFacebookAccessToken: async (code: string) => {
-    const res = await fetch('/api/facebook/access-token', {
-      method: 'POST',
+    const res = await fetch(`${BASE_URL}/api/facebook/access-token?code=${code}`, {
+      method: 'GET',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code }),
     });
     if (!res.ok) throw new Error('Erro ao obter access token');
-    return res.json();
+    const data = await res.json();
+    if (data.error) {
+      return { success: false, error: data.error.message };
+    }
+    return { success: true, data };
   },
 
   subscribeFacebookApp: async (data: FacebookAccessToken) => {
-    const res = await fetch('/api/facebook/subscribe-app', {
+    const res = await fetch(`${BASE_URL}/api/facebook/subscribe-app`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ accessToken: data.access_token, wabaId: data.waba_id }),
     });
     if (!res.ok) throw new Error('Erro ao subscrever app');
-    return res.json();
+
+    const result = await res.json();
+    if (result.error) {
+      return { success: false, error: result.error.message };
+    }
+    return { success: true };
   },
 
   registerFacebookNumber: async (phoneNumberId: string, facebookAccessToken: string) => {
-    const res = await fetch('/api/facebook/register-number', {
+    const res = await fetch(`${BASE_URL}/api/facebook/register-number`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ phoneNumberId, facebookAccessToken }),
@@ -84,3 +94,12 @@ export const useIntegrationStore = create<IntegrationState>((set, get) => ({
     return res.json();
   }
 }));
+
+function mapToIntegration(data: any): Integration {
+  return {
+    id: data.id,
+    agentId: data.agent_id ?? data.agentId,
+    serviceProviderId: data.service_provider_id ?? data.serviceProviderId,
+    metadata: data.metadata,
+  };
+}

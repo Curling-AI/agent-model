@@ -3,13 +3,13 @@ import { Request, Response } from 'express';
 export const FacebookController = {
   // Obtém um access token do Facebook
   async getAccessToken(req: Request, res: Response) {
-    const { code } = req.body;
+    const { code } = req.query;
     if (!code) {
       return res.status(400).json({ error: 'code is required' });
     }
     try {
       const params = new URLSearchParams({
-        code,
+        code: code as string,
         client_id: process.env.FACEBOOK_APP_ID || '',
         client_secret: process.env.FACEBOOK_APP_SECRET || '',
         grant_type: 'authorization_code',
@@ -21,6 +21,7 @@ export const FacebookController = {
         },
       )
       const data = await response.json()
+  
       res.status(response.status).json(data)
     } catch (error) {
       console.error('Error fetching Facebook access token:', error)
@@ -30,7 +31,6 @@ export const FacebookController = {
 
   async subscribeApp(req: Request, res: Response) {
     try {
-      console.log('Subscribing apps with access token:', req.body)
       const { accessToken, wabaId } = req.body as { accessToken: string; wabaId: string }
 
       const response = await fetch(
@@ -53,9 +53,9 @@ export const FacebookController = {
   // Registra o número do WhatsApp Business
   async registerNumber(req: Request, res: Response) {
     try {
-      const { phoneNumberId, accessToken } = req.body as {
+      const { phoneNumberId, facebookAccessToken } = req.body as {
         phoneNumberId: string
-        accessToken: string
+        facebookAccessToken: string
       }
 
       const response = await fetch(
@@ -63,7 +63,7 @@ export const FacebookController = {
         {
           method: 'POST',
           headers: {
-            Authorization: `Bearer ${accessToken}`,
+            Authorization: `Bearer ${facebookAccessToken}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({ messaging_product: 'whatsapp', pin: '123456' }),

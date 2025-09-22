@@ -1,11 +1,11 @@
 import { Request, Response } from 'express';
-import { upsert, getByAgentId, remove, getById, getByFilter } from '@/services/storage';
+import { upsert, getByAgentId, remove, getById, getByFilter, removeWithFilter } from '@/services/storage';
 
 export const IntegrationController = {
   // Upsert (cria ou atualiza uma integração)
   async upsert(req: Request, res: Response) {
     try {
-      const integration = await upsert('integrations', { ...req.body });
+      const integration = await upsert('integrations', { agent_id: req.body.agentId, service_provider_id: req.body.serviceProviderId, metadata: req.body.metadata });
       res.status(201).json(integration);
     } catch (err: any) {
       return res.status(500).json({ error: 'Failed to upsert integration', details: err.message });
@@ -14,9 +14,10 @@ export const IntegrationController = {
 
   // Delete uma integração pelo id
   async delete(req: Request, res: Response) {
-    const integration = getById('integrations', Number(req.params.id));
-    if (!integration) return res.status(404).json({ error: 'Integration not found' });
-    remove('integrations', Number(req.params.id));
+    const integrations = await getByFilter('integrations', { service_provider_id: Number(req.query.serviceProviderId), agent_id: Number(req.query.agentId) });
+    
+    if (!integrations) return res.status(404).json({ error: 'Integration not found' });
+    await removeWithFilter('integrations', { agent_id: Number(req.query.agentId), service_provider_id: Number(req.query.serviceProviderId) });
     res.status(204).send();
   },
 

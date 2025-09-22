@@ -157,6 +157,7 @@ const WPOficialButton: React.FC<WhatsAppSignupButtonProps> = ({
             facebookAccessToken.phone_number_id = phone_number_id
             facebookAccessToken.waba_id = waba_id
             facebookAccessToken.business_id = business_id
+            
           } else if (data.event === 'ERROR') {
             const { error_message } = data.data
             console.error('error ', error_message)
@@ -166,10 +167,6 @@ const WPOficialButton: React.FC<WhatsAppSignupButtonProps> = ({
     }
 
     window.addEventListener('message', handleMessageEvent)
-
-    return () => {
-      window.removeEventListener('message', handleMessageEvent)
-    }
   }, [appId, graphApiVersion])
 
   return (

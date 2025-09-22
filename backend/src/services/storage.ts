@@ -60,6 +60,11 @@ export async function removeWithAgentId(table: string, agentId: number): Promise
   if (error) throw error;
 }
 
+export async function removeWithFilter<T>(table: string, filter: Partial<T>): Promise<void> {
+  const { error } = await supabase.from(table).delete().match(filter);
+  if (error) throw error;
+}
+
 // Upsert (criar ou atualizar) um registro
 export async function upsert<T>(table: string, payload: Partial<T>): Promise<T> {
   const { data, error } = await supabase.from(table).upsert([payload]).select().single();

@@ -12,47 +12,28 @@ const NewAgentChannel: React.FC = () => {
   const t = useTranslation(language);
   const { serviceProviders, fetchServiceProviders } = useSystemStore();
   const { agent } = useAgentStore();
-  const { subscribeFacebookApp, registerFacebookNumber, upsertIntegration } = useIntegrationStore();
-
-  const isConnected = true;
+  const { subscribeFacebookApp, registerFacebookNumber, upsertIntegration, deleteIntegration } = useIntegrationStore();
+  const { integrations, fetchIntegrations } = useIntegrationStore();
 
   useEffect(() => {
     fetchServiceProviders();
-  }, [fetchServiceProviders]);
+    fetchIntegrations(agent.id);
+  }, [fetchServiceProviders, fetchIntegrations, agent.id]);
 
   const connectChannel = (channelId: number) => {
-    // Simular processo de conexão
-    console.log(`Conectando ${channelId}...`);
-
-    // Atualizar status do canal
-    // setAgentData(prev => ({
-    //   ...prev,
-    //   channels: [...prev.channels, channelId]
-    // }));
-
-    // Simular delay de conexão
-    // setTimeout(() => {
-    //   alert(`${channelOptions.find(c => c.id === channelId)?.name} ${t.channelConnected}`);
-    // }, 2000);
+    if (channelId === 1) {
+      document.getElementById('whatsapp-oficial-button')?.click();
+      return;
+    }
+    
   };
 
   const disconnectChannel = (channelId: number) => {
-    // Simular processo de desconexão
-    console.log(`Desconectando ${channelId}...`);
-
-    // Remover canal da lista
-    // setAgentData(prev => ({
-    //   ...prev,
-    //   channels: prev.channels.filter(c => c !== channelId)
-    // }));
-
-    // Simular delay de desconexão
-    // setTimeout(() => {
-    //   alert(`${channelOptions.find(c => c.id === channelId)?.name} ${t.channelDisconnected}`);
-    // }, 1000);
+    deleteIntegration(agent.id,channelId);
   };
 
   const handleConnectWhatsappOficial = async (data: FacebookAccessToken) => {
+    console.log('Facebook Access Token recebido:', data)
     await subscribeFacebookApp(data)
 
     const result = await upsertIntegration({
@@ -73,6 +54,7 @@ const NewAgentChannel: React.FC = () => {
     } else {
       const result = await registerFacebookNumber(data.phone_number_id, data.access_token)
       console.log('Número do WhatsApp Oficial registrado com sucesso:', result)
+      fetchIntegrations(agent.id);
     }
   }
 
@@ -82,7 +64,7 @@ const NewAgentChannel: React.FC = () => {
 
       <div className="grid md:grid-cols-2 gap-6">
         {serviceProviders.map(channel => {
-          // const isConnected = agent.serviceProviders.includes(channel);
+          const isConnected = integrations.some(i => i.serviceProviderId === channel.id && i.agentId === agent.id);
 
           return (
             <div key={channel.id} className="card bg-base-200 hover:bg-base-300 transition-colors">
@@ -121,16 +103,17 @@ const NewAgentChannel: React.FC = () => {
                 { 
                    channel.id === 1 ? (
                       <WPOficialButton
+                        id="whatsapp-oficial-button"
                         visible={false}
-                        appId={process.env.NEXT_PUBLIC_FACEBOOK_APP_ID || ''}
-                        graphApiVersion={process.env.NEXT_PUBLIC_FACEBOOK_GRAPH_API_VERSION || ''}
-                        configurationId={process.env.NEXT_PUBLIC_FACEBOOK_CONFIGURATION_ID || ''}
-                        featureType={process.env.NEXT_PUBLIC_FACEBOOK_FEATURE_TYPE || ''}
+                        appId={import.meta.env.VITE_FACEBOOK_APP_ID || ''}
+                        graphApiVersion={import.meta.env.VITE_FACEBOOK_GRAPH_API_VERSION || ''}
+                        configurationId={import.meta.env.VITE_FACEBOOK_CONFIGURATION_ID || ''}
+                        featureType={import.meta.env.VITE_FACEBOOK_FEATURE_TYPE || ''}
                         onLoginSuccess={handleConnectWhatsappOficial}
                       />
                 ) : null}
 
-                {false ? (
+                {isConnected ? (
                   <button
                     onClick={() => disconnectChannel(channel.id)}
                     className="btn btn-outline btn-error w-full"

@@ -5,6 +5,6 @@ const router = Router();
 
 router.get('/', IntegrationController.list);
 router.post('/', IntegrationController.upsert);
-router.delete('/:id', IntegrationController.delete);
+router.delete('/', IntegrationController.delete);
 
 export default router;
