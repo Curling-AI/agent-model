@@ -2,10 +2,12 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useAgentStore } from "@/store/agent";
 import { useSystemStore } from "@/store/system";
 import { useTranslation } from "@/translations";
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import WPOficialButton from "@/components/WPOficialButton";
 import { FacebookAccessToken } from "@/types/facebook";
 import { useIntegrationStore } from "@/store/integration";
+import * as Dialog from '@radix-ui/react-dialog'
+import modalStyles from '../modal/Modal.module.css'
 
 const NewAgentChannel: React.FC = () => {
   const language = useLanguage();
@@ -13,27 +15,71 @@ const NewAgentChannel: React.FC = () => {
   const { serviceProviders, fetchServiceProviders } = useSystemStore();
   const { agent } = useAgentStore();
   const { subscribeFacebookApp, registerFacebookNumber, upsertIntegration, deleteIntegration } = useIntegrationStore();
-  const { integrations, fetchIntegrations } = useIntegrationStore();
+  const { integrations, fetchIntegrations, getZapiInstance, getZapiQrCode } = useIntegrationStore();
+  const wppConnectionMonitorRef = useRef<NodeJS.Timeout | null>(null)
+  const [isWhatsappModalOpen, setIsWhatsappModalOpen] = useState(true)
+  const [qrcode, setQrcode] = useState<string | null>(null)
 
   useEffect(() => {
     fetchServiceProviders();
     fetchIntegrations(agent.id);
   }, [fetchServiceProviders, fetchIntegrations, agent.id]);
 
-  const connectChannel = (channelId: number) => {
+  const connectChannel = async (channelId: number) => {
     if (channelId === 1) {
       document.getElementById('whatsapp-oficial-button')?.click();
       return;
+    } else if (channelId === 2) {
+      const instance = await getZapiInstance();
+
+      if (instance) {
+        await upsertIntegration({
+          agentId: agent.id,
+          serviceProviderId: 2,
+          metadata: {
+            ...instance
+          }
+        });
+
+        generateWhatsappQrCode();
+      }
+      return;
     }
-    
   };
 
+  const generateWhatsappQrCode = () => {
+    setIsWhatsappModalOpen(true)
+
+    const checkWhatsappConnection = async () => {
+
+      const result = await getZapiQrCode();
+
+      if (!result.data) {
+        setIsWhatsappModalOpen(false)
+      } else {
+        wppConnectionMonitorRef.current = setTimeout(checkWhatsappConnection, 5000)
+      }
+      setQrcode(result.data.qrCode)
+      fetchIntegrations(agent.id);
+      return;
+    }
+
+    wppConnectionMonitorRef.current = setTimeout(checkWhatsappConnection, 3000)
+  }
+
+  const handleWhatsappModalClose = () => {
+    setIsWhatsappModalOpen(false)
+
+    if (wppConnectionMonitorRef.current) {
+      clearTimeout(wppConnectionMonitorRef.current)
+    }
+  }
+
   const disconnectChannel = (channelId: number) => {
-    deleteIntegration(agent.id,channelId);
+    deleteIntegration(agent.id, channelId);
   };
 
   const handleConnectWhatsappOficial = async (data: FacebookAccessToken) => {
-    console.log('Facebook Access Token recebido:', data)
     await subscribeFacebookApp(data)
 
     const result = await upsertIntegration({
@@ -75,7 +121,7 @@ const NewAgentChannel: React.FC = () => {
                       }`} style={{
                         minWidth: '48px',
                         minHeight: '48px',
-                        backgroundColor: channel.id > 2  ? '#4884e4' : undefined
+                        backgroundColor: channel.id > 2 ? '#4884e4' : undefined
                       }}>
                       {channel.id > 2 ? (
                         <img
@@ -96,22 +142,22 @@ const NewAgentChannel: React.FC = () => {
                     </div>
                   </div>
                   <div className={`badge ${isConnected ? 'badge-success' : 'badge-neutral'}`}>
-                            {isConnected ? t.connected : t.disconnected}
-                          </div>
+                    {isConnected ? t.connected : t.disconnected}
+                  </div>
                 </div>
 
-                { 
-                   channel.id === 1 ? (
-                      <WPOficialButton
-                        id="whatsapp-oficial-button"
-                        visible={false}
-                        appId={import.meta.env.VITE_FACEBOOK_APP_ID || ''}
-                        graphApiVersion={import.meta.env.VITE_FACEBOOK_GRAPH_API_VERSION || ''}
-                        configurationId={import.meta.env.VITE_FACEBOOK_CONFIGURATION_ID || ''}
-                        featureType={import.meta.env.VITE_FACEBOOK_FEATURE_TYPE || ''}
-                        onLoginSuccess={handleConnectWhatsappOficial}
-                      />
-                ) : null}
+                {
+                  channel.id === 1 ? (
+                    <WPOficialButton
+                      id="whatsapp-oficial-button"
+                      visible={false}
+                      appId={import.meta.env.VITE_FACEBOOK_APP_ID || ''}
+                      graphApiVersion={import.meta.env.VITE_FACEBOOK_GRAPH_API_VERSION || ''}
+                      configurationId={import.meta.env.VITE_FACEBOOK_CONFIGURATION_ID || ''}
+                      featureType={import.meta.env.VITE_FACEBOOK_FEATURE_TYPE || ''}
+                      onLoginSuccess={handleConnectWhatsappOficial}
+                    />
+                  ) : null}
 
                 {isConnected ? (
                   <button
@@ -121,7 +167,7 @@ const NewAgentChannel: React.FC = () => {
                     {t.disconnect}
                   </button>
                 ) : (
-                  
+
                   <button
                     onClick={() => connectChannel(channel.id)}
                     className="btn btn-primary w-full"
@@ -134,6 +180,41 @@ const NewAgentChannel: React.FC = () => {
           );
         })}
       </div>
+      {isWhatsappModalOpen && (
+        <Dialog.Root open={isWhatsappModalOpen} onOpenChange={(open) => {
+          setIsWhatsappModalOpen(open);
+          if (!open) {
+            handleWhatsappModalClose();
+          }
+        }}>
+          <Dialog.Portal>
+            <Dialog.Overlay className={modalStyles.dialogOverlay} />
+            <Dialog.Content className={modalStyles.dialogContent}>
+              <Dialog.Title className={modalStyles.dialogTitle}>Conecte ao WhatsApp</Dialog.Title>
+              <Dialog.Description className={modalStyles.dialogDescription}>
+                Escaneie o QR Code com seu WhatsApp para conectar
+              </Dialog.Description>
+
+              <div className={modalStyles.qrcodeContainer}>
+                <img
+                  src={qrcode!}
+                  alt="QR Code"
+                  width={348}
+                  height={348}
+                />
+              </div>
+
+              <div className={modalStyles.dialogActions}>
+                <Dialog.Close asChild>
+                  <button className={modalStyles.cancelButton} onClick={handleWhatsappModalClose}>
+                    Fechar
+                  </button>
+                </Dialog.Close>
+              </div>
+            </Dialog.Content>
+          </Dialog.Portal>
+        </Dialog.Root>
+      )}
     </div>
   )
 }

@@ -10,6 +10,7 @@ import systemRoutes from './system-param-routes';
 import followUpRoutes from './follow-up-routes';
 import integrationRoutes from './integration-routes';
 import facebookRoutes from './facebook-routes';
+import zapiRoutes from './zapi-routes';
 
 const router = Router();
 
@@ -24,5 +25,6 @@ router.use('/follow-ups', followUpRoutes);
 router.use('/system-params', systemRoutes);
 router.use('/integrations', integrationRoutes);
 router.use('/facebook', facebookRoutes);
+router.use('/zapi', zapiRoutes);
 
 export default router;

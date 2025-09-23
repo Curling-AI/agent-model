@@ -11,9 +11,11 @@ interface IntegrationState {
   getFacebookAccessToken: (code: string) => Promise<{ success: boolean; error?: string; data?: FacebookAccessToken }>;
   subscribeFacebookApp: (data: FacebookAccessToken) => Promise<{ success: boolean; error?: string }>;
   registerFacebookNumber: (phoneNumberId: string, facebookAccessToken: string) => Promise<{ success: boolean; error?: string }>;
+  getZapiInstance: () => Promise<any>;
+  getZapiQrCode: () => Promise<any>;
 }
 
-export const useIntegrationStore = create<IntegrationState>((set, get) => ({
+export const useIntegrationStore = create<IntegrationState>((set) => ({
   integrations: [],
 
   fetchIntegrations: async (agentId: number) => {
@@ -92,6 +94,27 @@ export const useIntegrationStore = create<IntegrationState>((set, get) => ({
     });
     if (!res.ok) throw new Error('Erro ao registrar número');
     return res.json();
+  },
+
+  getZapiInstance: async () => {
+    const res = await fetch(`${BASE_URL}/api/zapi/instance`, {
+      method: 'GET',
+    });
+    if (!res.ok) throw new Error('Erro ao obter instância Zapi');
+    return res.json();
+  },
+
+  getZapiQrCode: async () => {
+    const res = await fetch(`${BASE_URL}/api/zapi/qrcode`, {
+      method: 'GET',
+    });
+    if (!res.ok) throw new Error('Erro ao obter QR Code Zapi');
+
+    const data = await res.json();
+    if (data.error) {
+      return { success: false, error: data.error.message };
+    }
+    return { success: true, data };
   }
 }));
 
