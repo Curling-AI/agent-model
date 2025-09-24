@@ -1,7 +1,10 @@
 @import "tailwindcss";
 @plugin "daisyui";
+@layer base, components, utilities;
 
 :root[data-theme="light"] {
+  --suc: 206 61% 91%; 
+  --su: 199 72% 48%;
   --background: #ffffff;
   --color-primary: #229ad2;
   --color-primary-focus: #1e87b8;
@@ -22,7 +25,10 @@
   --color-info: #229ad2;             
   --color-success: #229ad2;             
   --color-warning: #6b7280;           
-  --color-error: #229ad2;             
+  --color-error: #229ad2;  
+  --color-error-content: #ffffff;   
+  --fg: #ffffff;        
+  --bg: #229ad2;
 }
 
 :root[data-theme="dark"] {
@@ -47,6 +53,9 @@
   --color-success: #3ba8e0;
   --color-warning: #9ca3af;
   --color-error: #3ba8e0;
+  --color-error-content: #111827;
+  --fg: #111827;
+  --bg: #229ad2;
 }
 
 @layer base {
@@ -60,6 +69,34 @@
 }
 
 @layer components {
+  .label-display {
+    display: flex !important;
+  }
+
+  .label-medium-custom {
+    font-weight: 500 !important;
+    color: var(--color-secondary-content) !important;
+    padding-left: 2px !important;
+    padding-bottom: 6px !important;
+  }
+
+  .bg-opacity-custom {
+    background-color: rgba(0, 0, 0, 0.6) !important;
+  }
+
+  .badge-success-custom {
+    border-color: transparent;
+    --tw-bg-opacity: 1;
+    background-color: var(--bg)!important;
+    --tw-text-opacity: 1;
+    color: var(--fg)!important;
+  }
+
+  .btn-error {
+    --btn-color: var(--color-error);
+    --btn-fg: var(--color-error-content);
+  }
+
   .sidebar-transition {
     @apply transition-all duration-300 ease-in-out;
   }

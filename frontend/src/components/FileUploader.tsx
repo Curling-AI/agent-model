@@ -140,7 +140,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({
         disabled={isLoading}
       />
       <label className="label">
-        <span className="label-text font-medium">{t.documents}</span>
+        <span className="label-text label-medium-custom">{t.documents}</span>
       </label>
       <div className="border-2 border-dashed border-base-300 rounded-lg p-8 text-center">
         <Upload className="w-12 h-12 mx-auto text-neutral mb-4" />

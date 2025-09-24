@@ -19,7 +19,6 @@ import NewAgentBehavior from '@/components/agent/NewAgentBehavior';
 import NewAgentKnowledge from '@/components/agent/NewAgentKnowledge';
 import NewAgentFollowUp from '@/components/agent/NewAgentFollowUp';
 import NewAgentChannel from '@/components/agent/NewAgentChannel';
-import { useDocumentStore } from '@/store/document';
 
 const CreateAgent: React.FC = () => {
   const navigate = useNavigate();
@@ -28,7 +27,6 @@ const CreateAgent: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(1);
 
   const { agent, createOrUpdateAgent } = useAgentStore();
-  const { saveDocuments } = useDocumentStore();
   const steps = [
     { id: 1, name: t.personality, icon: User },
     { id: 2, name: t.behavior, icon: Brain },
@@ -134,6 +132,7 @@ const CreateAgent: React.FC = () => {
           onClick={prevStep}
           disabled={currentStep === 1}
           className="btn btn-sm btn-ghost"
+          style={{ textTransform: 'uppercase' }}
         >
           <ChevronLeft className="w-4 h-4 mr-1" />
           {t.previous}
@@ -144,7 +143,7 @@ const CreateAgent: React.FC = () => {
         </div>
 
         {currentStep === steps.length ? (
-          <button onClick={handleSubmit} className="btn btn-sm btn-primary">
+          <button onClick={handleSubmit} className="btn btn-sm btn-primary" style={{ textTransform: 'uppercase' }}>
             <Check className="w-4 h-4 mr-1" />
             {t.createAgent}
           </button>
@@ -159,7 +158,7 @@ const CreateAgent: React.FC = () => {
                 break;
             }
             nextStep();
-          }} className="btn btn-sm btn-primary">
+          }} className="btn btn-sm btn-primary" style={{ textTransform: 'uppercase' }}>
             {t.next}
             <ChevronRight className="w-4 h-4 ml-1" />
           </button>

@@ -69,7 +69,7 @@ const YoutubeInput: React.FC = () => {
   return (
     <div>
         <label className="label">
-          <span className="label-text font-medium">{t.youtubeVideos}</span>
+          <span className="label-text label-medium-custom">{t.youtubeVideos}</span>
         </label>
         <p className="text-sm text-neutral mb-4">{t.youtubeVideosDesc}</p>
 

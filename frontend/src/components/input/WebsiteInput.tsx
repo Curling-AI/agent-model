@@ -70,7 +70,7 @@ const WebsiteInput: React.FC = () => {
   return (
     <div>
       <label className="label">
-        <span className="label-text font-medium">{t.websiteUrl}</span>
+        <span className="label-text label-medium-custom">{t.websiteUrl}</span>
       </label>
       <div className="flex space-x-3">
         <input
@@ -95,7 +95,7 @@ const WebsiteInput: React.FC = () => {
           )}
         </button>
       </div>
-      <div className="label">
+      <div className="label" style={{marginTop: '8px', marginLeft: '2px'}}>
         <span className="label-text-alt">{t.analyzeSiteHelp}</span>
       </div>
 

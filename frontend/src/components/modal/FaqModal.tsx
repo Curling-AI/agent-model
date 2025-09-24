@@ -37,7 +37,7 @@ const FaqModal: React.FC<FaqModalProps> = ({ isOpen, onClose, document }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black  flex items-center justify-center z-50 p-4 bg-opacity-custom">
       <div className="bg-base-100 rounded-2xl w-full max-w-2xl">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-base-300">
@@ -51,42 +51,45 @@ const FaqModal: React.FC<FaqModalProps> = ({ isOpen, onClose, document }) => {
         </div>
 
         {/* Content */}
-        <div>
-          <label className="label">
-            <span className="label-text font-medium">{t.question}</span>
-          </label>
-          <input
-            type="text"
-            placeholder={t.questionPlaceholder}
-            className="input input-bordered w-full"
-            value={faqDocument.name}
-            onChange={(e) => setFaqDocument(prev => ({ ...prev, name: e.target.value }))}
-            required
-          />
-        </div>
+        <div className="p-6 space-y-4">
+          <div>
+            <label className="label">
+              <span className="label-text label-medium-custom">{t.question}</span>
+            </label>
+            <input
+              type="text"
+              placeholder={t.questionPlaceholder}
+              className="input input-bordered w-full"
+              value={faqDocument.name}
+              onChange={(e) => setFaqDocument(prev => ({ ...prev, name: e.target.value }))}
+              required
+            />
+          </div>
 
-        <div>
-          <label className="label">
-            <span className="label-text font-medium">{t.answer}</span>
-          </label>
-          <textarea
-            placeholder={t.answerPlaceholder}
-            className="textarea textarea-bordered w-full h-32"
-            value={faqDocument.content}
-            onChange={(e) => setFaqDocument(prev => ({ ...prev, content: e.target.value }))}
-            required
-          />
+          <div>
+            <label className="label">
+              <span className="label-text label-medium-custom">{t.answer}</span>
+            </label>
+            <textarea
+              placeholder={t.answerPlaceholder}
+              className="textarea textarea-bordered w-full h-32"
+              value={faqDocument.content}
+              onChange={(e) => setFaqDocument(prev => ({ ...prev, content: e.target.value }))}
+              required
+            />
+          </div>
         </div>
 
         {/* Footer */}
         <div className="flex items-center justify-end space-x-3 p-6 border-t border-base-300">
-          <button onClick={handleClose} className="btn btn-ghost">
+          <button onClick={handleClose} className="btn btn-ghost" style={{ textTransform: 'uppercase' }}>
             {t.cancel}
           </button>
           <button
             onClick={handleSubmit}
             disabled={!faqDocument.name.trim() || !faqDocument.content!.trim()}
             className="btn btn-primary"
+            style={{ textTransform: 'uppercase' }}
           >
             {faqDocument.id !== 0 ? t.update : t.add}
           </button>

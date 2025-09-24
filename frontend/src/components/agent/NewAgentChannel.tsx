@@ -17,7 +17,7 @@ const NewAgentChannel: React.FC = () => {
   const { subscribeFacebookApp, registerFacebookNumber, upsertIntegration, deleteIntegration } = useIntegrationStore();
   const { integrations, fetchIntegrations, getZapiInstance, getZapiQrCode } = useIntegrationStore();
   const wppConnectionMonitorRef = useRef<NodeJS.Timeout | null>(null)
-  const [isWhatsappModalOpen, setIsWhatsappModalOpen] = useState(true)
+  const [isWhatsappModalOpen, setIsWhatsappModalOpen] = useState(false)
   const [qrcode, setQrcode] = useState<string | null>(null)
 
   useEffect(() => {
@@ -141,7 +141,7 @@ const NewAgentChannel: React.FC = () => {
                       <p className="text-sm text-neutral mt-1">{channel.description_pt}</p>
                     </div>
                   </div>
-                  <div className={`badge ${isConnected ? 'badge-success' : 'badge-neutral'}`}>
+                  <div className={`badge ${isConnected ? 'badge-success-custom' : 'badge-neutral'}`}>
                     {isConnected ? t.connected : t.disconnected}
                   </div>
                 </div>
@@ -163,6 +163,7 @@ const NewAgentChannel: React.FC = () => {
                   <button
                     onClick={() => disconnectChannel(channel.id)}
                     className="btn btn-outline btn-error w-full"
+                    style={{ textTransform: 'uppercase' }}
                   >
                     {t.disconnect}
                   </button>
@@ -171,6 +172,7 @@ const NewAgentChannel: React.FC = () => {
                   <button
                     onClick={() => connectChannel(channel.id)}
                     className="btn btn-primary w-full"
+                    style={{ textTransform: 'uppercase' }}
                   >
                     {t.connect}
                   </button>
@@ -190,9 +192,9 @@ const NewAgentChannel: React.FC = () => {
           <Dialog.Portal>
             <Dialog.Overlay className={modalStyles.dialogOverlay} />
             <Dialog.Content className={modalStyles.dialogContent}>
-              <Dialog.Title className={modalStyles.dialogTitle}>Conecte ao WhatsApp</Dialog.Title>
+              <Dialog.Title className={modalStyles.dialogTitle}>{t.connectWhatsApp}</Dialog.Title>
               <Dialog.Description className={modalStyles.dialogDescription}>
-                Escaneie o QR Code com seu WhatsApp para conectar
+                {t.scanQrCodeToConnect}
               </Dialog.Description>
 
               <div className={modalStyles.qrcodeContainer}>
@@ -206,8 +208,8 @@ const NewAgentChannel: React.FC = () => {
 
               <div className={modalStyles.dialogActions}>
                 <Dialog.Close asChild>
-                  <button className={modalStyles.cancelButton} onClick={handleWhatsappModalClose}>
-                    Fechar
+                  <button className={modalStyles.cancelButton} onClick={handleWhatsappModalClose} style={{ textTransform: 'uppercase' }}>
+                    {t.close}
                   </button>
                 </Dialog.Close>
               </div>

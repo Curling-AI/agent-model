@@ -14,12 +14,13 @@ const FaqInput: React.FC<FaqInputProps> = ({ onClick }) => {
   return (
     <div>
       <label className="label">
-        <span className="label-text font-medium">{t.faqs}</span>
+        <span className="label-text label-medium-custom">{t.faqs}</span>
       </label>
       <div className="space-y-3">
         <button
           onClick={onClick}
           className="btn btn-outline btn-sm"
+          style={{ textTransform: 'uppercase' }}
         >
           <Plus className="w-4 h-4 mr-2" />
           {t.addFaq}

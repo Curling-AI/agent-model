@@ -170,7 +170,7 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, followUp
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 flex items-center justify-center z-50 p-4 bg-opacity-custom">
       <div className="bg-base-100 rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-base-300">
@@ -188,7 +188,7 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, followUp
           <div className="grid md:grid-cols-2 gap-6">
             <div>
               <label className="label">
-                <span className="label-text font-medium">{t.sequenceName}</span>
+                <span className="label-text label-medium-custom">{t.sequenceName}</span>
               </label>
               <input
                 type="text"
@@ -202,7 +202,7 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, followUp
 
             <div>
               <label className="label">
-                <span className="label-text font-medium">{t.crmColumns}</span>
+                <span className="label-text label-medium-custom">{t.crmColumns}</span>
               </label>
               <select
                 className="select select-bordered w-full"
@@ -221,7 +221,7 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, followUp
 
           <div>
             <label className="label">
-              <span className="label-text font-medium">{t.triggers}</span>
+              <span className="label-text label-medium-custom">{t.triggers}</span>
             </label>
             <select
               className="select select-bordered w-full"
@@ -236,7 +236,7 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, followUp
 
           <div>
             <label className="label">
-              <span className="label-text font-medium">{t.sequenceDescription}</span>
+              <span className="label-text label-medium-custom">{t.sequenceDescription}</span>
             </label>
             <textarea
               placeholder={t.sequenceDescriptionPlaceholder}
@@ -248,7 +248,7 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, followUp
 
           <div>
             <label className="label">
-              <span className="label-text font-medium">{t.sequenceMessages}</span>
+              <span className="label-text label-medium-custom">{t.sequenceMessages}</span>
             </label>
             <div className="space-y-4">
               {followUpData.messages.map((message, index) => (
@@ -271,7 +271,7 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, followUp
                       {/* Template Selection */}
                       <div>
                         <label className="label">
-                          <span className="label-text font-medium">{t.messageTemplates}</span>
+                          <span className="label-text label-medium-custom">{t.messageTemplates}</span>
                         </label>
                         <select
                           className="select select-bordered w-full"
@@ -301,13 +301,14 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, followUp
                       {/* Attachments */}
                       <div>
                         <label className="label">
-                          <span className="label-text font-medium">{t.attachments}</span>
+                          <span className="label-text label-medium-custom">{t.attachments}</span>
                         </label>
                         <div className="flex flex-wrap gap-2 mb-2">
                           <button
                             type="button"
                             onClick={() => document.getElementById(`doc-${message.id}`)!.click()}
                             className="btn btn-outline btn-sm"
+                            style={{ textTransform: 'uppercase' }}
                           >
                             <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -326,6 +327,7 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, followUp
                             type="button"
                             onClick={() => document.getElementById(`video-${message.id}`)!.click()}
                             className="btn btn-outline btn-sm"
+                            style={{ textTransform: 'uppercase' }}
                           >
                             <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -344,6 +346,7 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, followUp
                             type="button"
                             onClick={() => document.getElementById(`audio-${message.id}`)!.click()}
                             className="btn btn-outline btn-sm"
+                            style={{ textTransform: 'uppercase' }}
                           >
                             <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
@@ -362,7 +365,7 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, followUp
                         {/* Display Attachments */}
                         {message.documents!.length > 0 && (
                           <div className="space-y-2 mt-2">
-                            <div className="text-sm font-medium text-neutral mb-2">{t.attachments}:</div>
+                            <div className="text-sm label-medium-custom text-neutral mb-2">{t.attachments}:</div>
                             {message.documents!.map(attachment => {
                               if (attachment.followUpMessageId !== message.id) return null;
                               return (
@@ -389,7 +392,7 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, followUp
                                       )}
                                     </div>
                                     <div>
-                                      <div className="text-sm font-medium">{attachment.name}</div>
+                                      <div className="text-sm label-medium-custom">{attachment.name}</div>
                                       {/* <div className="text-xs text-neutral">
                                       {(attachment.size / 1024 / 1024).toFixed(2)} MB
                                     </div> */}
@@ -413,7 +416,7 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, followUp
                       {/* Delay */}
                       <div>
                         <label className="label">
-                          <span className="label-text font-medium">{t.delay}</span>
+                          <span className="label-text label-medium-custom">{t.delay}</span>
                         </label>
                         <div className="space-y-3">
                           <select
@@ -490,6 +493,7 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, followUp
                 type="button"
                 onClick={addMessage}
                 className="btn btn-outline btn-sm"
+                style={{ textTransform: 'uppercase' }}
               >
                 <Plus className="w-4 h-4 mr-2" />
                 {t.addMessage}
@@ -500,13 +504,14 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, followUp
 
         {/* Footer */}
         <div className="flex items-center justify-end space-x-3 p-6 border-t border-base-300">
-          <button onClick={handleClose} className="btn btn-ghost">
+          <button onClick={handleClose} className="btn btn-ghost" style={{ textTransform: 'uppercase' }}>
             {t.cancel}
           </button>
           <button
             onClick={handleSubmit}
             disabled={!followUpData.name.trim() || !followUpData.messages.some(m => m.message.trim())}
             className="btn btn-primary"
+            style={{ textTransform: 'uppercase' }}
           >
             {followUp ? t.update : t.create}
           </button>

@@ -46,7 +46,7 @@ const NewAgentBehavior: React.FC = () => {
 
       <div>
         <label className="label">
-          <span className="label-text font-medium">{t.systemPrompt}</span>
+          <span className="label-text label-medium-custom">{t.systemPrompt}</span>
         </label>
         <p className="text-sm text-neutral mb-4">{t.systemPromptDesc}</p>
 
@@ -116,7 +116,7 @@ const NewAgentBehavior: React.FC = () => {
             {agent.promptType && (
               <div className="mt-6">
                 <label className="label">
-                  <span className="label-text font-medium">{t.systemPromptEditable}</span>
+                  <span className="label-text label-medium-custom">{t.systemPromptEditable}</span>
                 </label>
                 <textarea
                   placeholder={t.systemPromptEditablePlaceholder}
@@ -124,7 +124,7 @@ const NewAgentBehavior: React.FC = () => {
                   value={agent.prompt}
                   onChange={(e) => updateAgentAttribute('prompt', e.target.value)}
                 />
-                <div className="label">
+                <div className="label" style={{marginTop: '8px'}}>
                   <span className="label-text-alt">{t.systemPromptEditableHelp}</span>
                 </div>
               </div>
@@ -143,7 +143,7 @@ const NewAgentBehavior: React.FC = () => {
                 updateAgentAttribute('prompt', e.target.value);
               }}
             />
-            <div className="label">
+            <div className="label" style={{marginTop: '8px'}}>
               <span className="label-text-alt">{t.agentBehaviorPlaceholder}</span>
             </div>
           </div>
@@ -151,8 +151,8 @@ const NewAgentBehavior: React.FC = () => {
       </div>
 
       <div>
-        <label className="label">
-          <span className="label-text font-medium">{t.responseTime}</span>
+        <label className="label label-display">
+          <span className="label-text label-medium-custom">{t.responseTime}</span>
         </label>
         <select
           className="select select-bordered w-full max-w-xs"
@@ -168,7 +168,7 @@ const NewAgentBehavior: React.FC = () => {
 
       <div>
         <label className="label">
-          <span className="label-text font-medium">{t.workingHours}</span>
+          <span className="label-text label-medium-custom">{t.workingHours}</span>
         </label>
         <div className="form-control">
           <label className="cursor-pointer flex items-center space-x-2">
@@ -183,9 +183,9 @@ const NewAgentBehavior: React.FC = () => {
         </div>
 
         {(checkboxWorkingHours || agent.scheduleAgentBegin != '') && (
-          <div className="grid grid-cols-2 gap-4 mt-4">
+          <div className="grid grid-cols-2 gap-4 mt-4" style={{marginTop: '20px !important'}}>
             <div>
-              <label className="label">
+              <label className="label label-display label-medium-custom">
                 <span className="label-text">{t.start}</span>
               </label>
               <input
@@ -196,7 +196,7 @@ const NewAgentBehavior: React.FC = () => {
               />
             </div>
             <div>
-              <label className="label">
+              <label className="label label-display label-medium-custom">
                 <span className="label-text">{t.end}</span>
               </label>
               <input

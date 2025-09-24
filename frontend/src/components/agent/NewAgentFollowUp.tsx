@@ -17,7 +17,7 @@ const NewAgentFollowUp: React.FC = () => {
 
   const { followUpTriggers, fetchCrmColumns, fetchFollowUpTriggers } = useSystemStore();
 
-  const { followUps, fetchFollowUps, followUpMessages, deleteFollowUp } = useFollowUpStore();
+  const { followUps, fetchFollowUps, deleteFollowUp } = useFollowUpStore();
 
   const [automaticFollowUpsEnabled, setAutomaticFollowUpsEnabled] = useState(true);
   const [showFollowUpModal, setShowFollowUpModal] = useState(false);
@@ -70,6 +70,7 @@ const NewAgentFollowUp: React.FC = () => {
           <button
             onClick={() => setShowFollowUpModal(true)}
             className="btn btn-outline"
+            style={{ textTransform: 'uppercase' }}
           >
             <Plus className="w-4 h-4 mr-2" />
             {t.createFollowUpSequence}

@@ -28,7 +28,7 @@ const NewAgentPersonality: React.FC = () => {
 
     <div>
       <label className="label">
-        <span className="label-text font-medium">{t.agentName}</span>
+        <span className="label-text label-medium-custom">{t.agentName}</span>
       </label>
       <input
         type="text"
@@ -41,7 +41,7 @@ const NewAgentPersonality: React.FC = () => {
 
     <div>
       <label className="label">
-        <span className="label-text font-medium">{t.description}</span>
+        <span className="label-text label-medium-custom">{t.description}</span>
       </label>
       <textarea
         placeholder={t.descriptionPlaceholder}
@@ -53,7 +53,7 @@ const NewAgentPersonality: React.FC = () => {
 
     <div>
       <label className="label">
-        <span className="label-text font-medium">{t.voiceTone}</span>
+        <span className="label-text label-medium-custom">{t.voiceTone}</span>
       </label>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {toneOptions.map(option => (
@@ -86,7 +86,7 @@ const NewAgentPersonality: React.FC = () => {
 
     <div>
       <label className="label">
-        <span className="label-text font-medium">{t.voiceSettings}</span>
+        <span className="label-text label-medium-custom">{t.voiceSettings}</span>
       </label>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {
@@ -120,7 +120,7 @@ const NewAgentPersonality: React.FC = () => {
 
     <div>
       <label className="label">
-        <span className="label-text font-medium">{t.greetingMessage}</span>
+        <span className="label-text label-medium-custom">{t.greetingMessage}</span>
       </label>
       <textarea
         placeholder={t.greetingMessagePlaceholder}

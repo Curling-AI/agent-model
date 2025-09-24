@@ -153,7 +153,7 @@ const Agents = () => {
 
               {/* Status and Last Active */}
               <div className="flex items-center justify-between mb-3">
-                <div className={`badge ${agent.active ? 'badge-success' : 'badge-neutral'}`}>
+                <div className={`badge ${agent.active ? 'badge-success-custom' : 'badge-neutral'}`}>
                   {agent.active ? t.activeStatus : t.pausedStatus}
                 </div>
                 {/* <span className="text-xs text-neutral">{agent.lastActive}</span> */}

@@ -1,4 +1,5 @@
 import { LanguageContextType } from "@/types";
+import { connect } from "http2";
 
 export const translations = {
   pt: {
@@ -760,7 +761,11 @@ export const translations = {
     attendancePromptTemplate: 'Você é um assistente de atendimento ao cliente. Sua função é ajudar os clientes com dúvidas, fornecer informações sobre produtos e serviços, e resolver problemas de forma eficiente e cordial. Sempre seja paciente, prestativo e mantenha um tom profissional e amigável.',
     billingPromptTemplate: 'Você é um especialista em cobrança. Sua função é negociar pagamentos em atraso de forma respeitosa e eficaz. Você deve ser firme mas cordial, oferecer opções de pagamento flexíveis, e buscar acordos que sejam benéficos para ambas as partes. Sempre mantenha um tom profissional e empático.',
     commercialPromptTemplate: 'Você é um representante de vendas (SDR). Sua função é qualificar leads, identificar oportunidades de negócio, e agendar reuniões com prospects qualificados. Você deve ser proativo, fazer perguntas estratégicas, e demonstrar valor da solução. Mantenha um tom entusiasta e profissional.',
-    supportPromptTemplate: 'Você é um especialista em suporte técnico. Sua função é ajudar os clientes a resolver problemas técnicos, fornecer orientações sobre o uso de produtos e serviços, e garantir uma experiência positiva. Sempre mantenha um tom paciente e prestativo.'
+    supportPromptTemplate: 'Você é um especialista em suporte técnico. Sua função é ajudar os clientes a resolver problemas técnicos, fornecer orientações sobre o uso de produtos e serviços, e garantir uma experiência positiva. Sempre mantenha um tom paciente e prestativo.',
+  
+    // WHATSAPP
+    connectWhatsApp: 'Conecte ao WhatsApp',
+    scanQrCodeToConnect: 'Escaneie o QR Code com seu WhatsApp para conectar',
   },
   en: {
     // Header
@@ -1520,7 +1525,11 @@ export const translations = {
     attendancePromptTemplate: 'You are a customer service assistant. Your role is to help customers with questions, provide information about products and services, and resolve issues efficiently and courteously. Always be patient, helpful, and maintain a professional and friendly tone.',
     billingPromptTemplate: 'You are a billing specialist. Your role is to negotiate overdue payments respectfully and effectively. You must be firm yet cordial, offer flexible payment options, and seek agreements that are beneficial for both parties. Always maintain a professional and empathetic tone.',
     commercialPromptTemplate: 'You are a sales representative (SDR). Your role is to qualify leads, identify business opportunities, and schedule meetings with qualified prospects. You must be proactive, ask strategic questions, and demonstrate the value of the solution. Maintain an enthusiastic and professional tone.',
-    supportPromptTemplate: 'You are a technical support specialist. Your role is to help customers resolve technical issues, provide guidance on using products and services, and ensure a positive experience. Always maintain a patient and helpful tone.'
+    supportPromptTemplate: 'You are a technical support specialist. Your role is to help customers resolve technical issues, provide guidance on using products and services, and ensure a positive experience. Always maintain a patient and helpful tone.',
+
+    // WHATSAPP
+    connectWhatsApp: 'Connect to WhatsApp',
+    scanQrCodeToConnect: 'Scan the QR Code with your WhatsApp to connect',
   }
 };
 
