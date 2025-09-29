@@ -6,7 +6,7 @@ export const SystemParamsController = {
   listFollowUpsTriggers: async (req: Request, res: Response) => {
     try {
       const agentId = req.query.agentId as string | undefined;
-      const result = await getAll('follow_up_triggers');
+      const result = await getAll('follow_up_triggers', 'id');
       res.json(result);
     } catch (err) {
       res.status(500).json({ error: 'Failed to list follow up triggers', details: err });
@@ -15,34 +15,24 @@ export const SystemParamsController = {
   listJobs: async (req: Request, res: Response) => {
     try {
       const agentId = req.query.agentId as string | undefined;
-      const result = await getAll('jobs');
+      const result = await getAll('jobs', 'id');
       res.json(result);
     } catch (err) {
       res.status(500).json({ error: 'Failed to list jobs', details: err });
     }
   },
-  listCrmColumns: async (req: Request, res: Response) => {
+  listPermissions: async (req: Request, res: Response) => {
     try {
-      const agentId = req.query.agentId as string | undefined;
-      const result = await getAll('crm_columns');
+      const result = await getAll('permissions', 'id');
       res.json(result);
     } catch (err) {
-      res.status(500).json({ error: 'Failed to list CRM columns', details: err });
-    }
-  },
-  listCrmPermissions: async (req: Request, res: Response) => {
-    try {
-      const agentId = req.query.agentId as string | undefined;
-      const result = await getAll('crm_permissions');
-      res.json(result);
-    } catch (err) {
-      res.status(500).json({ error: 'Failed to list CRM permissions', details: err });
+      res.status(500).json({ error: 'Failed to list permissions', details: err });
     }
   },
   listPlans: async (req: Request, res: Response) => {
     try {
       const agentId = req.query.agentId as string | undefined;
-      const result = await getAll('plans');
+      const result = await getAll('plans', 'id');
       res.json(result);
     } catch (err) {
       res.status(500).json({ error: 'Failed to list plans', details: err });
@@ -51,7 +41,7 @@ export const SystemParamsController = {
   listServiceProviders: async (req: Request, res: Response) => {
     try {
       const agentId = req.query.agentId as string | undefined;
-      const result = await getAll('service_providers');
+      const result = await getAll('service_providers', 'id');
       res.json(result);
     } catch (err) {
       res.status(500).json({ error: 'Failed to list service providers', details: err });
@@ -60,37 +50,10 @@ export const SystemParamsController = {
   listConversationTags: async (req: Request, res: Response) => {
     try {
       const agentId = req.query.agentId as string | undefined;
-      const result = await getAll('conversation_tags');
+      const result = await getAll('conversation_tags', 'id');
       res.json(result);
     } catch (err) {
       res.status(500).json({ error: 'Failed to list conversation tags', details: err });
-    }
-  },
-  listConversationPermissions: async (req: Request, res: Response) => {
-    try {
-      const agentId = req.query.agentId as string | undefined;
-      const result = await getAll('conversation_permissions');
-      res.json(result);
-    } catch (err) {
-      res.status(500).json({ error: 'Failed to list conversation permissions', details: err });
-    }
-  },
-  listManagementPermissions: async (req: Request, res: Response) => {
-    try {
-      const agentId = req.query.agentId as string | undefined;
-      const result = await getAll('management_permissions');
-      res.json(result);
-    } catch (err) {
-      res.status(500).json({ error: 'Failed to list management permissions', details: err });
-    }
-  },
-  listAgentPermissions: async (req: Request, res: Response) => {
-    try {
-      const agentId = req.query.agentId as string | undefined;
-      const result = await getAll('agent_permissions');
-      res.json(result);
-    } catch (err) {
-      res.status(500).json({ error: 'Failed to list agent permissions', details: err });
     }
   },
 }

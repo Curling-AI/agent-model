@@ -29,7 +29,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
   fetchDocuments: async (agentId: number, type: string = 'all') => {
     set({ loading: true, error: null });
     try {
-      const res = await fetch(`${BASE_URL}/api/documents?agentId=${agentId}&type=${type}`);
+      const res = await fetch(`${BASE_URL}/documents?agentId=${agentId}&type=${type}`);
       const data = await res.json();
       if (res.ok) {
         data.documents.map((doc: Document) => {
@@ -63,7 +63,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
   createDocument: async (doc: Document) => {
     set({ loading: true, error: null });
     try {
-      const res = await fetch(`${BASE_URL}/api/documents`, {
+      const res = await fetch(`${BASE_URL}/documents`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(transformDocumentsForApi([doc])),
@@ -89,7 +89,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       formData.append('agentId', agentId.toString());
       formData.append('file', file);
 
-      const res = await fetch(`${BASE_URL}/api/documents/file`, {
+      const res = await fetch(`${BASE_URL}/documents/file`, {
         method: 'POST',
         body: formData,
       });
@@ -108,7 +108,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
   deleteDocument: async (id: number) => {
     set({ loading: true, error: null });
     try {
-      const res = await fetch(`${BASE_URL}/api/documents/${id}`, { method: 'DELETE' });
+      const res = await fetch(`${BASE_URL}/documents/${id}`, { method: 'DELETE' });
       if (res.ok) {
         set({ documents: get().documents.filter(doc => doc.id !== id), loading: false });
       } else {

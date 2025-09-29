@@ -7,15 +7,15 @@ export interface User extends BaseInterface {
   email: string;
   phone: string;
   jobId: number;
-  locationName: string;
-  language: string;
-  timezone: string;
+  locationName?: string;
+  language?: string;
+  timezone?: string;
+  password?: string;
+  confirmPassword?: string;
   status: 'active' | 'inactive' | 'suspended';
   departmentId: number;
-  agentPermissions: AgentPermission[];
-  crmPermissions: CrmPermission[];
-  conversationPermissions: ConversationPermission[];
-  managementPermissions: ManagementPermission[];
+  permissions: string[];
+  updatedAt?: string;
 }
 
 export interface Job extends BaseInterface {
@@ -24,28 +24,19 @@ export interface Job extends BaseInterface {
 }
 
 export interface Department extends BaseInterface {
-  id: number;
+  id?: number;
   name: string;
   description: string;
   managerName: string;
+  createdAt: string;
 }
 
-export interface AgentPermission extends BaseInterface {
+export interface Permission extends BaseInterface {
   id: number;
-  name: string;
-}
-
-export interface CrmPermission extends BaseInterface {
-  id: number;
-  name: string;
-}
-
-export interface ConversationPermission extends BaseInterface {
-  id: number;
-  name: string;
-}
-
-export interface ManagementPermission extends BaseInterface {
-  id: number;
-  name: string;
+  code: string;
+  descriptionPt: string;
+  descriptionEn: string;
+  groupId: number;
+  groupNamePt: string;
+  groupNameEn: string;
 }

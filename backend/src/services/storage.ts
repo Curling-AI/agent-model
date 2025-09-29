@@ -1,8 +1,8 @@
 import { supabase } from '../config/supabaseClient';
 
 // Consulta todos os registros de uma tabela
-export async function getAll<T>(table: string): Promise<T[]> {
-  const { data, error } = await supabase.from(table).select('*').order('name', { ascending: true });
+export async function getAll<T>(table: string, orderField: string = 'name'): Promise<T[]> {
+  const { data, error } = await supabase.from(table).select('*').order(orderField, { ascending: true });
   if (error) throw error;
   return data as T[];
 }

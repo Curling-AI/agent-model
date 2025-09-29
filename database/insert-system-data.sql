@@ -1,9 +1,9 @@
 -- Criação de dados para a tabela crm_column
-INSERT INTO crm_columns (name, is_system) VALUES ('Novos Leads', TRUE);
-INSERT INTO crm_columns (name, is_system) VALUES ('Qualificados', TRUE);
-INSERT INTO crm_columns (name, is_system) VALUES ('Proposta Enviada', TRUE);
-INSERT INTO crm_columns (name, is_system) VALUES ('Em Negociação', TRUE);
-INSERT INTO crm_columns (name, is_system) VALUES ('Fechados', TRUE);
+INSERT INTO crm_columns (id, title_pt, title_en, is_system, color) VALUES (1, 'Novos Leads', 'New Leads', TRUE, '#229ad2');
+INSERT INTO crm_columns (id, title_pt, title_en, is_system, color) VALUES (2, 'Qualificados', 'Qualified', TRUE, '#22d2a2');
+INSERT INTO crm_columns (id, title_pt, title_en, is_system, color) VALUES (3, 'Proposta Enviada', 'Proposal Sent', TRUE, '#5a22d2');
+INSERT INTO crm_columns (id, title_pt, title_en, is_system, color) VALUES (4, 'Em Negociação', 'In Negotiation', TRUE, '#d222a2');
+INSERT INTO crm_columns (id, title_pt, title_en, is_system, color) VALUES (5, 'Fechados', 'Closed', TRUE, '#a2d222');
 
 -- Criação de dados para a tabela service_provider
 INSERT INTO service_providers (name, description_pt, description_en) VALUES ('Whatsapp Oficial', 'Conexão direta com WhatsApp Business API oficial', 'Official WhatsApp Business API connection');
@@ -32,28 +32,22 @@ INSERT INTO departments (name, description, manager_name) VALUES ('Marketing', '
 INSERT INTO departments (name, description, manager_name) VALUES ('RH', 'Departamento de Recursos Humanos', 'David');
 
 -- Criação de dados para a tabela agent_permission
-INSERT INTO agent_permissions (name) VALUES ('Criar Agente');
-INSERT INTO agent_permissions (name) VALUES ('Editar Agente');
-INSERT INTO agent_permissions (name) VALUES ('Excluir Agente');
-INSERT INTO agent_permissions (name) VALUES ('Visualizar Agente');
-
--- Criação de dados para a tabela crm_permission
-INSERT INTO crm_permissions (name) VALUES ('Criar Lead');
-INSERT INTO crm_permissions (name) VALUES ('Editar Lead');
-INSERT INTO crm_permissions (name) VALUES ('Excluir Lead');
-INSERT INTO crm_permissions (name) VALUES ('Visualizar Lead');
-
--- Criação de dados para a tabela management_permission
-INSERT INTO management_permissions (name) VALUES ('Gerenciar Usuários');
-INSERT INTO management_permissions (name) VALUES ('Gerenciar Departamentos');
-INSERT INTO management_permissions (name) VALUES ('Gerenciar Permissões');
-INSERT INTO management_permissions (name) VALUES ('Visualizar Relatórios');
-
--- Criação de dados para a tabela conversation_permission
-INSERT INTO conversation_permissions (name) VALUES ('Visualizar Conversa');
-INSERT INTO conversation_permissions (name) VALUES ('Assumir Conversa');
-INSERT INTO conversation_permissions (name) VALUES ('Finalizar Conversa');
-INSERT INTO conversation_permissions (name) VALUES ('Arquivar Conversa');
+INSERT INTO permissions (group_id, group_name_pt, group_name_en, code, description_pt, description_en) VALUES (1, 'Permissões de Agente', 'Agent Permissions', 'createAgent', 'Criar Agente', 'Create Agent');
+INSERT INTO permissions (group_id, group_name_pt, group_name_en, code, description_pt, description_en) VALUES (1, 'Permissões de Agente', 'Agent Permissions', 'editAgent', 'Editar Agente', 'Edit Agent');
+INSERT INTO permissions (group_id, group_name_pt, group_name_en, code, description_pt, description_en) VALUES (1, 'Permissões de Agente', 'Agent Permissions', 'deleteAgent', 'Excluir Agente', 'Delete Agent');
+INSERT INTO permissions (group_id, group_name_pt, group_name_en, code, description_pt, description_en) VALUES (1, 'Permissões de Agente', 'Agent Permissions', 'viewAgent', 'Visualizar Agente', 'View Agent');
+INSERT INTO permissions (group_id, group_name_pt, group_name_en, code, description_pt, description_en) VALUES (2, 'Permissões de CRM', 'CRM Permissions', 'createLead', 'Criar Lead', 'Create Lead');
+INSERT INTO permissions (group_id, group_name_pt, group_name_en, code, description_pt, description_en) VALUES (2, 'Permissões de CRM', 'CRM Permissions', 'editLead', 'Editar Lead', 'Edit Lead');
+INSERT INTO permissions (group_id, group_name_pt, group_name_en, code, description_pt, description_en) VALUES (2, 'Permissões de CRM', 'CRM Permissions', 'deleteLead', 'Excluir Lead', 'Delete Lead');
+INSERT INTO permissions (group_id, group_name_pt, group_name_en, code, description_pt, description_en) VALUES (2, 'Permissões de CRM', 'CRM Permissions', 'viewLead', 'Visualizar Lead', 'View Lead');
+INSERT INTO permissions (group_id, group_name_pt, group_name_en, code, description_pt, description_en) VALUES (3, 'Permissões de Conversa', 'Conversation Permissions', 'manageUsers', 'Gerenciar Usuários', 'Manage Users');
+INSERT INTO permissions (group_id, group_name_pt, group_name_en, code, description_pt, description_en) VALUES (3, 'Permissões de Conversa', 'Conversation Permissions', 'manageDepartments', 'Gerenciar Departamentos', 'Manage Departments');
+INSERT INTO permissions (group_id, group_name_pt, group_name_en, code, description_pt, description_en) VALUES (3, 'Permissões de Conversa', 'Conversation Permissions', 'managePermissions', 'Gerenciar Permissões', 'Manage Permissions');
+INSERT INTO permissions (group_id, group_name_pt, group_name_en, code, description_pt, description_en) VALUES (3, 'Permissões de Conversa', 'Conversation Permissions', 'viewReports', 'Visualizar Relatórios', 'View Reports');
+INSERT INTO permissions (group_id, group_name_pt, group_name_en, code, description_pt, description_en) VALUES (4, 'Permissões de Administração', 'Administration Permissions', 'viewConversations', 'Visualizar Conversas', 'View Conversations');
+INSERT INTO permissions (group_id, group_name_pt, group_name_en, code, description_pt, description_en) VALUES (4, 'Permissões de Administração', 'Administration Permissions', 'takeConversations', 'Assumir Conversas', 'Take Conversations');
+INSERT INTO permissions (group_id, group_name_pt, group_name_en, code, description_pt, description_en) VALUES (4, 'Permissões de Administração', 'Administration Permissions', 'finishConversations', 'Finalizar Conversas', 'Finish Conversations');
+INSERT INTO permissions (group_id, group_name_pt, group_name_en, code, description_pt, description_en) VALUES (4, 'Permissões de Administração', 'Administration Permissions', 'archiveConversations', 'Arquivar Conversas', 'Archive Conversations');
 
 -- Criação de dados para a tabela follow_up_trigger
 INSERT INTO follow_up_triggers (name) VALUES ('Novo Lead');

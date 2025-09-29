@@ -11,6 +11,10 @@ import followUpRoutes from './follow-up-routes';
 import integrationRoutes from './integration-routes';
 import facebookRoutes from './facebook-routes';
 import zapiRoutes from './zapi-routes';
+import userRoutes from './user-routes';
+import departmentRoutes from './department-routes';
+import leadRoutes from './lead-routes';
+import crmColumnRoutes from './crm-column-routes';
 
 const router = Router();
 
@@ -26,5 +30,9 @@ router.use('/system-params', systemRoutes);
 router.use('/integrations', integrationRoutes);
 router.use('/facebook', facebookRoutes);
 router.use('/zapi', zapiRoutes);
+router.use('/users', userRoutes);
+router.use('/departments', departmentRoutes);
+router.use('/leads', leadRoutes);
+router.use('/crm-columns', crmColumnRoutes); // CRM Columns routes
 
 export default router;

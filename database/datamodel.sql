@@ -13,6 +13,7 @@ CREATE TABLE crm_columns (
   id SERIAL PRIMARY KEY,
   organization_id INTEGER NULL,
   name VARCHAR(255) NOT NULL,
+  color VARCHAR(10) NOT NULL DEFAULT #000000,
   is_system BOOLEAN NOT NULL DEFAULT FALSE,
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
@@ -222,84 +223,26 @@ CREATE TABLE "users" (
   location_name VARCHAR(255),
   language VARCHAR(50),
   timezone VARCHAR(50),
+  permissions jsonb
   status VARCHAR(10) CHECK (status IN ('active', 'inactive', 'suspended')),
   department_id INTEGER REFERENCES departments(id),
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
--- Tabela AgentPermission
-CREATE TABLE agent_permissions (
+-- Tabela Permission
+CREATE TABLE permissions (
   id SERIAL PRIMARY KEY,
   organization_id INTEGER NULL,
-  name VARCHAR(255) NOT NULL,
+  group_id INTEGER NOT NULL,
+  group_name_pt VARCHAR(255) NOT NULL, 
+  group_name_en VARCHAR(255) NOT NULL,
+  code VARCHAR(255) NOT NULL,
+  description_pt TEXT NOT NULL,
+  description_en TEXT NOT NULL,
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()  
 );
-
--- Tabela CrmPermission
-CREATE TABLE crm_permissions (
-  id SERIAL PRIMARY KEY,
-  organization_id INTEGER NULL,
-  name VARCHAR(255) NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
-);
-
--- Tabela ConversationPermission
-CREATE TABLE conversation_permissions (
-  id SERIAL PRIMARY KEY,
-  organization_id INTEGER NULL,
-  name VARCHAR(255) NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
-);
-
--- Tabela ManagementPermission
-CREATE TABLE management_permissions (
-  id SERIAL PRIMARY KEY,
-  organization_id INTEGER NULL,
-  name VARCHAR(255) NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
-);
-
--- Associação entre User e AgentPermission
-CREATE TABLE user_agent_permissions (
-  user_id INTEGER REFERENCES "users"(id) ON DELETE CASCADE,
-  agent_permission_id INTEGER REFERENCES agent_permissions(id) ON DELETE CASCADE,
-  PRIMARY KEY (user_id, agent_permission_id),
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
-);
-
--- Associação entre User e CrmPermission
-CREATE TABLE user_crm_permissions (
-  user_id INTEGER REFERENCES "users"(id) ON DELETE CASCADE,
-  crm_permission_id INTEGER REFERENCES crm_permissions(id) ON DELETE CASCADE,
-  PRIMARY KEY (user_id, crm_permission_id),
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
-);
-
--- Associação entre User e ConversationPermission
-CREATE TABLE user_conversation_permissions (
-  user_id INTEGER REFERENCES "users"(id) ON DELETE CASCADE,
-  conversation_permission_id INTEGER REFERENCES conversation_permissions(id) ON DELETE CASCADE,
-  PRIMARY KEY (user_id, conversation_permission_id),
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
-);
-
--- Associação entre User e ManagementPermission
-CREATE TABLE user_management_permissions (
-  user_id INTEGER REFERENCES "users"(id) ON DELETE CASCADE,
-  management_permission_id INTEGER REFERENCES management_permissions(id) ON DELETE CASCADE,
-  PRIMARY KEY (user_id, management_permission_id),
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
-);
-
 
 -- This script sets up a PostgreSQL database schema for storing documents with embeddings
 -- and provides a function to search for similar documents based on a query embedding.

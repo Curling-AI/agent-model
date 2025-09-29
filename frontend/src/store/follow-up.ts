@@ -23,7 +23,7 @@ export const useFollowUpStore = create<FollowUpState>((set, get) => ({
   followUpMessageDocuments: [],
 
   fetchFollowUps: async (agentId: number) => {
-    const res = await fetch(`${BASE_URL}/api/follow-ups?agentId=${agentId}`);
+    const res = await fetch(`${BASE_URL}/follow-ups?agentId=${agentId}`);
     if (!res.ok) throw new Error('Erro ao buscar follow ups');
     const data = await res.json();
 
@@ -43,7 +43,7 @@ export const useFollowUpStore = create<FollowUpState>((set, get) => ({
     set({ followUps: follows });
   },
   addOrUpdateFollowUp: async (followUp: FollowUp) => {
-    const res = await fetch(`${BASE_URL}/api/follow-ups`, {
+    const res = await fetch(`${BASE_URL}/follow-ups`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(mapFollowUpToSupabaseRow(followUp)),
@@ -58,7 +58,7 @@ export const useFollowUpStore = create<FollowUpState>((set, get) => ({
     return saved;
   },
   deleteFollowUp: async (id: number) => {
-    const res = await fetch(`${BASE_URL}/api/follow-ups/${id}`, { method: 'DELETE' });
+    const res = await fetch(`${BASE_URL}/follow-ups/${id}`, { method: 'DELETE' });
     if (!res.ok) throw new Error('Erro ao deletar follow up');
     set((state) => ({
       followUps: state.followUps.filter((f) => f.id !== id),
@@ -66,7 +66,7 @@ export const useFollowUpStore = create<FollowUpState>((set, get) => ({
   },
 
   deleteFollowUpMessage: async (id: number) => {
-    const res = await fetch(`${BASE_URL}/api/follow-ups/messages/${id}`, { method: 'DELETE' });
+    const res = await fetch(`${BASE_URL}/follow-ups/messages/${id}`, { method: 'DELETE' });
     if (!res.ok) throw new Error('Erro ao deletar mensagem');
     set((state) => ({
       followUpMessages: state.followUpMessages.filter((m) => m.id !== id),
@@ -74,7 +74,7 @@ export const useFollowUpStore = create<FollowUpState>((set, get) => ({
   },
 
   deleteFollowUpMessageDocument: async (id: number) => {
-    const res = await fetch(`${BASE_URL}/api/follow-ups/messages/documents/${id}`, { method: 'DELETE' });
+    const res = await fetch(`${BASE_URL}/follow-ups/messages/documents/${id}`, { method: 'DELETE' });
     if (!res.ok) throw new Error('Erro ao deletar documento');
     set((state) => ({
       followUpMessageDocuments: state.followUpMessageDocuments.filter((d) => d.id !== id),
@@ -84,7 +84,7 @@ export const useFollowUpStore = create<FollowUpState>((set, get) => ({
 
 async function addOrUpdateFollowUpMessage(msgs: FollowUpMessage[]) {
   msgs.map(async m => {
-    const res = await fetch(`${BASE_URL}/api/follow-ups/messages`, {
+    const res = await fetch(`${BASE_URL}/follow-ups/messages`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify([mapFollowUpMessageToSupabaseRow(m)]),
@@ -113,7 +113,7 @@ async function addOrUpdateFollowUpMessageDocument(docs: FollowUpMessageDocument[
       }
       delete d.file;
 
-      const res = await fetch(`${BASE_URL}/api/follow-ups/messages/documents`, {
+      const res = await fetch(`${BASE_URL}/follow-ups/messages/documents`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(docs.map((d) => mapFollowUpMessageDocumentToSupabaseRow(d))),
@@ -128,7 +128,7 @@ async function addOrUpdateFollowUpMessageDocument(docs: FollowUpMessageDocument[
 }
 
 async function fetchFollowUpMessages(followUpId: number): Promise<FollowUpMessage[]> {
-  const res = await fetch(`${BASE_URL}/api/follow-ups/${followUpId}/messages`);
+  const res = await fetch(`${BASE_URL}/follow-ups/${followUpId}/messages`);
   if (!res.ok) throw new Error('Erro ao buscar mensagens');
 
   const data = await res.json();
@@ -144,7 +144,7 @@ async function fetchFollowUpMessages(followUpId: number): Promise<FollowUpMessag
 }
 
 async function fetchFollowUpMessageDocuments(messageId: number): Promise<FollowUpMessageDocument[]> {
-  const res = await fetch(`${BASE_URL}/api/follow-ups/messages/${messageId}/documents`);
+  const res = await fetch(`${BASE_URL}/follow-ups/messages/${messageId}/documents`);
   if (!res.ok) throw new Error('Erro ao buscar documentos');
   const data = await res.json();
   return mapSupabaseRowToFollowUpMessageDocument(data);

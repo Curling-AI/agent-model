@@ -10,7 +10,10 @@ export interface Lead extends BaseInterface{
   source: 'whatsapp' | 'email' | 'website' | 'phone' | 'referral';
   priority: 'low' | 'medium' | 'high';
   observation: string;
-  tags: LeadTag[];
+  status: number;
+  tags: string[];
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface LeadTag extends BaseInterface {

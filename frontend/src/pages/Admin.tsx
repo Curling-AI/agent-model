@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { 
   Users, 
   Building2, 
@@ -13,9 +13,13 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useTranslation } from '../translations';
-import { Department, Permission, User } from '@/types';
+import { Department, Permission, User } from '@/types/user';
 import UserModal from '@/components/modal/UserModal';
 import DepartmentModal from '@/components/modal/DepartmentModal';
+import { useDepartmentStore } from '@/store/department';
+import { useUserStore } from '@/store/user';
+import { useSystemStore } from '@/store/system';
+import DepartmentUserCount from '@/components/DepartmentUserCount';
 
 type Tab = {
   id: string;
@@ -29,14 +33,16 @@ const Admin: React.FC = () => {
   const t = useTranslation(language);
 
   const [activeTab, setActiveTab] = useState('users');
-  const [users, setUsers] = useState<User[]>([]);
-  const [departments, setDepartments] = useState<Department[]>([]);
-  const [permissions, setPermissions] = useState<Permission[]>([]);
+  const { users, fetchUsers, deleteUser } = useUserStore();
+  const { departments, fetchDepartments, deleteDepartment, getDepartmentUserCount } = useDepartmentStore();
+  const { permissions, fetchPermissions } = useSystemStore();
+  const { jobs, fetchJobs } = useSystemStore();
+
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFilters, setSelectedFilters] = useState({
-    department: 'all',
-    role: 'all',
+    department: 0,
+    role: 0,
     status: 'all'
   });
   
@@ -44,148 +50,39 @@ const Admin: React.FC = () => {
   const [showUserModal, setShowUserModal] = useState(false);
   const [showDepartmentModal, setShowDepartmentModal] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [editingDepartment, setEditingDepartment] = useState<Department | null>(null);
+  const [editingDepartment, setEditingDepartment] = useState<Department>();
+  const [departmentUserCounts, setDepartmentUserCounts] = useState<number>(0);
 
   // Mock data
   useEffect(() => {
     setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setUsers([
-        {
-          id: 1,
-          firstName: 'João',
-          lastName: 'Silva',
-          email: 'joao.silva@empresa.com',
-          role: 'admin',
-          department: 'TI',
-          status: 'active',
-          lastLogin: '2024-01-15T10:30:00',
-          createdAt: '2023-06-15T09:00:00',
-          phone: '+55 11 99999-9999',
-          avatar: 'JS',
-          permissions: [1, 2, 3, 4, 5, 6, 7, 8, 13, 14, 15, 16, 9, 10, 11, 12]
-        },
-        {
-          id: 2,
-          firstName: 'Maria',
-          lastName: 'Santos',
-          email: 'maria.santos@empresa.com',
-          role: 'manager',
-          department: 'Vendas',
-          status: 'active',
-          lastLogin: '2024-01-15T09:15:00',
-          createdAt: '2023-08-20T14:30:00',
-          phone: '+55 11 88888-8888',
-          avatar: 'MS',
-          permissions: [1, 2, 4, 5, 6, 8, 13, 14, 15, 16]
-        },
-        {
-          id: 3,
-          firstName: 'Pedro',
-          lastName: 'Oliveira',
-          email: 'pedro.oliveira@empresa.com',
-          role: 'user',
-          department: 'Marketing',
-          status: 'inactive',
-          lastLogin: '2024-01-10T16:45:00',
-          createdAt: '2023-09-10T11:20:00',
-          phone: '+55 11 77777-7777',
-          avatar: 'PO',
-          permissions: [4, 8, 13, 16]
-        },
-        {
-          id: 4,
-          firstName: 'Ana',
-          lastName: 'Costa',
-          email: 'ana.costa@empresa.com',
-          role: 'viewer',
-          department: 'RH',
-          status: 'active',
-          lastLogin: '2024-01-15T08:00:00',
-          createdAt: '2023-10-05T13:15:00',
-          phone: '+55 11 66666-6666',
-          avatar: 'AC',
-          permissions: [4, 8, 12, 13]
-        }
-      ]);
-
-      setDepartments([
-        {
-          id: 1,
-          name: 'TI',
-          description: 'Tecnologia da Informação',
-          manager: 'João Silva',
-          userCount: 5,
-          createdAt: '2023-01-15T09:00:00'
-        },
-        {
-          id: 2,
-          name: 'Vendas',
-          description: 'Departamento de Vendas',
-          manager: 'Maria Santos',
-          userCount: 8,
-          createdAt: '2023-02-20T10:30:00'
-        },
-        {
-          id: 3,
-          name: 'Marketing',
-          description: 'Departamento de Marketing',
-          manager: 'Carlos Lima',
-          userCount: 4,
-          createdAt: '2023-03-10T14:15:00'
-        },
-        {
-          id: 4,
-          name: 'RH',
-          description: 'Recursos Humanos',
-          manager: 'Ana Costa',
-          userCount: 3,
-          createdAt: '2023-04-05T11:45:00'
-        }
-      ]);
-
-      setPermissions([
-        { id: 1, name: 'createAgent', description: 'Criar Agente', category: 'agent' },
-        { id: 2, name: 'editAgent', description: 'Editar Agente', category: 'agent' },
-        { id: 3, name: 'deleteAgent', description: 'Excluir Agente', category: 'agent' },
-        { id: 4, name: 'viewAgent', description: 'Visualizar Agente', category: 'agent' },
-        { id: 5, name: 'createLead', description: 'Criar Lead', category: 'crm' },
-        { id: 6, name: 'editLead', description: 'Editar Lead', category: 'crm' },
-        { id: 7, name: 'deleteLead', description: 'Excluir Lead', category: 'crm' },
-        { id: 8, name: 'viewLead', description: 'Visualizar Lead', category: 'crm' },
-        { id: 13, name: 'viewConversation', description: 'Visualizar Conversa', category: 'conversation' },
-        { id: 14, name: 'assumeConversation', description: 'Assumir Conversa', category: 'conversation' },
-        { id: 15, name: 'finishConversation', description: 'Finalizar Conversa', category: 'conversation' },
-        { id: 16, name: 'archiveConversation', description: 'Arquivar Conversa', category: 'conversation' },
-        { id: 9, name: 'manageUsers', description: 'Gerenciar Usuários', category: 'admin' },
-        { id: 10, name: 'manageDepartments', description: 'Gerenciar Departamentos', category: 'admin' },
-        { id: 11, name: 'managePermissions', description: 'Gerenciar Permissões', category: 'admin' },
-        { id: 12, name: 'viewReports', description: 'Visualizar Relatórios', category: 'admin' }
-      ]);
-
-      setLoading(false);
-    }, 1000);
+    fetchPermissions();
+    fetchDepartments();
+    fetchUsers();
+    fetchJobs();
+    setLoading(false);
+    handleUserCount();
   }, []);
 
-  const getRoleLabel = (role: string) => {
-    switch (role) {
-      case 'admin':
-        return t.adminRole as string;
-      case 'manager':
-        return t.managerRole as string;
-      case 'user':
-        return t.userRole as string;
-      case 'viewer':
-        return t.viewerRole as string;
-      default:
-        return role;
-    }
+  const handleUserCount = useCallback(async () => {
+    setDepartmentUserCounts(await getDepartmentUserCount(0));
+  }, [departments, getDepartmentUserCount]);
+
+  const getRoleLabel = (id: number) => {
+    return jobs.find(job => {
+      if (job.id === id) return job;
+    })?.title;
+  };
+
+  const getDepartmentLabel = (id: number) => {
+    return departments.find(department => {
+      if (department.id === id) return department;
+    })?.name || t.noDepartment;
   };
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      active: { color: 'badge-success', icon: CheckCircle },
+      active: { color: 'badge-success-custom', icon: CheckCircle },
       inactive: { color: 'badge-warning', icon: Clock },
       suspended: { color: 'badge-error', icon: XCircle }
     };
@@ -203,12 +100,11 @@ const Admin: React.FC = () => {
 
   const filteredUsers = users.filter(user => {
     const matchesSearch = 
-      user.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.surname.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesDepartment = selectedFilters.department === 'all' || user.department === selectedFilters.department;
-    const matchesRole = selectedFilters.role === 'all' || user.role === selectedFilters.role;
+    const matchesDepartment = selectedFilters.department === 0 || user.departmentId === selectedFilters.department;
+    const matchesRole = selectedFilters.role === 0 || user.jobId === selectedFilters.role;
     const matchesStatus = selectedFilters.status === 'all' || user.status === selectedFilters.status;
     
     return matchesSearch && matchesDepartment && matchesRole && matchesStatus;
@@ -229,14 +125,13 @@ const Admin: React.FC = () => {
     setShowUserModal(true);
   };
 
-  const handleDeleteUser = (userId: number) => {
+  const handleDeleteUser = async (userId: number) => {
     if (window.confirm(t.confirmDeleteUser)) {
-      setUsers(users.filter(user => user.id !== userId));
+      await deleteUser(userId);
     }
   };
 
   const handleCreateDepartment = () => {
-    setEditingDepartment(null);
     setShowDepartmentModal(true);
   };
 
@@ -245,13 +140,12 @@ const Admin: React.FC = () => {
     setShowDepartmentModal(true);
   };
 
-  const handleDeleteDepartment = (departmentId: number) => {
+  const handleDeleteDepartment = async (departmentId: number) => {
     if (window.confirm(t.confirmDeleteDepartment)) {
-      setDepartments(departments.filter(dept => dept.id !== departmentId));
+      await deleteDepartment(departmentId);
+      fetchDepartments();
     }
   };
-
-
 
   const tabs: Tab[] = [
     { id: 'users', label: t.users, icon: Users, count: users.length },
@@ -315,11 +209,11 @@ const Admin: React.FC = () => {
             <select
               className="select select-bordered select-sm bg-base-200 w-full sm:w-auto"
               value={selectedFilters.department}
-              onChange={(e) => setSelectedFilters({...selectedFilters, department: e.target.value})}
+              onChange={(e) => setSelectedFilters({...selectedFilters, department: Number(e.target.value)})}
             >
-              <option value="all">{t.allDepartments}</option>
+              <option value="0">{t.allDepartments}</option>
               {departments.map(dept => (
-                <option key={dept.id} value={dept.name}>{dept.name}</option>
+                <option key={dept.id} value={dept.id}>{dept.name}</option>
               ))}
             </select>
           )}
@@ -327,13 +221,13 @@ const Admin: React.FC = () => {
         
         <div className="flex items-center space-x-2">
           {activeTab === 'users' && (
-            <button className="btn btn-primary btn-sm w-full sm:w-auto" onClick={handleCreateUser}>
+            <button className="btn btn-primary btn-sm w-full sm:w-auto" onClick={handleCreateUser} style={{ textTransform: 'uppercase' }}>
               <UserPlus className="w-4 h-4 mr-2" />
               {t.createUser}
             </button>
           )}
           {activeTab === 'departments' && (
-            <button className="btn btn-primary btn-sm w-full sm:w-auto" onClick={handleCreateDepartment}>
+            <button className="btn btn-primary btn-sm w-full sm:w-auto" onClick={handleCreateDepartment} style={{ textTransform: 'uppercase' }}>
               <Building className="w-4 h-4 mr-2" />
               {t.createDepartment}
             </button>
@@ -403,27 +297,27 @@ const Admin: React.FC = () => {
                               <div className="flex items-center gap-3">
                                 <div className="avatar placeholder">
                                   <div className="bg-neutral text-neutral-content rounded-full w-10">
-                                    <span className="text-sm">{user.avatar}</span>
+                                    {/* <span className="text-sm">{user.avatar}</span> */}
                                   </div>
                                 </div>
                                 <div>
-                                  <div className="font-bold">{user.firstName} {user.lastName}</div>
+                                  <div className="font-bold">{user.name} {user.surname}</div>
                                   <div className="text-sm opacity-50">{user.phone}</div>
                                 </div>
                               </div>
                             </td>
                             <td>{user.email}</td>
                             <td>
-                              <span className="badge badge-outline">{getRoleLabel(user.role)}</span>
+                              <span className="badge badge-outline">{getRoleLabel(user.jobId)}</span>
                             </td>
-                            <td>{user.department || t.noDepartment}</td>
+                            <td>{getDepartmentLabel(user.departmentId)}</td>
                             <td>{getStatusBadge(user.status)}</td>
                             <td>
                               <div className="text-sm">
-                                {new Date(user.lastLogin).toLocaleDateString()}
+                                {new Date(user.updatedAt!).toLocaleDateString()}
                                 <br />
                                 <span className="opacity-50">
-                                  {new Date(user.lastLogin).toLocaleTimeString()}
+                                  {new Date(user.updatedAt!).toLocaleTimeString()}
                                 </span>
                               </div>
                             </td>
@@ -486,7 +380,7 @@ const Admin: React.FC = () => {
                         <Users className="w-6 h-6 text-success" />
                       </div>
                       <div>
-                        <h3 className="text-2xl font-bold">{departments.reduce((sum, dept) => sum + dept.userCount, 0)}</h3>
+                        <h3 className="text-2xl font-bold">{departmentUserCounts}</h3>
                         <p className="text-neutral text-sm">Total de Usuários</p>
                       </div>
                     </div>
@@ -514,7 +408,7 @@ const Admin: React.FC = () => {
                           </button>
                           <button 
                             className="btn btn-ghost btn-sm text-error"
-                            onClick={() => handleDeleteDepartment(department.id)}
+                            onClick={() => handleDeleteDepartment(department.id!)}
                             title={t.deleteDepartment}
                           >
                             <Trash2 className="w-4 h-4" />
@@ -525,12 +419,9 @@ const Admin: React.FC = () => {
                       <div className="mt-4 space-y-2">
                         <div className="flex justify-between text-sm">
                           <span className="opacity-70">{t.departmentManager}:</span>
-                          <span>{department.manager}</span>
+                          <span>{department.managerName}</span>
                         </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="opacity-70">{t.usersInDepartment}:</span>
-                          <span className="badge badge-primary">{department.userCount}</span>
-                        </div>
+                        <DepartmentUserCount departmentId={department.id!} label={t.usersInDepartment} />
                         <div className="flex justify-between text-sm">
                           <span className="opacity-70">{t.createdAt}:</span>
                           <span>{new Date(department.createdAt).toLocaleDateString()}</span>
@@ -558,13 +449,9 @@ const Admin: React.FC = () => {
           user={editingUser}
           departments={departments}
           permissions={permissions}
-          onClose={() => setShowUserModal(false)}
-          onSave={(userData) => {
-            if (editingUser) {
-              setUsers(users.map(u => u.id === editingUser.id ? {...u, ...userData} : u));
-            } else {
-              setUsers([...users, { ...userData, id: Date.now() }]);
-            }
+          onClose={() => {
+            fetchUsers();
+            handleUserCount();
             setShowUserModal(false);
           }}
         />
@@ -574,13 +461,8 @@ const Admin: React.FC = () => {
       {showDepartmentModal && (
         <DepartmentModal
           department={editingDepartment}
-          onClose={() => setShowDepartmentModal(false)}
-          onSave={(deptData) => {
-            if (editingDepartment) {
-              setDepartments(departments.map(d => d.id === editingDepartment.id ? {...d, ...deptData} : d));
-            } else {
-              setDepartments([...departments, { ...deptData, id: Date.now(), userCount: 0 }]);
-            }
+          onClose={() => {
+            fetchDepartments();
             setShowDepartmentModal(false);
           }}
         />

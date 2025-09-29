@@ -24,7 +24,7 @@ export const useAgentStore = create<AgentState>((set, get) => ({
     set({ agent });
   },
   fetchAgent: async (id: string) => {
-    const response = await fetch(`${BASE_URL}/api/agents/${id}`);
+    const response = await fetch(`${BASE_URL}/agents/${id}`);
     const data = await response.json();
     if (data) {
       const agent = fillAgent(data);
@@ -34,7 +34,7 @@ export const useAgentStore = create<AgentState>((set, get) => ({
     return emptyAgent();
   },
   fetchAgents: async (organizationId: number, filter: string = 'all') => {
-    const response = await fetch(`${BASE_URL}/api/agents?organizationId=${organizationId}&filter=${filter}`);
+    const response = await fetch(`${BASE_URL}/agents?organizationId=${organizationId}&filter=${filter}`);
     const data = await response.json();
     if (data) {
       const agents = data.map((item: any) => fillAgent(item));
@@ -44,7 +44,7 @@ export const useAgentStore = create<AgentState>((set, get) => ({
     return [];
   },
   createOrUpdateAgent: async (agent: Agent) => {
-    const url = `${BASE_URL}/api/agents`;
+    const url = `${BASE_URL}/agents`;
 
     const body = JSON.stringify({
       id: agent.id === 0 ? undefined : agent.id,
@@ -77,7 +77,7 @@ export const useAgentStore = create<AgentState>((set, get) => ({
     return emptyAgent();
   },
   deleteAgent: async (id: number) => {
-    const response = await fetch(`${BASE_URL}/api/agents/${id}`, {
+    const response = await fetch(`${BASE_URL}/agents/${id}`, {
       method: 'DELETE',
     });
     if (response.ok) {

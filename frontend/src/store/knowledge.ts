@@ -16,25 +16,25 @@ export const useKnowledgeStore = create<KnowledgeState>((set) => ({
 
   fetchKnowledge: async (filter = {}) => {
     const params = new URLSearchParams(filter as any).toString();
-    const res = await fetch(`${BASE_URL}/api/knowledge${params ? `?${params}` : ""}`);
+    const res = await fetch(`${BASE_URL}/knowledge${params ? `?${params}` : ""}`);
     const data = await res.json();
     set({ knowledgeList: (data.knowledge || []).map(mapToKnowledge) });
   },
 
   upsertKnowledge: async (knowledge) => {
-    await fetch(`${BASE_URL}/api/knowledge`, {
+    await fetch(`${BASE_URL}/knowledge`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(knowledge),
     });
     // Atualiza a lista após upsert
-    const res = await fetch(`${BASE_URL}/api/knowledge`);
+    const res = await fetch(`${BASE_URL}/knowledge`);
     const data = await res.json();
     set({ knowledgeList: data.knowledge as Knowledge[] || [] });
   },
 
   deleteKnowledge: async (id) => {
-    await fetch(`${BASE_URL}/api/knowledge/${id}`, { method: "DELETE" });
+    await fetch(`${BASE_URL}/knowledge/${id}`, { method: "DELETE" });
     set((state) => ({
       knowledgeList: state.knowledgeList.filter((k) => k.id !== id),
     }));

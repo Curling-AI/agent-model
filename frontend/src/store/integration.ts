@@ -19,7 +19,7 @@ export const useIntegrationStore = create<IntegrationState>((set) => ({
   integrations: [],
 
   fetchIntegrations: async (agentId: number) => {
-    const res = await fetch(`${BASE_URL}/api/integrations?agentId=${agentId}`);
+    const res = await fetch(`${BASE_URL}/integrations?agentId=${agentId}`);
     if (res.ok) {
       const data = await res.json();
       
@@ -28,7 +28,7 @@ export const useIntegrationStore = create<IntegrationState>((set) => ({
   },
 
   upsertIntegration: async (integration) => {
-    const res = await fetch(`${BASE_URL}/api/integrations`, {
+    const res = await fetch(`${BASE_URL}/integrations`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(integration),
@@ -50,7 +50,7 @@ export const useIntegrationStore = create<IntegrationState>((set) => ({
   },
 
   deleteIntegration: async (agentId: number, serviceProviderId: number) => {
-    const res = await fetch(`${BASE_URL}/api/integrations?agentId=${agentId}&serviceProviderId=${serviceProviderId}`, { method: 'DELETE' });
+    const res = await fetch(`${BASE_URL}/integrations?agentId=${agentId}&serviceProviderId=${serviceProviderId}`, { method: 'DELETE' });
     if (res.ok) {
       set((state) => ({
         integrations: state.integrations.filter(i => i.serviceProviderId !== serviceProviderId && i.agentId !== agentId),
@@ -59,7 +59,7 @@ export const useIntegrationStore = create<IntegrationState>((set) => ({
   },
 
   getFacebookAccessToken: async (code: string) => {
-    const res = await fetch(`${BASE_URL}/api/facebook/access-token?code=${code}`, {
+    const res = await fetch(`${BASE_URL}/facebook/access-token?code=${code}`, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
     });
@@ -72,7 +72,7 @@ export const useIntegrationStore = create<IntegrationState>((set) => ({
   },
 
   subscribeFacebookApp: async (data: FacebookAccessToken) => {
-    const res = await fetch(`${BASE_URL}/api/facebook/subscribe-app`, {
+    const res = await fetch(`${BASE_URL}/facebook/subscribe-app`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ accessToken: data.access_token, wabaId: data.waba_id }),
@@ -87,7 +87,7 @@ export const useIntegrationStore = create<IntegrationState>((set) => ({
   },
 
   registerFacebookNumber: async (phoneNumberId: string, facebookAccessToken: string) => {
-    const res = await fetch(`${BASE_URL}/api/facebook/register-number`, {
+    const res = await fetch(`${BASE_URL}/facebook/register-number`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ phoneNumberId, facebookAccessToken }),
@@ -97,7 +97,7 @@ export const useIntegrationStore = create<IntegrationState>((set) => ({
   },
 
   getZapiInstance: async () => {
-    const res = await fetch(`${BASE_URL}/api/zapi/instance`, {
+    const res = await fetch(`${BASE_URL}/zapi/instance`, {
       method: 'GET',
     });
     if (!res.ok) throw new Error('Erro ao obter instância Zapi');
@@ -105,7 +105,7 @@ export const useIntegrationStore = create<IntegrationState>((set) => ({
   },
 
   getZapiQrCode: async () => {
-    const res = await fetch(`${BASE_URL}/api/zapi/qrcode`, {
+    const res = await fetch(`${BASE_URL}/zapi/qrcode`, {
       method: 'GET',
     });
     if (!res.ok) throw new Error('Erro ao obter QR Code Zapi');

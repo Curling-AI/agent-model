@@ -7,6 +7,7 @@ import { useEffect, useState } from "react"
 import FollowUpModal from "../modal/FollowUpModal";
 import { useSystemStore } from "@/store/system";
 import { useFollowUpStore } from "@/store/follow-up";
+import { useCrmColumnStore } from "@/store/crm-column";
 
 const NewAgentFollowUp: React.FC = () => {
 
@@ -15,7 +16,9 @@ const NewAgentFollowUp: React.FC = () => {
 
   const { agent } = useAgentStore();
 
-  const { followUpTriggers, fetchCrmColumns, fetchFollowUpTriggers } = useSystemStore();
+  const { followUpTriggers, fetchFollowUpTriggers } = useSystemStore();
+
+  const { fetchCrmColumns } = useCrmColumnStore();
 
   const { followUps, fetchFollowUps, deleteFollowUp } = useFollowUpStore();
 

@@ -29,6 +29,7 @@
   --color-error-content: #ffffff;   
   --fg: #ffffff;        
   --bg: #229ad2;
+  --bc: 215 28% 17%;
 }
 
 :root[data-theme="dark"] {
@@ -56,6 +57,7 @@
   --color-error-content: #111827;
   --fg: #111827;
   --bg: #229ad2;
+  --bc: 220 14% 96%;
 }
 
 @layer base {
@@ -69,6 +71,20 @@
 }
 
 @layer components {
+
+  .label-text {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    --tw-text-opacity: 1;
+    color: hsl(var(--bc) / var(--tw-text-opacity));
+    padding-bottom: 5px;
+  }
+
+  .form-control {
+    display: flex;
+    flex-direction: column;
+  }
+
   .label-display {
     display: flex !important;
   }

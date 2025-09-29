@@ -1,21 +1,29 @@
 import { useLanguage } from "@/context/LanguageContext";
+import { useDepartmentStore } from "@/store/department";
 import { useTranslation } from "@/translations";
+import { Department } from "@/types/user";
 import { useState } from "react";
 
 // Department Modal Component
-const DepartmentModal: React.FC<{ department?: any; onClose: () => void; onSave: (data: any) => void }> = ({ department, onClose, onSave }) => {
-  const { language } = useLanguage();
+const DepartmentModal: React.FC<{ department?: Department | null; onClose: () => void; }> = ({ department, onClose }) => {
+  const  language = useLanguage();
   const t = useTranslation(language);
-  
-  const [formData, setFormData] = useState({
-    name: department?.name || '',
-    description: department?.description || '',
-    manager: department?.manager || ''
+
+  const { upsertDepartment } = useDepartmentStore();
+
+  const [newDepartment, setDepartment] = useState<Department>(department || {
+    id: 0,
+    organizationId: 1,
+    name: '',
+    description: '',
+    managerName: '',
+    createdAt: '',
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(formData);
+    await upsertDepartment(newDepartment);
+    onClose();
   };
 
   return (
@@ -33,8 +41,9 @@ const DepartmentModal: React.FC<{ department?: any; onClose: () => void; onSave:
             <input
               type="text"
               className="input input-bordered"
-              value={formData.name}
-              onChange={(e) => setFormData({...formData, name: e.target.value})}
+              style={{ width: '100%' }}
+              value={newDepartment.name || ''}
+              onChange={(e) => setDepartment({...newDepartment, name: e.target.value})}
               required
             />
           </div>
@@ -45,8 +54,9 @@ const DepartmentModal: React.FC<{ department?: any; onClose: () => void; onSave:
             </label>
             <textarea
               className="textarea textarea-bordered"
-              value={formData.description}
-              onChange={(e) => setFormData({...formData, description: e.target.value})}
+              style={{ width: '100%' }}
+              value={newDepartment.description}
+              onChange={(e) => setDepartment({...newDepartment, description: e.target.value})}
               required
             />
           </div>
@@ -58,16 +68,17 @@ const DepartmentModal: React.FC<{ department?: any; onClose: () => void; onSave:
             <input
               type="text"
               className="input input-bordered"
-              value={formData.manager}
-              onChange={(e) => setFormData({...formData, manager: e.target.value})}
+              style={{ width: '100%' }}
+              value={newDepartment.managerName}
+              onChange={(e) => setDepartment({...newDepartment, managerName: e.target.value})}
             />
           </div>
           
           <div className="modal-action">
-            <button type="button" className="btn" onClick={onClose}>
+            <button type="button" className="btn" onClick={onClose} style={{ textTransform: 'uppercase' }}>
               {t.cancel}
             </button>
-            <button type="submit" className="btn btn-primary">
+            <button type="button" onClick={handleSubmit} className="btn btn-primary" style={{ textTransform: 'uppercase' }}>
               {t.save}
             </button>
           </div>

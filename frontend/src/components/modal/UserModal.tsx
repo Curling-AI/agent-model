@@ -1,63 +1,47 @@
 // User Modal Component
 
 import { useLanguage } from "@/context/LanguageContext";
+import { useSystemStore } from "@/store/system";
+import { useUserStore } from "@/store/user";
 import { useTranslation } from "@/translations";
+import { Department, Permission, User } from "@/types/user";
 import { useState } from "react";
-
-interface Department {
-  id: string | number;
-  name: string;
-}
-
-interface Permission {
-  id: string | number;
-  category: string;
-  description: string;
-}
-
-interface User {
-  firstName?: string;
-  lastName?: string;
-  email?: string;
-  phone?: string;
-  role?: string;
-  department?: string;
-  status?: string;
-  permissions?: Array<string | number>;
-}
 
 interface UserModalProps {
   user?: User | null;
   departments: Department[];
   permissions: Permission[];
   onClose: () => void;
-  onSave: (formData: any) => void;
 }
 
-const UserModal: React.FC<UserModalProps> = ({ user, departments, permissions, onClose, onSave }) => {
+const UserModal: React.FC<UserModalProps> = ({ user, departments, permissions, onClose }) => {
   const language = useLanguage();
   const t = useTranslation(language);
-  
-  const [formData, setFormData] = useState({
-    firstName: user?.firstName || '',
-    lastName: user?.lastName || '',
-    email: user?.email || '',
-    phone: user?.phone || '',
-    role: user?.role || 'user',
-    department: user?.department || '',
-    status: user?.status || 'active',
+  const { upsertUser } = useUserStore();
+  const { jobs } = useSystemStore();
+  const [formData, setFormData] = useState(user || {
+    id: 0,
+    organizationId: 1,
+    name: '',
+    surname: '',
+    email: '',
+    phone: '',
+    jobId: 0,
+    departmentId: 0,
+    status: 'active' as 'active' | 'inactive' | 'suspended',
     password: '',
     confirmPassword: '',
-    permissions: user?.permissions || []
+    permissions: []
   });
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.password !== formData.confirmPassword) {
       alert(t.passwordsDontMatch);
       return;
     }
-    onSave(formData);
+    await upsertUser(formData);
+    onClose();
   };
 
   return (
@@ -67,7 +51,7 @@ const UserModal: React.FC<UserModalProps> = ({ user, departments, permissions, o
           {user ? t.editUser : t.createUser}
         </h3>
         
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="form-control">
               <label className="label">
@@ -76,8 +60,8 @@ const UserModal: React.FC<UserModalProps> = ({ user, departments, permissions, o
               <input
                 type="text"
                 className="input input-bordered"
-                value={formData.firstName}
-                onChange={(e) => setFormData({...formData, firstName: e.target.value})}
+                value={formData.name}
+                onChange={(e) => setFormData({...formData, name: e.target.value})}
                 required
               />
             </div>
@@ -89,8 +73,8 @@ const UserModal: React.FC<UserModalProps> = ({ user, departments, permissions, o
               <input
                 type="text"
                 className="input input-bordered"
-                value={formData.lastName}
-                onChange={(e) => setFormData({...formData, lastName: e.target.value})}
+                value={formData.surname}
+                onChange={(e) => setFormData({...formData, surname: e.target.value})}
                 required
               />
             </div>
@@ -115,9 +99,14 @@ const UserModal: React.FC<UserModalProps> = ({ user, departments, permissions, o
             </label>
             <input
               type="tel"
+              maxLength={15}
               className="input input-bordered"
               value={formData.phone}
-              onChange={(e) => setFormData({...formData, phone: e.target.value})}
+              style={{ width: '100%' }}
+              onChange={(e) => {
+                const numericValue = e.target.value.replace(/\D/g, '');
+                setFormData({...formData, phone: numericValue})}
+              }
             />
           </div>
           
@@ -128,14 +117,13 @@ const UserModal: React.FC<UserModalProps> = ({ user, departments, permissions, o
               </label>
               <select
                 className="select select-bordered"
-                value={formData.role}
-                onChange={(e) => setFormData({...formData, role: e.target.value})}
+                value={formData.jobId}
+                onChange={(e) => setFormData({...formData, jobId: Number(e.target.value)})}
                 required
               >
-                <option value="admin">{t.adminRole}</option>
-                <option value="manager">{t.managerRole}</option>
-                <option value="user">{t.userRole}</option>
-                <option value="viewer">{t.viewerRole}</option>
+                {jobs.map(job => (
+                  <option key={job.id} value={job.id}>{job.title}</option>
+                ))}
               </select>
             </div>
             
@@ -145,12 +133,12 @@ const UserModal: React.FC<UserModalProps> = ({ user, departments, permissions, o
               </label>
               <select
                 className="select select-bordered"
-                value={formData.department}
-                onChange={(e) => setFormData({...formData, department: e.target.value})}
+                value={formData.departmentId}
+                onChange={(e) => setFormData({...formData, departmentId: Number(e.target.value)})}
               >
                 <option value="">{t.noDepartment}</option>
                 {departments.map(dept => (
-                  <option key={dept.id} value={dept.name}>{dept.name}</option>
+                  <option key={dept.id} value={dept.id}>{dept.name}</option>
                 ))}
               </select>
             </div>
@@ -162,7 +150,7 @@ const UserModal: React.FC<UserModalProps> = ({ user, departments, permissions, o
               <select
                 className="select select-bordered"
                 value={formData.status}
-                onChange={(e) => setFormData({...formData, status: e.target.value})}
+                onChange={(e) => setFormData({...formData, status: e.target.value as 'active' | 'inactive' | 'suspended'})}
                 required
               >
                 <option value="active">{t.active}</option>
@@ -209,41 +197,41 @@ const UserModal: React.FC<UserModalProps> = ({ user, departments, permissions, o
               <span className="label-text font-semibold">{t.userPermissions}</span>
             </label>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-2">
-              {['agent', 'crm', 'conversation', 'admin'].map(category => {
+              {[1,2,3,4].map(group => {
                 const permissionLabels: Record<string, string> = {
-                  agent: t.agentPermissions,
-                  crm: t.crmPermissions,
-                  conversation: t.conversationPermissions,
-                  admin: t.adminPermissions,
+                  1: t.agentPermissions,
+                  2: t.crmPermissions,
+                  3: t.conversationPermissions,
+                  4: t.adminPermissions,
                 };
                 return (
-                  <div key={category} className="card bg-base-200">
+                  <div key={group} className="card bg-base-200">
                     <div className="card-body p-4">
-                      <h4 className="card-title text-sm capitalize mb-3">{permissionLabels[category]}</h4>
+                      <h4 className="card-title text-sm capitalize mb-3">{permissionLabels[group]}</h4>
                       <div className="space-y-2">
                         {permissions
-                          .filter(permission => permission.category === category)
+                          .filter(permission => permission.groupId === group)
                           .map(permission => (
-                            <label key={permission.id} className="flex items-center gap-2 cursor-pointer">
+                            <label key={permission.code} className="flex items-center gap-2 cursor-pointer">
                               <input
                                 type="checkbox"
                                 className="checkbox checkbox-primary checkbox-sm"
-                                checked={formData.permissions.includes(permission.id)}
+                                checked={formData.permissions.includes(permission.code)}
                                 onChange={(e) => {
                                   if (e.target.checked) {
                                     setFormData({
                                       ...formData,
-                                      permissions: [...formData.permissions, permission.id]
+                                      permissions: [...formData.permissions, permission.code]
                                     });
                                   } else {
                                     setFormData({
                                       ...formData,
-                                      permissions: formData.permissions.filter(id => id !== permission.id)
+                                      permissions: user!.permissions.filter(code => code !== permission.code)
                                     });
                                   }
                                 }}
                               />
-                              <span className="text-sm">{permission.description}</span>
+                              <span className="text-sm">{language.language == 'en' ? permission.descriptionEn : permission.descriptionPt}</span>
                             </label>
                           ))}
                       </div>
@@ -255,10 +243,10 @@ const UserModal: React.FC<UserModalProps> = ({ user, departments, permissions, o
           </div>
           
           <div className="modal-action">
-            <button type="button" className="btn" onClick={onClose}>
+            <button type="button" className="btn" onClick={onClose} style={{ textTransform: 'uppercase' }}>
               {t.cancel}
             </button>
-            <button type="submit" className="btn btn-primary">
+            <button type="button" onClick={handleSubmit} className="btn btn-primary" style={{ textTransform: 'uppercase' }}>
               {t.save}
             </button>
           </div>

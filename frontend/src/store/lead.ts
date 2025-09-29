@@ -1,0 +1,97 @@
+import { Lead } from '@/types/lead';
+import { BASE_URL } from '@/utils/constants';
+import { create } from 'zustand';
+
+interface LeadState {
+  leads: Lead[];
+  loading: boolean;
+  error: string | null;
+  fetchLeads: () => Promise<void>;
+  upsertLead: (lead: Omit<Lead, 'id'> & { id?: number }) => Promise<void>;
+  deleteLead: (leadId: number) => Promise<void>;
+}
+
+export const useLeadStore = create<LeadState>((set, get) => ({
+  leads: [],
+  loading: false,
+  error: null,
+
+  fetchLeads: async () => {
+    set({ loading: true, error: null });
+    try {
+      const response = await fetch(`${BASE_URL}/leads?organizationId=1`);
+      const data = await response.json();
+      set({ leads: mapToLead(data), loading: false });
+    } catch (error) {
+      console.error("Failed to fetch leads:", error);
+      set({ error: 'Falha ao buscar leads.', loading: false });
+    }
+  },
+
+  upsertLead: async (lead) => {
+    set({ loading: true, error: null });
+
+    try {
+      const response = await fetch(`${BASE_URL}/leads`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(lead),
+      });
+      const savedLead = await response.json();
+
+      const filteredLeads = get().leads.filter((d) => d.id !== savedLead.id);
+
+      // Create
+      set((_) => ({
+        leads: mapToLead([...filteredLeads, savedLead]),
+        loading: false,
+      }));
+    } catch (error) {
+      console.error("Failed to upsert lead:", error);
+      set({ error: 'Falha ao salvar o lead.', loading: false });
+    }
+  },
+
+  deleteLead: async (leadId: number) => {
+    set({ loading: true, error: null });
+    try {
+      const response = await fetch(`${BASE_URL}/leads/${leadId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete lead');
+      }
+      
+      set((state) => ({
+        leads: state.leads.filter((d) => d.id !== leadId),
+        loading: false,
+      }));
+    } catch (error) {
+      console.error("Failed to delete lead:", error);
+      set({ error: 'Falha ao deletar o lead.', loading: false });
+    }
+  },
+
+}));
+
+function mapToLead(data: any[]): Lead[] {
+  return data.map((item) => ({
+    id: item.id,
+    name: item.name,
+    company: item.company,
+    email: item.email,
+    phone: item.phone,
+    value: item.value,
+    source: item.source,
+    observation: item.observation,
+    priority: item.priority,
+    tags: item.tags,
+    status: item.status,
+    organizationId: item.organization_id,
+    createdAt: item.created_at,
+    updatedAt: item.updated_at,
+  }));
+};

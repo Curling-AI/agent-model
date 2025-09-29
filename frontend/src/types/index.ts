@@ -11,7 +11,9 @@ export interface BaseInterface {
 
 export interface CrmColumn extends BaseInterface {
   id: number;
-  name: string;
+  titlePt: string;
+  titleEn: string;
+  color: string;
   isSystem: boolean;
 }
 
@@ -37,3 +39,32 @@ export interface LanguageContextType {
   setLanguage: (lang: 'pt' | 'en') => void;
   toggleLanguage: () => void;
 }
+
+export type Column = {
+  id: string;
+  title: string;
+  color: string;
+};
+
+export type ValueRange = {
+  min: string;
+  max: string;
+};
+
+export type DateRange = {
+  start: string;
+  end: string;
+};
+
+export type CrmFilter = {
+  status: string[];
+  priority: string[];
+  source: string[];
+  tags: string[];
+  valueRange: ValueRange;
+  dateRange: DateRange;
+  company: string;
+  hasNotes: boolean;
+  hasPhone: boolean;
+  hasEmail: boolean;
+};
