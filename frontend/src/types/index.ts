@@ -15,6 +15,7 @@ export interface CrmColumn extends BaseInterface {
   titleEn: string;
   color: string;
   isSystem: boolean;
+  order?: number;
 }
 
 export interface ServiceProvider {
@@ -57,7 +58,7 @@ export type DateRange = {
 };
 
 export type CrmFilter = {
-  status: string[];
+  status: number[];
   priority: string[];
   source: string[];
   tags: string[];

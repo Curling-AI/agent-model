@@ -15,6 +15,7 @@ CREATE TABLE crm_columns (
   name VARCHAR(255) NOT NULL,
   color VARCHAR(10) NOT NULL DEFAULT #000000,
   is_system BOOLEAN NOT NULL DEFAULT FALSE,
+  order serial,
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
 );
@@ -187,6 +188,8 @@ CREATE TABLE leads (
   source VARCHAR(20) CHECK (source IN ('whatsapp', 'email', 'website', 'phone', 'referral')),
   priority VARCHAR(10) CHECK (priority IN ('low', 'medium', 'high')),
   observation TEXT,
+  tags jsonb,
+  status INTEGER default 1,
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
 );

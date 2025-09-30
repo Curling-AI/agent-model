@@ -3,7 +3,6 @@ import { useTranslation } from '@/translations';
 import { generateComplementaryColors } from '@/utils/colors';
 import { Edit, Plus, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
-import CrmColumnModal from './CrmColumnModal';
 import { CrmColumn } from '@/types';
 
 import { GripVertical as DragHandle } from 'lucide-react';
@@ -12,20 +11,18 @@ import { useLeadStore } from '@/store/lead';
 
 interface SettingCrmColumnModalProps {
   onClose: () => void;
-  title?: string;
-  children?: React.ReactNode;
+  setEditingColumn: (column: CrmColumn) => void;
 }
 
-const SettingCrmColumnModal: React.FC<SettingCrmColumnModalProps> = ({ onClose, title, children }) => {
+const SettingCrmColumnModal: React.FC<SettingCrmColumnModalProps> = ({ onClose, setEditingColumn }) => {
 
   const language = useLanguage();
   const t = useTranslation(language);
 
   const [draggedColumn, setDraggedColumn] = useState<CrmColumn | null>(null);
-  const [editingColumn, setEditingColumn] = useState<CrmColumn | null>(null);
- 
-  const { crmColumns, deleteCrmColumn } = useCrmColumnStore();
-  const { leads } = useLeadStore();
+
+  const { crmColumns, deleteCrmColumn, upsertCrmColumn, setColumns } = useCrmColumnStore();
+  const { leads, upsertLead } = useLeadStore();
 
   // Função para obter leads filtrados por status
   const getLeadsByStatus = (status: number) => {
@@ -43,18 +40,18 @@ const SettingCrmColumnModal: React.FC<SettingCrmColumnModalProps> = ({ onClose, 
 
       if (confirmDelete) {
         // Mover leads para a primeira coluna disponível
-        const firstAvailableColumn = crmColumns.find(col => col.id !== columnId);
+        const firstAvailableColumn = crmColumns.find(col => col.order !== columnId);
         if (firstAvailableColumn) {
-          const updatedLeads = leads.map(lead =>
-            lead.status === columnId
+          leads.map(async lead => {
+            const updatedLead = lead.status === columnId
               ? { ...lead, status: firstAvailableColumn.id }
-              : lead
-          );
-          // setLeadsData(updatedLeads);
+              : lead;
+            await upsertLead(updatedLead);
+          });
         }
       }
     }
-    
+
     await deleteCrmColumn(columnId);
   };
 
@@ -71,18 +68,23 @@ const SettingCrmColumnModal: React.FC<SettingCrmColumnModalProps> = ({ onClose, 
     e.dataTransfer.dropEffect = 'move';
   };
 
-  const handleColumnDrop = (e: React.DragEvent<HTMLDivElement>, targetColumnId: number) => {
+  const handleColumnDrop = async (e: React.DragEvent<HTMLDivElement>, targetColumn: CrmColumn) => {
     e.preventDefault();
 
-    if (draggedColumn && draggedColumn.id !== targetColumnId) {
+    if (draggedColumn && draggedColumn.id !== targetColumn.id) {
       const draggedIndex = crmColumns.findIndex(col => col.id === draggedColumn.id);
-      const targetIndex = crmColumns.findIndex(col => col.id === targetColumnId);
+      const targetIndex = crmColumns.findIndex(col => col.id === targetColumn.id);
 
       const newColumns = [...crmColumns];
       const [removed] = newColumns.splice(draggedIndex, 1);
       newColumns.splice(targetIndex, 0, removed);
+      
+      draggedColumn.order = targetIndex + 1;
+      targetColumn.order = draggedIndex + 1;
+      await upsertCrmColumn(draggedColumn);
+      await upsertCrmColumn(targetColumn);  
 
-      // setColumns(newColumns);
+      setColumns(newColumns);
     }
 
     setDraggedColumn(null);
@@ -93,21 +95,22 @@ const SettingCrmColumnModal: React.FC<SettingCrmColumnModalProps> = ({ onClose, 
   };
 
   // Função para adicionar nova coluna
-    const handleAddColumn = () => {
-      const newColumnId = `coluna_${Date.now()}`;
-      const complementaryColors = generateComplementaryColors();
-      const availableColors = complementaryColors.filter(color => 
-        !crmColumns.some(col => col.color === color)
-      );
-      
-      const newColumn = {
-        id: newColumnId,
-        title: t.newColumn,
+  const handleAddColumn = async () => {
+    const complementaryColors = generateComplementaryColors();
+    const availableColors = complementaryColors.filter(color =>
+      !crmColumns.some(col => col.color === color)
+    );
 
-        color: availableColors.length > 0 ? availableColors[0] : complementaryColors[5] // Roxo como fallback
-      };
-      // setColumns([...crmColumns, newColumn]);
+    const newColumn = {
+      id: 0,
+      titlePt: t.newColumn,
+      titleEn: t.newColumn,
+      isSystem: false,
+      organizationId: 1, 
+      color: availableColors.length > 0 ? availableColors[0] : complementaryColors[5] // Roxo como fallback
     };
+    await upsertCrmColumn(newColumn);
+  };
 
   return (
     <div className="modal modal-open">
@@ -133,6 +136,7 @@ const SettingCrmColumnModal: React.FC<SettingCrmColumnModalProps> = ({ onClose, 
               <button
                 className="btn btn-primary btn-sm"
                 onClick={handleAddColumn}
+                style={{ textTransform: 'uppercase' }}
               >
                 <Plus className="w-4 h-4 mr-2" />
                 {t.addColumn}
@@ -148,7 +152,7 @@ const SettingCrmColumnModal: React.FC<SettingCrmColumnModalProps> = ({ onClose, 
                   draggable
                   onDragStart={(e) => handleColumnDragStart(e, column)}
                   onDragOver={handleColumnDragOver}
-                  onDrop={(e) => handleColumnDrop(e, column.id)}
+                  onDrop={(e) => handleColumnDrop(e, column)}
                   onDragEnd={handleColumnDragEnd}
                 >
                   <div className="flex items-center justify-between">
@@ -162,24 +166,24 @@ const SettingCrmColumnModal: React.FC<SettingCrmColumnModalProps> = ({ onClose, 
                       <span className="badge badge-neutral">{getLeadsByStatus(column.id).length} {t.leads}</span>
                     </div>
                     <div className="flex items-center space-x-2">
+                      {!column.isSystem && (
                       <button
                         className="btn btn-ghost btn-sm"
                         onClick={() => setEditingColumn(column)}
                       >
                         <Edit className="w-4 h-4" />
                       </button>
-                      <button
-                        className="btn btn-ghost btn-sm text-error"
-                        onClick={() => handleDeleteColumn(column.id)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      )}
+                      {!column.isSystem && (
+                        <button
+                          className="btn btn-ghost btn-sm text-error"
+                          onClick={() => handleDeleteColumn(column.id)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
                   </div>
-                  {/* Modal Editar Coluna */}
-                  {editingColumn && (
-                    <CrmColumnModal crmColumn={column} onClose={() => setEditingColumn(null)} />
-                  )}
                 </div>
               ))}
             </div>
@@ -190,6 +194,7 @@ const SettingCrmColumnModal: React.FC<SettingCrmColumnModalProps> = ({ onClose, 
           <button
             className="btn btn-ghost btn-sm"
             onClick={() => onClose()}
+            style={{ textTransform: 'uppercase' }}
           >
             {t.close}
           </button>

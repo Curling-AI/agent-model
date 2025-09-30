@@ -31,7 +31,7 @@ const CrmColumnModal: React.FC<CrmColumnModalProps> = ({ onClose, crmColumn }) =
   };
 
   return (
-    <div className="modal modal-open">
+    <div className="modal modal-open" style={{ backgroundColor: 'transparent !important' }}>
       <div className="modal-box w-11/12 max-w-md">
         <div className="flex items-center justify-between mb-6">
           <h3 className="font-bold text-lg">{t.editColumn}</h3>

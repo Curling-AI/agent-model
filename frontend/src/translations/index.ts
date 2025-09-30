@@ -265,6 +265,7 @@ export const translations = {
     valuePlaceholder: '0.00',
     notesPlaceholder: 'Adicione observações sobre o lead...',
     now: 'Agora',
+    invalidEmail: 'Por favor, insira um email válido.',
     
     // CRM Column Management
     columns: 'Colunas',
@@ -1048,6 +1049,7 @@ export const translations = {
     dragToReorder: 'Drag to reorder',
     suggestedComplementaryColors: 'Suggested colors:',
     color: 'Color',
+    invalidEmail: 'Please enter a valid email address',
     
     // Plans Page
     plansTitle: 'Plans',

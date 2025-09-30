@@ -6,8 +6,9 @@ interface LeadState {
   leads: Lead[];
   loading: boolean;
   error: string | null;
+  setLead: (leads: Lead[]) => void;
   fetchLeads: () => Promise<void>;
-  upsertLead: (lead: Omit<Lead, 'id'> & { id?: number }) => Promise<void>;
+  upsertLead: (lead: Lead) => Promise<void>;
   deleteLead: (leadId: number) => Promise<void>;
 }
 
@@ -15,7 +16,7 @@ export const useLeadStore = create<LeadState>((set, get) => ({
   leads: [],
   loading: false,
   error: null,
-
+  setLead: (leads) => set({ leads }),
   fetchLeads: async () => {
     set({ loading: true, error: null });
     try {
@@ -88,7 +89,7 @@ function mapToLead(data: any[]): Lead[] {
     source: item.source,
     observation: item.observation,
     priority: item.priority,
-    tags: item.tags,
+    tags: item.tags || [],
     status: item.status,
     organizationId: item.organization_id,
     createdAt: item.created_at,

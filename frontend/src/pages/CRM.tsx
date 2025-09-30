@@ -1,10 +1,10 @@
 import { useState, useMemo, useEffect } from 'react';
-import { 
+import {
   Plus,
-  Search, 
-  MoreVertical, 
-  Phone, 
-  Mail, 
+  Search,
+  MoreVertical,
+  Phone,
+  Mail,
   MessageSquare,
   Edit,
   Trash2,
@@ -19,11 +19,14 @@ import {
 import { useLanguage } from '../context/LanguageContext';
 import { useTranslation } from '../translations';
 import { CrmColumn, CrmFilter } from '@/types';
-import LeadModal from '@/components/modal/FilterLeadModal';
+import LeadModal from '@/components/modal/LeadModal';
 import { Lead } from '@/types/lead';
 import SettingCrmColumnModal from '@/components/modal/SettingCrmColumnModal';
 import { useCrmColumnStore } from '@/store/crm-column';
 import { useLeadStore } from '@/store/lead';
+import FilterLeadModal from '@/components/modal/FilterLeadModal';
+import { formatDateDMYHM } from '@/utils/date';
+import CrmColumnModal from '@/components/modal/CrmColumnModal';
 
 const CRM: React.FC = () => {
   const language = useLanguage();
@@ -34,12 +37,13 @@ const CRM: React.FC = () => {
   const [showColumnSettings, setShowColumnSettings] = useState(false);
   const [showFiltersModal, setShowFiltersModal] = useState(false);
   const [editingColumn, setEditingColumn] = useState<CrmColumn | null>(null);
+  const [editingLead, setEditingLead] = useState<Lead | null>(null);
 
   const { crmColumns, fetchCrmColumns } = useCrmColumnStore();
-  const { leads, fetchLeads } = useLeadStore();
-  
+  const { leads, setLead, fetchLeads, upsertLead, deleteLead } = useLeadStore();
+
   // Estado para filtros
-  const [filters] = useState<CrmFilter>({
+  const [filters, setFilters] = useState<CrmFilter>({
     status: [],
     priority: [],
     source: [],
@@ -59,20 +63,19 @@ const CRM: React.FC = () => {
     fetchCrmColumns();
     fetchLeads();
   }, []);
-  
 
   // Função para aplicar filtros aos leads
   const filteredLeadsData = useMemo(() => {
     return leads.filter((lead: Lead) => {
       // Filtro por termo de busca
-      if (searchTerm && !lead.name.toLowerCase().includes(searchTerm.toLowerCase()) && 
-          !lead.company.toLowerCase().includes(searchTerm.toLowerCase()) &&
-          !lead.email.toLowerCase().includes(searchTerm.toLowerCase())) {
+      if (searchTerm && !lead.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+        !lead.company.toLowerCase().includes(searchTerm.toLowerCase()) &&
+        !lead.email.toLowerCase().includes(searchTerm.toLowerCase())) {
         return false;
       }
 
       // Filtro por status
-      if (filters.status.length > 0 && !filters.status.includes(lead.status.toString())) {
+      if (filters.status.length > 0 && !filters.status.includes(lead.status)) {
         return false;
       }
 
@@ -126,17 +129,17 @@ const CRM: React.FC = () => {
   // Função para verificar se há filtros ativos
   const hasActiveFilters = () => {
     return filters.status.length > 0 ||
-           filters.priority.length > 0 ||
-           filters.source.length > 0 ||
-           filters.tags.length > 0 ||
-           filters.valueRange.min !== '' ||
-           filters.valueRange.max !== '' ||
-           filters.dateRange.start !== '' ||
-           filters.dateRange.end !== '' ||
-           filters.company !== '' ||
-           filters.hasNotes ||
-           filters.hasPhone ||
-           filters.hasEmail;
+      filters.priority.length > 0 ||
+      filters.source.length > 0 ||
+      filters.tags.length > 0 ||
+      filters.valueRange.min !== '' ||
+      filters.valueRange.max !== '' ||
+      filters.dateRange.start !== '' ||
+      filters.dateRange.end !== '' ||
+      filters.company !== '' ||
+      filters.hasNotes ||
+      filters.hasPhone ||
+      filters.hasEmail;
   };
 
   // Função para obter leads filtrados por status
@@ -159,7 +162,8 @@ const CRM: React.FC = () => {
       titleEn: column.titleEn,
       color: column.color,
       isSystem: column.isSystem,
-      organizationId: column.organizationId
+      organizationId: column.organizationId,
+      order: column.order
     });
   };
 
@@ -176,18 +180,14 @@ const CRM: React.FC = () => {
     setDragOverColumn(columnId);
   };
 
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>, newStatus: number) => {
+  const handleDrop = async (e: React.DragEvent<HTMLDivElement>, newStatus: number) => {
     e.preventDefault();
-    
+
     if (draggedLead && draggedLead.status !== newStatus) {
-      const updatedLeads = leads.map(lead => 
-        lead.id === draggedLead.id 
-          ? { ...lead, status: newStatus }
-          : lead
-      );
-      // setLeads(updatedLeads);
+      await upsertLead({ ...draggedLead, status: newStatus });
+      setLead(leads.map(lead => lead.id === draggedLead.id ? { ...lead, status: newStatus } : lead));
     }
-    
+
     setDraggedLead(null);
     setDragOverColumn(null);
   };
@@ -195,6 +195,16 @@ const CRM: React.FC = () => {
   const handleDragEnd = () => {
     setDraggedLead(null);
     setDragOverColumn(null);
+  };
+
+  const handleEditLead = (lead: Lead) => {
+    setEditingLead(lead);
+    setShowNewLeadModal(true);
+  };
+
+  const handleDeleteLead = async (leadId: number) => {
+
+    await deleteLead(leadId);
   };
 
   return (
@@ -209,18 +219,19 @@ const CRM: React.FC = () => {
           <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-2 mt-4 md:mt-0">
             <div className="relative w-full sm:w-auto">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-neutral" />
-              <input 
-                type="text" 
-                placeholder={t.searchLeads} 
+              <input
+                type="text"
+                placeholder={t.searchLeads}
                 className="input input-bordered input-sm pl-10 bg-base-200 w-full sm:w-auto"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
             <div className="flex flex-wrap gap-2">
-              <button 
+              <button
                 className={`btn btn-outline btn-sm ${hasActiveFilters() ? 'btn-primary' : ''}`}
                 onClick={() => setShowFiltersModal(true)}
+                style={{ textTransform: 'uppercase' }}
               >
                 <Filter className="w-4 h-4 mr-2" />
                 {t.filters}
@@ -230,17 +241,22 @@ const CRM: React.FC = () => {
                   </span>
                 )}
               </button>
-              <button 
+              <button
                 className="btn btn-outline btn-sm"
                 onClick={() => setShowColumnSettings(true)}
                 title={t.configureColumns}
+                style={{ textTransform: 'uppercase' }}
               >
                 <Settings className="w-4 h-4 mr-2" />
                 {t.columns}
               </button>
-              <button 
+              <button
                 className="btn btn-primary btn-sm"
-                onClick={() => setShowNewLeadModal(true)}
+                onClick={() => {
+                  setEditingLead(null);
+                  setShowNewLeadModal(true);
+                }}
+                style={{ textTransform: 'uppercase' }}
               >
                 <Plus className="w-4 h-4 mr-2" />
                 {t.newLead}
@@ -256,7 +272,7 @@ const CRM: React.FC = () => {
           {crmColumns.map(column => (
             <div key={column.id} className="w-80 flex-shrink-0">
               {/* Column Header */}
-              <div 
+              <div
                 className="card bg-base-100 border-t-4 p-4 mb-4 transition-all duration-200"
                 style={{ borderTopColor: column.color }}
               >
@@ -264,33 +280,32 @@ const CRM: React.FC = () => {
                   <h3 className="font-semibold text-lg">{language.language == 'pt' ? column.titlePt : column.titleEn}</h3>
                   <div className="flex items-center space-x-2">
                     <span className="badge badge-neutral">{getLeadsByStatus(column.id).length}</span>
-                    <button 
+                    {!column.isSystem && (<button
                       className="btn btn-ghost btn-xs"
                       onClick={() => handleEditColumn(column)}
                       title={t.editColumn}
                     >
                       <Edit className="w-3 h-3" />
                     </button>
+                    )}
                   </div>
                 </div>
               </div>
 
               {/* Cards Container */}
-              <div 
-                className={`space-y-4 min-h-[500px] transition-all duration-200 ${
-                  dragOverColumn === column.id && draggedLead && draggedLead.id !== column.id
-                    ? 'bg-base-200/50 rounded-lg p-2 border-2 border-dashed border-primary/30' 
-                    : ''
-                }`}
+              <div
+                className={`space-y-4 min-h-[500px] transition-all duration-200 ${dragOverColumn === column.id && draggedLead && draggedLead.id !== column.id
+                  ? 'bg-base-200/50 rounded-lg p-2 border-2 border-dashed border-primary/30'
+                  : ''
+                  }`}
                 onDragOver={(e) => handleDragOver(e, column.id)}
                 onDrop={(e) => handleDrop(e, column.id)}
               >
                 {getLeadsByStatus(column.id).map(lead => (
-                  <div 
-                    key={lead.id} 
-                    className={`card bg-base-100 hover:shadow-md transition-all duration-200 cursor-move ${
-                      draggedLead?.id === lead.id ? 'opacity-50 scale-95' : ''
-                    }`}
+                  <div
+                    key={lead.id}
+                    className={`card bg-base-100 hover:shadow-md transition-all duration-200 cursor-move ${draggedLead?.id === lead.id ? 'opacity-50 scale-95' : ''
+                      }`}
                     draggable
                     onDragStart={(e) => handleDragStart(e, lead)}
                     onDragEnd={handleDragEnd}
@@ -308,7 +323,7 @@ const CRM: React.FC = () => {
                           </div>
                         </div>
                         <div className="flex items-center space-x-1">
-                          <button 
+                          <button
                             className="btn btn-ghost btn-xs text-neutral hover:text-primary hover:bg-primary/10"
                             title={t.chatWithClient}
                           >
@@ -320,11 +335,11 @@ const CRM: React.FC = () => {
                               <MoreVertical className="w-3 h-3" />
                             </button>
                             <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 bg-base-100 rounded-box w-48">
-                              <li><a href="#details"><Eye className="w-3 h-3" />{t.viewDetails}</a></li>
-                              <li><a href="#edit"><Edit className="w-3 h-3" />{t.edit}</a></li>
-                              <li><a href="#chat"><MessageSquare className="w-3 h-3" />{t.chat}</a></li>
+                              <li><a href="#"><Eye className="w-3 h-3" />{t.viewDetails}</a></li>
+                              <li><a href="#" onClick={() => handleEditLead(lead)}><Edit className="w-3 h-3" />{t.edit}</a></li>
+                              <li><a href="#"><MessageSquare className="w-3 h-3" />{t.chat}</a></li>
                               <li><hr className="my-1" /></li>
-                              <li><a href="#delete" className="text-error"><Trash2 className="w-3 h-3" />{t.delete}</a></li>
+                              <li><a href="#" className="text-error" onClick={() => handleDeleteLead(lead.id)}><Trash2 className="w-3 h-3" />{t.delete}</a></li>
                             </ul>
                           </div>
                         </div>
@@ -353,21 +368,17 @@ const CRM: React.FC = () => {
                       <div className="flex items-center justify-between text-xs text-neutral">
                         <div className="flex items-center space-x-1">
                           <Clock className="w-3 h-3" />
-                          <span>{lead.createdAt}</span>
+                          <span>{formatDateDMYHM(lead.createdAt!)}</span>
                         </div>
                         <div className="flex items-center space-x-1">
                           <Tag className="w-3 h-3" />
-                          <span>{lead.source}</span>
+                          <span style={{ textTransform: 'capitalize' }}>{lead.source}</span>
                         </div>
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
-              {/* Modal Configurações de Colunas */}
-              {showColumnSettings && (
-                <SettingCrmColumnModal onClose={() => setShowColumnSettings(false)} />
-              )}
             </div>
           ))}
         </div>
@@ -375,12 +386,29 @@ const CRM: React.FC = () => {
 
       {/* Modal Novo Lead */}
       {showNewLeadModal && (
-        <LeadModal onClose={() => setShowNewLeadModal(false)} />
+        <LeadModal onClose={() => setShowNewLeadModal(false)} lead={editingLead} />
       )}
 
       {/* Modal de Filtros */}
       {showFiltersModal && (
-        <LeadModal onClose={() => setShowFiltersModal(false)} />
+        <FilterLeadModal
+          onClose={() => setShowFiltersModal(false)}
+          hasActiveFilters={() => hasActiveFilters()}
+          getFilterStats={() => getFilterStats()}
+          columns={crmColumns}
+          filters={filters}
+          setFilters={setFilters}
+        />
+      )}
+
+      {/* Modal Configurações de Colunas */}
+      {showColumnSettings && (
+        <SettingCrmColumnModal onClose={() => setShowColumnSettings(false)} setEditingColumn={setEditingColumn} />
+      )}
+
+      {/* Modal Editar Coluna */}
+      {editingColumn && (
+        <CrmColumnModal crmColumn={editingColumn} onClose={() => setEditingColumn(null)} />
       )}
     </div>
   );

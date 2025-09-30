@@ -26,6 +26,8 @@ export const LeadController = {
         source: req.body.source,
         priority: req.body.priority,
         observation: req.body.observation,
+        tags : req.body.tags,
+        status: req.body.status,
       }
 
       if (req.body.id && req.body.id > 0) {

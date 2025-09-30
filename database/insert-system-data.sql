@@ -1,9 +1,9 @@
 -- Criação de dados para a tabela crm_column
-INSERT INTO crm_columns (id, title_pt, title_en, is_system, color) VALUES (1, 'Novos Leads', 'New Leads', TRUE, '#229ad2');
-INSERT INTO crm_columns (id, title_pt, title_en, is_system, color) VALUES (2, 'Qualificados', 'Qualified', TRUE, '#22d2a2');
-INSERT INTO crm_columns (id, title_pt, title_en, is_system, color) VALUES (3, 'Proposta Enviada', 'Proposal Sent', TRUE, '#5a22d2');
-INSERT INTO crm_columns (id, title_pt, title_en, is_system, color) VALUES (4, 'Em Negociação', 'In Negotiation', TRUE, '#d222a2');
-INSERT INTO crm_columns (id, title_pt, title_en, is_system, color) VALUES (5, 'Fechados', 'Closed', TRUE, '#a2d222');
+INSERT INTO crm_columns (id, title_pt, title_en, is_system, color, order) VALUES (1, 'Novos Leads', 'New Leads', TRUE, '#229ad2', 1);
+INSERT INTO crm_columns (id, title_pt, title_en, is_system, color, order) VALUES (2, 'Qualificados', 'Qualified', TRUE, '#22d2a2', 2);
+INSERT INTO crm_columns (id, title_pt, title_en, is_system, color, order) VALUES (3, 'Proposta Enviada', 'Proposal Sent', TRUE, '#5a22d2', 3);
+INSERT INTO crm_columns (id, title_pt, title_en, is_system, color, order) VALUES (4, 'Em Negociação', 'In Negotiation', TRUE, '#d222a2', 4);
+INSERT INTO crm_columns (id, title_pt, title_en, is_system, color, order) VALUES (5, 'Fechados', 'Closed', TRUE, '#a2d222', 5);
 
 -- Criação de dados para a tabela service_provider
 INSERT INTO service_providers (name, description_pt, description_en) VALUES ('Whatsapp Oficial', 'Conexão direta com WhatsApp Business API oficial', 'Official WhatsApp Business API connection');

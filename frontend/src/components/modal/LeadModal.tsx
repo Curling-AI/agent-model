@@ -1,21 +1,25 @@
 import { useLanguage } from '@/context/LanguageContext';
+import { useLeadStore } from '@/store/lead';
 import { useTranslation } from '@/translations';
 import { Lead } from '@/types/lead';
+import { isValidEmail } from '@/utils/email';
 import { Building, DollarSign, Mail, Phone, User, X } from 'lucide-react';
 import { useState } from 'react';
 
 interface LeadModalProps {
-  isOpen: boolean;
   onClose: () => void;
-  title?: string;
+  lead: Lead | null;
 }
 
-const LeadModal: React.FC<LeadModalProps> = ({ isOpen, onClose, title }) => {
+const LeadModal: React.FC<LeadModalProps> = ({ onClose, lead }) => {
 
   const language = useLanguage();
   const t = useTranslation(language);
 
-  const [newLead, setNewLead] = useState<Lead>({
+  const { upsertLead } = useLeadStore();
+
+  const [emailError, setEmailError] = useState(false);
+  const [newLead, setNewLead] = useState<Lead>(lead ||{
       name: '',
       company: '',
       email: '',
@@ -27,11 +31,20 @@ const LeadModal: React.FC<LeadModalProps> = ({ isOpen, onClose, title }) => {
       tags: [],
       organizationId: 1,
       id: 0,
-      status: 0
+      status: 1
     });
 
+  const tags = [
+    { value: 'enterprise', label: t.enterprise },
+    { value: 'startup', label: t.startup },
+    { value: 'individual', label: t.individual },
+    { value: 'education', label: t.education },
+    { value: 'urgent', label: t.urgent },
+    { value: 'premium', label: t.premium }
+  ];
+  
   // Função para criar novo lead
-  const handleCreateLead = () => {
+  const handleCreateLead = async () => {
     if (!newLead.name || !newLead.email) {
       alert(`${t.nameRequired} e ${t.emailRequired}`);
       return;
@@ -39,20 +52,23 @@ const LeadModal: React.FC<LeadModalProps> = ({ isOpen, onClose, title }) => {
 
     const avatar = newLead.name.split(' ').map(n => n[0]).join('').toUpperCase();
     const newLeadData = {
-      id: Date.now(),
+      id: newLead.id || 0,
       name: newLead.name,
       company: newLead.company,
       avatar: avatar,
       email: newLead.email,
-      phone: newLead.phone,
+      phone: newLead.phone.replace(/\D/g, ''),
       value: newLead.value || 0,
-      status: 'novo',
+      status: newLead.status || 0,
       priority: newLead.priority,
       lastContact: t.now,
       source: newLead.source,
       tags: newLead.tags,
-      observation: newLead.observation
+      observation: newLead.observation,
+      organizationId: 1
     };
+
+    await upsertLead(newLeadData);
 
     onClose();
   };
@@ -65,13 +81,14 @@ const LeadModal: React.FC<LeadModalProps> = ({ isOpen, onClose, title }) => {
         ? prev.tags.filter(t => t !== tag)
         : [...prev.tags, tag]
     }));
+    console.log(newLead.tags);
   };
 
   return (
     <div className="modal modal-open">
       <div className="modal-box w-11/12 max-w-2xl">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="font-bold text-lg">{t.newLead}</h3>
+          <h3 className="font-bold text-lg">{lead ? t.editLead : t.newLead}</h3>
           <button
             className="btn btn-sm btn-circle btn-ghost"
             onClick={() => onClose()}
@@ -123,11 +140,20 @@ const LeadModal: React.FC<LeadModalProps> = ({ isOpen, onClose, title }) => {
                 </span>
               </label>
               <input
+                required
                 type="email"
-                className="input input-bordered input-sm"
+                className={`input input-bordered input-sm ${emailError ? 'border-red-500 focus:border-red-500' : ''}`}
                 placeholder={t.emailPlaceholder}
                 value={newLead.email}
-                onChange={(e) => setNewLead({ ...newLead, email: e.target.value })}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (!isValidEmail(value)) {
+                    setEmailError(true);
+                  } else {
+                    setEmailError(false);
+                  }
+                  setNewLead({ ...newLead, email: value });
+                }}
               />
             </div>
 
@@ -172,11 +198,11 @@ const LeadModal: React.FC<LeadModalProps> = ({ isOpen, onClose, title }) => {
                 value={newLead.source}
                 onChange={(e) => setNewLead({ ...newLead, source: e.target.value as 'whatsapp' | 'email' | 'website' | 'phone' | 'referral' })}
               >
-                <option value="WhatsApp">WhatsApp</option>
-                <option value="Email">Email</option>
-                <option value="Telefone">Telefone</option>
-                <option value="Site">Site</option>
-                <option value="Indicação">Indicação</option>
+                <option value="whatsapp">WhatsApp</option>
+                <option value="email">Email</option>
+                <option value="phone">Telefone</option>
+                <option value="website">Site</option>
+                <option value="referral">Indicação</option>
               </select>
             </div>
           </div>
@@ -190,6 +216,7 @@ const LeadModal: React.FC<LeadModalProps> = ({ isOpen, onClose, title }) => {
               {['low', 'medium', 'high'].map(priority => (
                 <button
                   key={priority}
+                  style={{ textTransform: 'uppercase' }}
                   className={`btn btn-sm ${newLead.priority === priority
                       ? 'btn-primary'
                       : 'btn-outline'
@@ -209,16 +236,16 @@ const LeadModal: React.FC<LeadModalProps> = ({ isOpen, onClose, title }) => {
               <span className="label-text">{t.tags}</span>
             </label>
             <div className="flex flex-wrap gap-2">
-              {[t.enterprise, t.startup, t.individual, t.education, t.urgent, t.premium].map(tag => (
+              {tags.map(tag => (
                 <button
-                  key={tag}
-                  className={`badge ${newLead.tags.includes(tag)
+                  key={tag.value}
+                  className={`badge ${newLead.tags.includes(tag.value)
                       ? 'badge-primary'
                       : 'badge-outline'
                     } cursor-pointer`}
-                  onClick={() => toggleTag(tag)}
+                  onClick={() => toggleTag(tag.value)}
                 >
-                  {tag}
+                  {tag.label}
                 </button>
               ))}
             </div>
@@ -231,6 +258,7 @@ const LeadModal: React.FC<LeadModalProps> = ({ isOpen, onClose, title }) => {
             </label>
             <textarea
               className="textarea textarea-bordered textarea-sm h-24"
+              style={{ width: '100%' }}
               placeholder={t.notesPlaceholder}
               value={newLead.observation}
               onChange={(e) => setNewLead({ ...newLead, observation: e.target.value })}
@@ -242,14 +270,16 @@ const LeadModal: React.FC<LeadModalProps> = ({ isOpen, onClose, title }) => {
           <button
             className="btn btn-ghost btn-sm"
             onClick={() => onClose()}
+            style={{ textTransform: 'uppercase' }}
           >
             {t.cancel}
           </button>
           <button
             className="btn btn-primary btn-sm"
             onClick={handleCreateLead}
+            style={{ textTransform: 'uppercase' }}
           >
-            {t.create}
+            {lead ? t.update : t.create}
           </button>
         </div>
       </div>

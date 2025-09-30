@@ -6,6 +6,7 @@ interface CrmColumnState {
   crmColumns: CrmColumn[];
   loading: boolean;
   error: string | null;
+  setColumns: (columns: CrmColumn[]) => void;
   fetchCrmColumns: () => Promise<void>;
   upsertCrmColumn: (crmColumn: CrmColumn) => Promise<void>;
   deleteCrmColumn: (crmColumnId: number) => Promise<void>;
@@ -15,7 +16,7 @@ export const useCrmColumnStore = create<CrmColumnState>((set, get) => ({
   crmColumns: [],
   loading: false,
   error: null,
-
+  setColumns: (columns: CrmColumn[]) => set({ crmColumns: columns }),
   fetchCrmColumns: async () => {
     set({ loading: true, error: null });
     try {
@@ -45,9 +46,10 @@ export const useCrmColumnStore = create<CrmColumnState>((set, get) => ({
 
       // Create
       set((_) => ({
-        crmColumns: mapToCrmColumn([...filteredCrmColumns, savedCrmColumn]),
+        crmColumns: [...filteredCrmColumns, mapToCrmColumn([savedCrmColumn])[0]],
         loading: false,
       }));
+      
     } catch (error) {
       console.error("Failed to upsert crmColumn:", error);
       set({ error: 'Falha ao salvar o crmColumn.', loading: false });
@@ -85,5 +87,6 @@ function mapToCrmColumn(data: any[]): CrmColumn[] {
     color: item.color,
     isSystem: item.is_system,
     organizationId: item.organization_id,
+    order: item.order,
   }));
 };
