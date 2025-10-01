@@ -63,6 +63,7 @@ const Agents = () => {
             <button
               onClick={() => navigate('/agents/test')}
               className="btn btn-primary btn-sm"
+              style={{ textTransform: 'uppercase' }}
             >
               <MessageSquare className="w-4 h-4 mr-2" />
               {t.testAgents}

@@ -15,6 +15,7 @@ import userRoutes from './user-routes';
 import departmentRoutes from './department-routes';
 import leadRoutes from './lead-routes';
 import crmColumnRoutes from './crm-column-routes';
+import webhookRoutes from './webhook-routes';
 
 const router = Router();
 
@@ -33,6 +34,7 @@ router.use('/zapi', zapiRoutes);
 router.use('/users', userRoutes);
 router.use('/departments', departmentRoutes);
 router.use('/leads', leadRoutes);
-router.use('/crm-columns', crmColumnRoutes); // CRM Columns routes
+router.use('/crm-columns', crmColumnRoutes); 
+router.use('/webhooks', webhookRoutes);
 
 export default router;

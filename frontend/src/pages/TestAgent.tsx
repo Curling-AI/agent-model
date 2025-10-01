@@ -9,15 +9,8 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { useTranslation } from '@/translations';
-
-export interface Agent {
-  id: number;
-  name: string;
-  description: string;
-  avatar: string;
-  capabilities: string[];
-  personality: string;
-}
+import { useAgentStore } from '@/store/agent';
+import { Agent } from '@/types/agent';
 
 const TestAgent: React.FC = () => {
   const navigate = useNavigate();
@@ -28,42 +21,11 @@ const TestAgent: React.FC = () => {
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const { agents, fetchAgents } = useAgentStore();
 
-  // Dados de exemplo dos agentes disponíveis para teste
-  const availableAgents = [
-    {
-      id: 1,
-      name: t.salesAgent,
-      description: t.salesAgentDesc,
-      avatar: '🛒',
-      capabilities: [t.leadQualification, t.productPresentation, t.negotiation],
-      personality: t.professionalPersuasive
-    },
-    {
-      id: 2,
-      name: t.technicalSupport,
-      description: t.technicalSupportDesc,
-      avatar: '🔧',
-      capabilities: [t.problemDiagnosis, t.technicalSolutions, t.usageGuide],
-      personality: t.patientDetailed
-    },
-    {
-      id: 3,
-      name: t.marketingAgent,
-      description: t.marketingAgentDesc,
-      avatar: '📢',
-      capabilities: [t.marketingStrategies, t.marketAnalysis, t.campaigns],
-      personality: t.creativeStrategic
-    },
-    {
-      id: 4,
-      name: t.financialAgent,
-      description: t.financialAgentDesc,
-      avatar: '💰',
-      capabilities: [t.financialManagement, t.billing, t.reports],
-      personality: t.preciseOrganized
-    }
-  ];
+  useEffect(() => {
+    fetchAgents(1, 'all');
+  }, [fetchAgents]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -93,102 +55,7 @@ const TestAgent: React.FC = () => {
 
     setMessages(prev => [...prev, userMessage]);
     setInputMessage('');
-    setIsLoading(true);
-
-    // Simular resposta do agente
-    setTimeout(() => {
-      const agentResponse = generateAgentResponse(inputMessage, selectedAgent);
-      const botMessage: { id: number; type: 'user' | 'agent'; content: string; timestamp: string } = {
-        id: Date.now() + 1,
-        type: 'agent' as 'agent',
-        content: agentResponse,
-        timestamp: new Date().toLocaleTimeString('pt-BR', { 
-          hour: '2-digit', 
-          minute: '2-digit' 
-        })
-      };
-      setMessages(prev => [...prev, botMessage]);
-      setIsLoading(false);
-    }, 1000 + Math.random() * 2000); // Simular tempo de processamento
-  };
-
-  const generateAgentResponse = (userMessage: string, agent: Agent) => {
-    const responses = {
-      1: { // Agente Vendas
-        greetings: [
-          "Olá! Sou o Agente de Vendas da ConvergIA. Como posso ajudá-lo hoje?",
-          "Oi! Estou aqui para auxiliar com suas necessidades de vendas. O que você gostaria de saber?"
-        ],
-        product: [
-          "Temos uma solução perfeita para suas necessidades! Nossa plataforma oferece recursos avançados de IA para otimizar suas vendas.",
-          "Deixe-me apresentar nossos produtos. Temos opções que podem aumentar significativamente sua taxa de conversão."
-        ],
-        pricing: [
-          "Nossos preços são competitivos e oferecemos diferentes planos para atender seu orçamento. Posso detalhar as opções?",
-          "Temos planos flexíveis que se adaptam ao seu negócio. Qual é o seu volume de vendas atual?"
-        ]
-      },
-      2: { // Suporte Técnico
-        greetings: [
-          "Olá! Sou o Agente de Suporte Técnico. Como posso ajudá-lo com problemas técnicos?",
-          "Oi! Estou aqui para resolver suas questões técnicas. Qual é o problema que você está enfrentando?"
-        ],
-        technical: [
-          "Vou ajudá-lo a resolver esse problema. Primeiro, vamos fazer um diagnóstico básico.",
-          "Entendo sua situação. Vamos seguir alguns passos para identificar e resolver o problema."
-        ],
-        troubleshooting: [
-          "Vamos resolver isso juntos. Pode me dar mais detalhes sobre o erro que está vendo?",
-          "Vou guiá-lo através do processo de solução. Primeiro, vamos verificar algumas configurações."
-        ]
-      },
-      3: { // Agente Marketing
-        greetings: [
-          "Olá! Sou o Agente de Marketing. Como posso ajudá-lo com suas estratégias de marketing?",
-          "Oi! Estou aqui para otimizar suas campanhas de marketing. Qual é seu objetivo atual?"
-        ],
-        strategy: [
-          "Vamos criar uma estratégia de marketing eficaz para seu negócio. Qual é seu público-alvo?",
-          "Posso ajudá-lo a desenvolver campanhas que gerem mais leads qualificados."
-        ],
-        analytics: [
-          "Vamos analisar seus dados de marketing para identificar oportunidades de melhoria.",
-          "Posso ajudá-lo a interpretar suas métricas e otimizar suas campanhas."
-        ]
-      },
-      4: { // Agente Financeiro
-        greetings: [
-          "Olá! Sou o Agente Financeiro. Como posso ajudá-lo com questões financeiras?",
-          "Oi! Estou aqui para auxiliar com gestão financeira e cobranças. O que você precisa?"
-        ],
-        billing: [
-          "Vou ajudá-lo com suas questões de cobrança. Pode me fornecer mais detalhes?",
-          "Vamos resolver essa questão de cobrança. Primeiro, preciso de algumas informações."
-        ],
-        reports: [
-          "Posso gerar relatórios financeiros detalhados para você. Que período gostaria de analisar?",
-          "Vou preparar um relatório financeiro completo com todas as informações relevantes."
-        ]
-      }
-    };
-
-    const agentResponses = responses[1];
-    const lowerMessage = userMessage.toLowerCase();
-
-    if (lowerMessage.includes('oi') || lowerMessage.includes('olá') || lowerMessage.includes('hello')) {
-      return agentResponses.greetings[Math.floor(Math.random() * agentResponses.greetings.length)];
-    }
-
-    if (lowerMessage.includes('produto') || lowerMessage.includes('solução') || lowerMessage.includes('oferta')) {
-      return agentResponses.product ? agentResponses.product[Math.floor(Math.random() * agentResponses.product.length)] : "Posso ajudá-lo com isso. Pode me dar mais detalhes?";
-    }
-
-    if (lowerMessage.includes('preço') || lowerMessage.includes('valor') || lowerMessage.includes('custo')) {
-      return agentResponses.pricing ? agentResponses.pricing[Math.floor(Math.random() * agentResponses.pricing.length)] : "Posso ajudá-lo com informações sobre preços. Pode me dar mais detalhes?";
-    }
-
-    // Resposta padrão
-    return "Entendo sua pergunta. Como posso ajudá-lo especificamente com isso?";
+    setIsLoading(false);
   };
 
   const resetConversation = () => {
@@ -227,10 +94,10 @@ const TestAgent: React.FC = () => {
             <div className="card-body">
               <h2 className="card-title text-lg">{t.availableAgents}</h2>
               <div className="space-y-3">
-                {availableAgents.map((agent) => (
+                {agents.map((agent) => (
                   <div
                     key={agent.id}
-                    onClick={() => handleAgentSelect(agent as Agent)}
+                    onClick={() => handleAgentSelect(agent)}
                     className={`p-4 rounded-lg border-2 cursor-pointer transition-all hover:shadow-md ${
                       selectedAgent?.id === agent.id
                         ? 'border-primary bg-primary/5'

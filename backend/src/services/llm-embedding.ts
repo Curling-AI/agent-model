@@ -126,7 +126,7 @@ export async function generateVector(embeddings, agentId: number, documentId: nu
 function getEmbedding() {
   const provider = process.env.LLM_PROVIDER;
   const apiKey = process.env.LLM_API_KEY;
-  const embeddingModel = process.env.EMBEDDING_MODEL;
+  const embeddingModel = process.env.LLM_EMBEDDING_MODEL;
 
   let embeddings: Embeddings;
 
