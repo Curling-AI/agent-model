@@ -93,10 +93,11 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         method: 'POST',
         body: formData,
       });
+      
       const data = await res.json();
-  
+
       if (res.ok && data) {
-        set({ documents: [...get().documents, data.document], loading: false });
+        set({ documents: [...get().documents, data], loading: false });
       } else {
         set({ error: data.error || 'Erro ao criar documento', loading: false });
       }

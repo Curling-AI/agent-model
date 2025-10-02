@@ -1,4 +1,3 @@
-import { supabase } from '@/config/supabaseClient';
 import { getByFilter, getById, remove, upsert } from '@/services/storage';
 
 import { Request, Response } from 'express';

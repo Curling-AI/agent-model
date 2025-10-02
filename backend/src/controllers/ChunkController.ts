@@ -8,7 +8,6 @@ import multer from 'multer';
 import { DocumentLoader } from '@langchain/core/document_loaders/base';
 import fs from 'fs';
 
-// POST /api/chunks
 export const ChunkController = {
   generateChunksFromUrl: async (req: Request, res: Response) => {
     const { url } = req.body;

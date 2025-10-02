@@ -1,16 +1,13 @@
 import { Router } from 'express';
 import {
-  listConversations,
-  getConversation,
-  createConversation,
-  createConversationMessage
+  ConversationController
 } from '../controllers/ConversationController';
 
 const router = Router();
 
-router.get('/', listConversations);
-router.get('/:id', getConversation);
-router.post('/', createConversation);
-router.post('/conversation-messages', createConversationMessage);
+router.get('/', ConversationController.listConversations);
+router.post('/process-message', ConversationController.processMessages);
+router.post('/', ConversationController.upsertConversation);
+router.delete('/:id', ConversationController.deleteConversation);
 
 export default router;

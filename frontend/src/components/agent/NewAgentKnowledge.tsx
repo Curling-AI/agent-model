@@ -28,7 +28,7 @@ const NewAgentKnowledge: React.FC = () => {
 
   const [editFaq, setEditFaq] = useState<Document | null>(null);
 
-  const { knowledgeList, fetchKnowledge, upsertKnowledge, deleteKnowledge } = useKnowledgeStore();
+  const { knowledgeList, fetchKnowledge, deleteKnowledge } = useKnowledgeStore();
 
   useEffect(() => {
     if (agent) {
@@ -36,7 +36,7 @@ const NewAgentKnowledge: React.FC = () => {
     } else {
       addNotification('Agente não encontrado ao buscar documentos.', 'error');
     }
-  }, [documents.length]);
+  }, []);
 
   useEffect(() => {
     if (agent) {
@@ -44,7 +44,7 @@ const NewAgentKnowledge: React.FC = () => {
     } else {
       addNotification('Agente não encontrado ao buscar chunks de conhecimento.', 'error');
     }
-  }, [knowledgeList.length]);
+  }, []);
 
   const removeKnowledge = (knowledgeId: number) => {
     const knowledge = knowledgeList.filter((k) => {

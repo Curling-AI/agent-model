@@ -5,6 +5,7 @@ import { useRef, useState } from "react"
 import { useNotifications } from "@/context/NotificationsProvider";
 import { useAgentStore } from "@/store/agent";
 import { useDocumentStore } from "@/store/document";
+import { useKnowledgeStore } from "@/store/knowledge";
 
 interface FileUploaderProps {
   supportedFileTypes?: string[];
@@ -35,6 +36,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({
   const { agent } = useAgentStore();
 
   const { createFileDocument, fetchDocuments } = useDocumentStore();
+  const { fetchKnowledge } = useKnowledgeStore();
 
   const [, setIsDragging] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -97,6 +99,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({
         createFileDocument(file, agent.id).then(async () => {
           console.log('File uploaded successfully');
           await fetchDocuments(agent.id);
+          await fetchKnowledge({ agentId: agent.id });
         });
 
         addNotification(`Arquivo "${file.name}" adicionado com sucesso.`);
@@ -146,7 +149,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({
         <Upload className="w-12 h-12 mx-auto text-neutral mb-4" />
         <p className="text-neutral mb-2">{t.dragFilesHere}</p>
         <button className="btn btn-outline btn-sm" onClick={(e) => handleButtonClick(e)}
-          style={{ cursor: 'pointer' }}>
+          style={{ cursor: 'pointer', textTransform: 'uppercase' }}>
           {t.selectFiles}
         </button>
         <p className="text-xs text-neutral mt-2">{t.fileTypes}</p>

@@ -37,7 +37,6 @@ export function formatDateHM(dateToFormat: string) {
   }
 }
 
-//
 export function formatDateLastActive(isoString: string | undefined | null) {
   if (!isoString) return 'nunca'
 

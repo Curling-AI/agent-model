@@ -6,6 +6,9 @@ import { ChatOpenAI, OpenAIEmbeddings } from '@langchain/openai';
 import { ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings } from '@langchain/google-genai';
 import { createToolCallingAgent, createOpenAIToolsAgent } from "langchain/agents";
 import { getById } from './storage';
+import { AIMessage, HumanMessage } from '@langchain/core/messages';
+
+const chatHistory: (HumanMessage | AIMessage)[] = [];
 
 export const AiExecutor = {
 
@@ -22,10 +25,10 @@ export const AiExecutor = {
           ["human", "{input}"],
           new MessagesPlaceholder("agent_scratchpad"),
       ]);
-
+      
       const agentExecutor = await getAgentExecutor(agentPromptTemplate, tools);
 
-      const response = await agentExecutor.invoke({ input: userInput });
+      const response = await agentExecutor.invoke({ input: userInput, chat_history: chatHistory });
       return response;
     } catch (error) {
       throw new Error(`Erro ao executar agente: ${error.message}`);
@@ -80,6 +83,7 @@ async function getAgentExecutor(agentPromptTemplate: ChatPromptTemplate, tools: 
   } else if (process.env.LLM_PROVIDER === 'gemini') {
     const chatModel = new ChatGoogleGenerativeAI({
       model: process.env.LLM_CHAT_MODEL || 'gemini-2.5-pro',
+      apiKey: process.env.LLM_API_KEY,
       temperature: Number(process.env.LLM_CHAT_MODEL_TEMPERATURE) || 0,
     });
 
@@ -89,7 +93,7 @@ async function getAgentExecutor(agentPromptTemplate: ChatPromptTemplate, tools: 
       prompt: agentPromptTemplate,
     });
   }
-  agentExecutor = new AgentExecutor({ agent, tools });
+  agentExecutor = new AgentExecutor({ agent, tools, verbose: process.env.LLM_LOGGER_ENABLED === 'true' });
 
   return agentExecutor;
 }

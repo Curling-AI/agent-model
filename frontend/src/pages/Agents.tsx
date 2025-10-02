@@ -60,14 +60,15 @@ const Agents = () => {
             <p className="text-neutral mt-1">{t.manageAgents}</p>
           </div>
           <div className="flex flex-row items-center space-x-2 mt-4 md:mt-0">
-            <button
+            {agents.length > 0 && (<button
               onClick={() => navigate('/agents/test')}
               className="btn btn-primary btn-sm"
               style={{ textTransform: 'uppercase' }}
             >
               <MessageSquare className="w-4 h-4 mr-2" />
               {t.testAgents}
-            </button>
+            </button>)
+            }
             <select className="select select-bordered select-sm bg-base-200" onChange={(e) => setFilter(e.target.value as 'all' | 'active' | 'paused')}>
               <option value="all">{t.allAgents}</option>
               <option value="active">{t.active}</option>

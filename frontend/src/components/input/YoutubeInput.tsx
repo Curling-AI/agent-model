@@ -2,6 +2,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useNotifications } from "@/context/NotificationsProvider";
 import { useAgentStore } from "@/store/agent";
 import { useDocumentStore } from "@/store/document";
+import { useKnowledgeStore } from "@/store/knowledge";
 import { useTranslation } from "@/translations";
 import { Document } from "@/types/agent";
 import { useState } from "react";
@@ -13,6 +14,7 @@ const YoutubeInput: React.FC = () => {
 
   const { agent } = useAgentStore();
   const { createDocument, fetchDocuments } = useDocumentStore();
+  const { fetchKnowledge } = useKnowledgeStore();
 
   const { addNotification } = useNotifications();
 
@@ -45,6 +47,7 @@ const YoutubeInput: React.FC = () => {
     await createDocument(videoDocument);
 
     await fetchDocuments(agent.id);
+    await fetchKnowledge({ agentId: agent.id });
 
     const progressInterval = setInterval(() => {
       setVideoAnalysisProgress(prev => {

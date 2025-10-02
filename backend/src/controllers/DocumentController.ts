@@ -44,8 +44,9 @@ export const DocumentController = {
       const extension = req.file.originalname.split('.').pop()?.toLowerCase();
       chunks = await generateChunksFromFile(file.path || '', extension);
       
+      let document;
       if (chunks.length > 0) {
-        const document = await insert('documents', {
+        document = await insert('documents', {
           agent_id: Number(agentId),
           type: 'file',
           name: file.originalname,
@@ -55,6 +56,7 @@ export const DocumentController = {
         if (!document) {
           return res.status(500).json({ error: 'Error creating document' });
         }
+
         const texts = chunks.map((chunk) => chunk.pageContent);
         await generateEmbeddingsFromChunks(document['agent_id'], document['id'], texts);
       }

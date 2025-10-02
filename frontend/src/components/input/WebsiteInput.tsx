@@ -2,6 +2,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useNotifications } from "@/context/NotificationsProvider";
 import { useAgentStore } from "@/store/agent";
 import { useDocumentStore } from "@/store/document";
+import { useKnowledgeStore } from "@/store/knowledge";
 import { useTranslation } from "@/translations";
 import { Document } from "@/types/agent";
 import { useCallback, useState } from "react"
@@ -20,6 +21,8 @@ const WebsiteInput: React.FC = () => {
   const [analysisProgress, setAnalysisProgress] = useState(0);
 
   const { createDocument, fetchDocuments } = useDocumentStore();
+
+  const { fetchKnowledge } = useKnowledgeStore();
 
   const { addNotification } = useNotifications()
 
@@ -47,6 +50,7 @@ const WebsiteInput: React.FC = () => {
     await createDocument(websiteDocument);
     console.log('Website document created:', websiteDocument);
     await fetchDocuments(agent.id);
+    await fetchKnowledge({ agentId: agent.id });
     console.log('Documents fetched');
     setWebsiteDocument({ ...websiteDocument, name: '' });
 
