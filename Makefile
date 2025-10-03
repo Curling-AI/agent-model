@@ -19,7 +19,9 @@ stop-dev:
 	docker compose -f compose.dev.yaml down
 
 restart-dev:
-	stop-dev setup-dev run-dev
+	docker compose -f compose.dev.yaml down
+	docker compose -f compose.dev.yaml build
+	docker compose -f compose.dev.yaml up -d --remove-orphans
 
 _pull:
 	git pull
