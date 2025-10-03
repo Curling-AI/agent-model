@@ -6,14 +6,15 @@ import { ChatOpenAI, OpenAIEmbeddings } from '@langchain/openai';
 import { ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings } from '@langchain/google-genai';
 import { createToolCallingAgent, createOpenAIToolsAgent } from "langchain/agents";
 import { getById } from './storage';
-import { AIMessage, HumanMessage } from '@langchain/core/messages';
-
-const chatHistory: (HumanMessage | AIMessage)[] = [];
+import { PostgresChatMessageHistory } from "@langchain/community/stores/message/postgres";
+import { Pool } from "pg";
+import { RunnableWithMessageHistory } from "@langchain/core/runnables";
 
 export const AiExecutor = {
 
   executeAgent: async (agentId: number, userId: number, userInput: string) => {
     try {
+      const sessionId = `user-${userId}-agent-${agentId}`;
 
       const agent = await getById('agents', agentId);
 
@@ -27,10 +28,14 @@ export const AiExecutor = {
       ]);
       
       const agentExecutor = await getAgentExecutor(agentPromptTemplate, tools);
-
-      const response = await agentExecutor.invoke({ input: userInput, chat_history: chatHistory });
+      console.log('Agent Executor created');
+      const runnableWithHistory = await createRunnableWithMessageHistory(sessionId, agentExecutor);
+      console.log('Runnable with history created');
+      const response = await runnableWithHistory.invoke({ input: userInput}, {configurable: { sessionId } });
+      console.log('Agent executed');
       return response;
     } catch (error) {
+      console.error('Error executing agent:', error);
       throw new Error(`Erro ao executar agente: ${error.message}`);
     }
   }
@@ -108,3 +113,25 @@ function generateAgentPrompt(agent: any) {
     Always refer to yourself as ${agent.name} and never as an AI model or language model.`;
   return basePrompt;
 }
+
+async function createRunnableWithMessageHistory(sessionId: string, agentExecutor: AgentExecutor) {
+  const pool = new Pool({
+    connectionString: process.env.SUPABASE_POSTGRES_URL,
+  });
+
+  const agentWithHistory = new RunnableWithMessageHistory({
+    runnable: agentExecutor,
+    getMessageHistory: (sessionId) => new PostgresChatMessageHistory({
+      pool, 
+      sessionId, 
+      tableName: "chat_messages",
+    }),
+    
+    inputMessagesKey: "input",
+    historyMessagesKey: "chat_history",
+    config: { configurable: { sessionId: sessionId } },
+  });
+
+  return agentWithHistory;
+}
+
