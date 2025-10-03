@@ -18,6 +18,9 @@ stop:
 stop-dev:
 	docker compose -f compose.dev.yaml down
 
+restart-dev:
+	stop-dev setup-dev run-dev
+
 _pull:
 	git pull
 
