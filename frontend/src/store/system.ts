@@ -10,7 +10,6 @@ type SystemStore = {
   departments: Department[];
   conversationTags: ConversationTag[];
   plans: Plan[];
-  crmColumns: CrmColumn[];
   permissions: Permission[];
   serviceProviders: ServiceProvider[];
   followUpTriggers: FollowUpTrigger[];
@@ -30,7 +29,6 @@ export const useSystemStore = create<SystemStore>((set) => ({
   departments: [],
   conversationTags: [],
   plans: [],
-  crmColumns: [],
   permissions: [],
   serviceProviders: [],
   followUpTriggers: [],

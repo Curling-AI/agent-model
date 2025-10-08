@@ -7,6 +7,7 @@ import { Plus, Trash2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { FileUtils } from "@/utils/file";
 import { useAgentStore } from "@/store/agent";
+import { useCrmColumnStore } from "@/store/crm-column";
 
 // Componente Modal Follow-up
 interface FollowUpModalProps {
@@ -24,7 +25,8 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, followUp
   const language = useLanguage();
   const t = useTranslation(language);
   const { agent } = useAgentStore();
-  const { crmColumns, followUpTriggers } = useSystemStore();
+  const { crmColumns } = useCrmColumnStore();
+  const { followUpTriggers } = useSystemStore();
   const { followUpMessages, addOrUpdateFollowUp, deleteFollowUpMessage, deleteFollowUpMessageDocument } = useFollowUpStore();
 
   const [negativeId, setNegativeId] = useState(-1);
@@ -34,11 +36,11 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, followUp
     description: "",
     organizationId: 1,
     agentId: agent.id,
-    crmColumn: crmColumns[0].id,
-    trigger: followUpTriggers[0].id,
+    crmColumn: crmColumns && crmColumns[0] ? crmColumns[0].id : 0,
+    trigger: followUpTriggers && followUpTriggers[0] ? followUpTriggers[0].id : 0,
     messages: []
   });
-
+console.log(crmColumns, followUpTriggers);
   const messageTemplateOptions = [
     { value: 'custom', label: t.customMessage },
     { value: 'welcome', label: t.welcomeTemplate },

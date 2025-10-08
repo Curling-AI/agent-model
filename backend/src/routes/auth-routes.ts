@@ -1,19 +1,18 @@
+import { AuthController } from '@/controllers/AuthController';
 import { Router } from 'express';
-import AuthController from '../controllers/AuthController';
 
-const authController = new AuthController();
 const router = Router();
 
 // Rota de login
-router.post('/login', authController.login.bind(authController));
+router.post('/login', AuthController.login);
 
 // Rota de logout
-router.post('/logout', authController.logout.bind(authController));
+router.post('/logout', AuthController.logout);
 
 // Rota de cadastro
-router.post('/register', authController.register.bind(authController));
+router.post('/register', AuthController.register);
 
-// Rota para verificação de token expirado
-router.post('/token-expired', authController.isTokenExpired.bind(authController));
+// Rota para verificação de sessão
+router.get('/session', AuthController.getSession);
 
 export default router;
