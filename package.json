@@ -1,5 +1,7 @@
 {
   "dependencies": {
-
+    "@supabase/supabase-js": "^2.74.0",
+    "dotenv": "^16.6.1",
+    "stripe": "^19.1.0"
   }
 }

@@ -4,7 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx --env-file=.env src/server.ts"
+    "dev": "tsx --env-file=.env src/server.ts",
+    "sync:stripe": "tsx --env-file=.env ../scripts/stripe.ts",
+    "sync:prices-from-stripe": "tsx --env-file=.env -e 'import(\"../scripts/stripe.ts\").then(m => m.syncPricesFromStripe())'"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
@@ -18,12 +20,14 @@
     "axios": "^1.11.0",
     "cheerio": "^1.1.2",
     "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
     "express": "^5.1.0",
     "langchain": "^0.3.35",
     "multer": "^2.0.2",
     "openai": "^4.62.1",
     "pdf-parse": "^1.1.1",
     "pg": "^8.16.3",
+    "stripe": "^19.1.0",
     "tsx": "^4.20.4",
     "youtubei.js": "^15.0.1"
   },
