@@ -10,12 +10,18 @@ import Admin from './pages/Admin';
 import Plans from './pages/Plans';
 import Profile from './pages/Profile';
 import Landing from './pages/Landing';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import ForgotPassword from './pages/ForgotPassword';
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
           <Route path="/" element={<Landing />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
           <Route path="/agents" element={<Layout><Agents /></Layout>} />
           <Route path="/agents/create" element={<Layout><CreateAgent /></Layout>} />
