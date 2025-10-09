@@ -20,10 +20,15 @@ const Landing: React.FC = () => {
           </div>
         </div>
         <div className="navbar-end">
-          <Link to="/dashboard" className="btn btn-primary btn-apple">
-            {t.accessPlatform}
-            <ArrowRight className="w-4 h-4 ml-2" />
-          </Link>
+          <div className="flex items-center space-x-2">
+            <Link to="/login" className="btn btn-ghost btn-apple">
+              Entrar
+            </Link>
+            <Link to="/register" className="btn btn-primary btn-apple">
+              Criar Conta
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -47,13 +52,13 @@ const Landing: React.FC = () => {
               {t.automateConversations}
             </p>
             <div className="flex flex-col md:flex-row gap-4 justify-center">
-              <Link to="/dashboard" className="btn btn-primary btn-lg btn-apple">
+              <Link to="/register" className="btn btn-primary btn-lg btn-apple">
                 {t.startNow}
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Link>
-              <button className="btn btn-outline btn-lg btn-apple">
-                {t.seeDemo}
-              </button>
+              <Link to="/login" className="btn btn-outline btn-lg btn-apple">
+                Já tenho conta
+              </Link>
             </div>
           </div>
         </div>
@@ -116,7 +121,7 @@ const Landing: React.FC = () => {
           <p className="text-xl mb-8 opacity-90">
             Junte-se a milhares de empresas que já automatizaram seus processos
           </p>
-          <Link to="/dashboard" className="btn btn-accent btn-lg btn-apple">
+          <Link to="/register" className="btn btn-accent btn-lg btn-apple">
             Criar Primeiro Agente
             <ArrowRight className="w-5 h-5 ml-2" />
           </Link>
