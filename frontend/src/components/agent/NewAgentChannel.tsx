@@ -7,7 +7,9 @@ import WPOficialButton from "@/components/WPOficialButton";
 import { FacebookAccessToken } from "@/types/facebook";
 import { useIntegrationStore } from "@/store/integration";
 import * as Dialog from '@radix-ui/react-dialog'
+import { Spinner } from "../Spinner";
 import modalStyles from '../modal/Modal.module.css'
+import { wait } from "@/utils";
 
 const NewAgentChannel: React.FC = () => {
   const language = useLanguage();
@@ -15,10 +17,11 @@ const NewAgentChannel: React.FC = () => {
   const { serviceProviders, fetchServiceProviders } = useSystemStore();
   const { agent } = useAgentStore();
   const { subscribeFacebookApp, registerFacebookNumber, upsertIntegration, deleteIntegration } = useIntegrationStore();
-  const { integrations, fetchIntegrations, getZapiInstance, getZapiQrCode } = useIntegrationStore();
+  const { integrations, fetchIntegrations, createNotOfficialInstance, deleteNotOfficialInstance, getNotOfficialQrCode } = useIntegrationStore();
   const wppConnectionMonitorRef = useRef<NodeJS.Timeout | null>(null)
   const [isWhatsappModalOpen, setIsWhatsappModalOpen] = useState(false)
   const [qrcode, setQrcode] = useState<string | null>(null)
+  const [userId, setUserId] = useState<number | null>(1)
 
   useEffect(() => {
     fetchServiceProviders();
@@ -30,8 +33,8 @@ const NewAgentChannel: React.FC = () => {
       document.getElementById('whatsapp-oficial-button')?.click();
       return;
     } else if (channelId === 2) {
-      const instance = await getZapiInstance();
-
+      const instance = await createNotOfficialInstance(`agent-${agent.id}-user-${userId}`);
+      
       if (instance) {
         await upsertIntegration({
           agentId: agent.id,
@@ -40,7 +43,7 @@ const NewAgentChannel: React.FC = () => {
             ...instance
           }
         });
-
+        await wait(500);
         generateWhatsappQrCode();
       }
       return;
@@ -52,19 +55,18 @@ const NewAgentChannel: React.FC = () => {
 
     const checkWhatsappConnection = async () => {
 
-      const result = await getZapiQrCode();
-
-      if (!result.data) {
+      const result = await getNotOfficialQrCode(`agent-${agent.id}-user-${userId}`);
+      console.log('QR Code fetch result:', result);
+      if (!result) {
         setIsWhatsappModalOpen(false)
       } else {
-        wppConnectionMonitorRef.current = setTimeout(checkWhatsappConnection, 5000)
+        wppConnectionMonitorRef.current = setTimeout(checkWhatsappConnection, 60000)
       }
-      setQrcode(result.data.qrCode)
+      setQrcode(result.qrCode)
       fetchIntegrations(agent.id);
       return;
     }
-
-    wppConnectionMonitorRef.current = setTimeout(checkWhatsappConnection, 3000)
+    checkWhatsappConnection();
   }
 
   const handleWhatsappModalClose = () => {
@@ -75,8 +77,11 @@ const NewAgentChannel: React.FC = () => {
     }
   }
 
-  const disconnectChannel = (channelId: number) => {
-    deleteIntegration(agent.id, channelId);
+  const disconnectChannel = async (channelId: number) => {
+    if (channelId == 2) {
+      await deleteNotOfficialInstance(`agent-${agent.id}-user-${userId}`)
+    }
+    await deleteIntegration(agent.id, channelId);
   };
 
   const handleConnectWhatsappOficial = async (data: FacebookAccessToken) => {
@@ -198,12 +203,20 @@ const NewAgentChannel: React.FC = () => {
               </Dialog.Description>
 
               <div className={modalStyles.qrcodeContainer}>
-                <img
-                  src={qrcode!}
-                  alt="QR Code"
-                  width={348}
-                  height={348}
-                />
+                {
+                qrcode && (
+                  <img
+                    src={qrcode!}
+                    alt="QR Code"
+                    width={348}
+                    height={348}
+                  />)
+                }
+                {
+                !qrcode && (
+                  <Spinner />
+                )
+                }
               </div>
 
               <div className={modalStyles.dialogActions}>

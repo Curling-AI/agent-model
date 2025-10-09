@@ -11,8 +11,9 @@ interface IntegrationState {
   getFacebookAccessToken: (code: string) => Promise<{ success: boolean; error?: string; data?: FacebookAccessToken }>;
   subscribeFacebookApp: (data: FacebookAccessToken) => Promise<{ success: boolean; error?: string }>;
   registerFacebookNumber: (phoneNumberId: string, facebookAccessToken: string) => Promise<{ success: boolean; error?: string }>;
-  getZapiInstance: () => Promise<any>;
-  getZapiQrCode: () => Promise<any>;
+  createNotOfficialInstance: (instanceName: string) => Promise<any>;
+  deleteNotOfficialInstance: (instanceName: string) => Promise<void>;
+  getNotOfficialQrCode: (instanceName: string) => Promise<any>;
 }
 
 export const useIntegrationStore = create<IntegrationState>((set) => ({
@@ -96,26 +97,30 @@ export const useIntegrationStore = create<IntegrationState>((set) => ({
     return res.json();
   },
 
-  getZapiInstance: async () => {
-    const res = await fetch(`${BASE_URL}/zapi/instance`, {
-      method: 'GET',
+  createNotOfficialInstance: async (instanceName: string) => {
+    const res = await fetch(`${BASE_URL}/messages/create-instance`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({instanceName})
     });
-    if (!res.ok) throw new Error('Erro ao obter instância Zapi');
+    if (!res.ok) throw new Error('Erro ao obter instância Uazapi');
     return res.json();
   },
 
-  getZapiQrCode: async () => {
-    const res = await fetch(`${BASE_URL}/zapi/qrcode`, {
-      method: 'GET',
+  deleteNotOfficialInstance: async (instanceName: string) => {
+    const res = await fetch(`${BASE_URL}/messages/delete-instance?instanceName=${instanceName}`, {
+      method: 'DELETE',
     });
-    if (!res.ok) throw new Error('Erro ao obter QR Code Zapi');
+    if (!res.ok) throw new Error('Erro ao obter instância Uazapi');
+    return res.json();
+  },
 
-    const data = await res.json();
-    if (data.error) {
-      return { success: false, error: data.error.message };
-    }
-    return { success: true, data };
-  }
+  getNotOfficialQrCode: async (instanceName: string) => {
+    console.log('Fetching QR Code for instance:', instanceName);
+    const res = await fetch(`${BASE_URL}/messages/qrcode?instanceName=${instanceName}`);
+    if (!res.ok) throw new Error('Erro ao obter qrcode de conexão Uazapi');
+    return res.json();
+  },
 }));
 
 function mapToIntegration(data: any): Integration {

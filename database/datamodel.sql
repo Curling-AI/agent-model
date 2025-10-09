@@ -143,6 +143,7 @@ CREATE TABLE conversations (
   organization_id INTEGER NOT NULL,
   agent_id INTEGER REFERENCES agents(id) ON DELETE SET NULL,
   lead_id INTEGER NOT NULL,
+  mode VARCHAR(20) DEFAULT 'agent' CHECK (mode IN ('agent', 'human')),
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
 );
@@ -154,6 +155,7 @@ CREATE TABLE conversation_messages (
   sender VARCHAR(10) CHECK (sender IN ('human', 'agent')),
   content TEXT NOT NULL,
   timestamp TIMESTAMP NOT NULL,
+  metadata jsonb NULL,
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
 );
