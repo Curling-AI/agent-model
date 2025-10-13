@@ -1,3 +1,4 @@
+
 import { getByFilter } from "./storage";
 
 export const sendMessage = async (to: string, message: string, token: string) => {
@@ -13,7 +14,7 @@ export const sendMessage = async (to: string, message: string, token: string) =>
         text: message
       })
     });
-  
+    
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(`Error sending message: ${errorData}`);
@@ -118,4 +119,34 @@ export const getTokenFromInstance = async (instance: string): Promise<string> =>
     return instances[0]['metadata']['instance']['token'];
   }
   throw new Error('Instance not found');
+}
+
+export const getMediaContent = async (messageId: string, token: string): Promise<string> => {
+  
+  let payload = {
+    id: messageId,
+    return_base64: true,
+    return_link: true,
+  };
+
+  if (process.env.LLM_PROVIDER === 'openai') {
+    payload['transcribe'] = true;
+    payload['openai_apikey'] = process.env.LLM_API_KEY;
+  }
+  
+  const response = await fetch(`${process.env.UAZAPI_API_URL}/message/download`, {
+    headers: {
+      'Content-Type': 'application/json',
+      'token': token
+    },
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+  const data = await response.json();
+
+  if (!data) {
+    throw new Error('Error getting content');
+  }
+
+  return data;
 }
