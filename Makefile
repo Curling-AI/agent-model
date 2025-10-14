@@ -1,4 +1,4 @@
-.PHONY: setup setup-dev run run-dev stop stop-dev deploy start-workers stop-workers
+.PHONY: setup setup-dev run run-dev stop stop-dev deploy start-workers stop-workers install-dependencies restart-dev
 
 setup:
 	docker compose -f compose.prod.yaml build
@@ -22,6 +22,9 @@ restart-dev:
 	docker compose -f compose.dev.yaml down
 	docker compose -f compose.dev.yaml build
 	docker compose -f compose.dev.yaml up -d --remove-orphans
+
+install-dependencies:
+	sudo apt update && sudo apt install ffmpeg
 
 _pull:
 	git pull

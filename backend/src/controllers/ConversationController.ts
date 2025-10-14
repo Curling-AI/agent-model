@@ -2,7 +2,7 @@ import { getByFilter, getById, remove, upsert } from '@/services/storage';
 
 import { Request, Response } from 'express';
 
-import { AiExecutor } from '@/services/ai-executor';
+import { AiExecutor } from '@/services/ai/ai-executor';
 
 export const ConversationController = {
 
