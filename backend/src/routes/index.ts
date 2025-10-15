@@ -36,7 +36,7 @@ router.use('/users', userRoutes);
 router.use('/departments', departmentRoutes);
 router.use('/leads', leadRoutes);
 router.use('/crm-columns', crmColumnRoutes); 
-router.use('/webhooks', webhookRoutes);
+router.use('/webhook', webhookRoutes);
 router.use('/stripe', stripeRoutes);
 
 export default router;

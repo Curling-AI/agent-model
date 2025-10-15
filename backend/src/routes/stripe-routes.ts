@@ -7,4 +7,6 @@ router.get('/products', StripeController.getAllProducts);
 
 router.get('/invoices', StripeController.getCustomerInvoices);
 
+router.post('/checkout/session', StripeController.createCheckoutSession);
+
 export default router;
