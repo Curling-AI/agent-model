@@ -1,5 +1,4 @@
 import { LanguageContextType } from "@/types";
-import { connect } from "http2";
 
 export const translations = {
   pt: {
@@ -767,6 +766,9 @@ export const translations = {
     // WHATSAPP
     connectWhatsApp: 'Conecte ao WhatsApp',
     scanQrCodeToConnect: 'Escaneie o QR Code com seu WhatsApp para conectar',
+
+    passwordChangeSuccess: 'Senha atualizada com sucesso. Por favor, faça login novamente.',
+    invalidCurrentPassword: 'Senha atual inválida',
   },
   en: {
     // Header
@@ -1532,6 +1534,9 @@ export const translations = {
     // WHATSAPP
     connectWhatsApp: 'Connect to WhatsApp',
     scanQrCodeToConnect: 'Scan the QR Code with your WhatsApp to connect',
+
+    passwordChangeSuccess: 'Password changed successfully. Please log in again.',
+    invalidCurrentPassword: 'Invalid current password',
   }
 };
 

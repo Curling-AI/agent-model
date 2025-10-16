@@ -20,6 +20,8 @@ import { useDepartmentStore } from '@/store/department';
 import { useUserStore } from '@/store/user';
 import { useSystemStore } from '@/store/system';
 import DepartmentUserCount from '@/components/DepartmentUserCount';
+import { get } from 'http';
+import { useAuthStore } from '@/store/auth';
 
 type Tab = {
   id: string;
@@ -53,12 +55,15 @@ const Admin: React.FC = () => {
   const [editingDepartment, setEditingDepartment] = useState<Department>();
   const [departmentUserCounts, setDepartmentUserCounts] = useState<number>(0);
 
+  const { user, getLoggedUser } = useAuthStore();
+
   // Mock data
   useEffect(() => {
     setLoading(true);
+    getLoggedUser();
     fetchPermissions();
     fetchDepartments();
-    fetchUsers();
+    fetchUsers(user?.organizationId!);
     fetchJobs();
     setLoading(false);
     handleUserCount();
@@ -310,7 +315,7 @@ const Admin: React.FC = () => {
                             <td>
                               <span className="badge badge-outline">{getRoleLabel(user.jobId)}</span>
                             </td>
-                            <td>{getDepartmentLabel(user.departmentId)}</td>
+                            <td>{getDepartmentLabel(user?.departmentId!)}</td>
                             <td>{getStatusBadge(user.status)}</td>
                             <td>
                               <div className="text-sm">
@@ -450,7 +455,7 @@ const Admin: React.FC = () => {
           departments={departments}
           permissions={permissions}
           onClose={() => {
-            fetchUsers();
+            fetchUsers(user?.organizationId!);
             handleUserCount();
             setShowUserModal(false);
           }}

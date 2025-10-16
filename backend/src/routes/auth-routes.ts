@@ -15,4 +15,10 @@ router.post('/register', AuthController.register);
 // Rota para verificação de sessão
 router.get('/session', AuthController.getSession);
 
+router.post('/reset-password', AuthController.resetPassword);
+
+router.post('/change-password', AuthController.changePasswordWithCurrentValidation);
+
+router.get('/me', AuthController.getLoggedUser);
+
 export default router;

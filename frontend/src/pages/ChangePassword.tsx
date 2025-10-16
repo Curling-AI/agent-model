@@ -1,20 +1,19 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Mail, ArrowLeft, CheckCircle, Hexagon } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { ArrowLeft, Hexagon, Key } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useTranslation } from '../translations';
-import { useAuthStore } from '@/store/auth';
+import { supabase } from '@/config/supabaseClient';
 
-const ForgotPassword: React.FC = () => {
+const ChangePassword: React.FC = () => {
   const language = useLanguage();
   const t = useTranslation(language);
-  
-  const [email, setEmail] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(false);
-  const [error, setError] = useState('');
 
-  const { resetPassword } = useAuthStore();
+  const [password, setPassword] = useState('');
+  const [confirmationPassword, setConfirmationPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,76 +22,44 @@ const ForgotPassword: React.FC = () => {
 
     try {
       // Validação básica
-      if (!email.trim()) {
-        setError('Por favor, digite seu e-mail');
+      if (!password.trim()) {
+        setError('Por favor, digite sua nova senha');
         return;
       }
 
-      if (!/\S+@\S+\.\S+/.test(email)) {
-        setError('E-mail inválido');
+      if (password !== confirmationPassword) {
+        setError('As senhas não coincidem');
         return;
       }
 
-      await resetPassword(email);
+      const { data, error } = await supabase.auth.updateUser({ password });
+      if (error) {
+        setError('Erro ao atualizar a senha. Tente novamente.');
+        return;
+      }
       
-      setIsSubmitted(true);
+      navigate('/login');
       
     } catch (err) {
-      setError('Erro ao enviar e-mail. Tente novamente.');
+      setError('Erro ao atualizar a senha. Tente novamente.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  if (isSubmitted) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-base-100 to-base-200 flex items-center justify-center p-6">
-        <div className="card bg-base-100 shadow-xl max-w-md w-full">
-          <div className="card-body text-center p-8">
-            <div className="w-16 h-16 bg-success rounded-full flex items-center justify-center mx-auto mb-4">
-              <CheckCircle className="w-8 h-8 text-success-content" />
-            </div>
-            <h2 className="text-2xl font-bold text-base-content mb-2">
-              E-mail enviado!
-            </h2>
-            <p className="text-neutral mb-6">
-              Enviamos um link para redefinir sua senha para <strong>{email}</strong>. 
-              Verifique sua caixa de entrada e siga as instruções.
-            </p>
-            <div className="space-y-3">
-              <Link to="/login" className="btn btn-primary w-full btn-apple">
-                Voltar ao Login
-              </Link>
-              <button 
-                onClick={() => {
-                  setIsSubmitted(false);
-                  setEmail('');
-                }}
-                className="btn btn-ghost w-full"
-              >
-                Tentar outro e-mail
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-base-100 to-base-200">
       <div className="flex min-h-screen">
-        {/* Lado esquerdo - Imagem (apenas desktop) */}
         <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary/10 to-primary/5 items-center justify-center p-12">
           <div className="text-center max-w-md">
             <div className="w-24 h-24 bg-gradient-to-br from-primary via-primary/90 to-primary/70 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-2xl">
               <Hexagon className="w-12 h-12 text-primary-content drop-shadow-sm" />
             </div>
             <h2 className="text-3xl font-bold text-base-content mb-4">
-              Esqueceu sua senha?
+              Atualização de Senha
             </h2>
             <p className="text-lg text-neutral">
-              Não se preocupe! Digite seu e-mail e enviaremos um link para redefinir sua senha.
+              Informe a nova senha que deseja utilizar na plataforma.
             </p>
           </div>
         </div>
@@ -113,10 +80,10 @@ const ForgotPassword: React.FC = () => {
               <div className="card-body p-8">
                 <div className="text-center mb-6">
                   <h2 className="text-2xl font-bold text-base-content mb-2">
-                    Recuperar Senha
+                    Atualização de Senha
                   </h2>
                   <p className="text-neutral">
-                    Digite seu e-mail para receber instruções de recuperação
+                    Digite sua nova senha para <strong>atualizá-la</strong>.
                   </p>
                 </div>
 
@@ -127,21 +94,20 @@ const ForgotPassword: React.FC = () => {
                 )}
 
                 <form onSubmit={handleSubmit} className="space-y-4">
-                  {/* Email */}
                   <div className="form-control">
                     <label className="label">
                       <span className="label-text label-medium-custom flex items-center">
-                        <Mail className="w-4 h-4 mr-2" />
-                        E-mail
+                        <Key className="w-4 h-4 mr-2" />
+                        Senha
                       </span>
                     </label>
                     <input
-                      type="email"
+                      type="password"
                       className="input input-bordered w-full"
-                      placeholder="seu@email.com"
-                      value={email}
+                      placeholder="Digite sua nova senha"
+                      value={password}
                       onChange={(e) => {
-                        setEmail(e.target.value);
+                        setPassword(e.target.value);
                         if (error) setError('');
                       }}
                       required
@@ -149,21 +115,41 @@ const ForgotPassword: React.FC = () => {
                     />
                   </div>
 
-                  {/* Botão de envio */}
+                  <div className="form-control">
+                    <label className="label">
+                      <span className="label-text label-medium-custom flex items-center">
+                        <Key className="w-4 h-4 mr-2" />
+                        Senha
+                      </span>
+                    </label>
+                    <input
+                      type="password"
+                      className="input input-bordered w-full"
+                      placeholder="Digite a confirmação de senha"
+                      value={confirmationPassword}
+                      onChange={(e) => {
+                        setConfirmationPassword(e.target.value);
+                        if (error) setError('');
+                      }}
+                      required
+                      disabled={isLoading}
+                    />
+                  </div>
+
                   <button
                     type="submit"
                     className={`btn btn-primary w-full btn-apple ${
                       isLoading ? 'loading' : ''
                     }`}
-                    disabled={isLoading || !email.trim()}
+                    disabled={isLoading || !password.trim() || !confirmationPassword.trim()}
                   >
                     {isLoading ? (
                       <>
                         <span className="loading loading-spinner loading-sm"></span>
-                        Enviando...
+                        Alterando senha...
                       </>
                     ) : (
-                      'Enviar Link de Recuperação'
+                      'Alterar Senha'
                     )}
                   </button>
                 </form>
@@ -187,4 +173,4 @@ const ForgotPassword: React.FC = () => {
   );
 };
 
-export default ForgotPassword;
+export default ChangePassword;

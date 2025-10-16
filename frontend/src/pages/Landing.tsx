@@ -4,9 +4,11 @@ import { useLanguage } from '../context/LanguageContext';
 import { useTranslation } from '../translations';
 
 const Landing: React.FC = () => {
-  const { language } = useLanguage();
+  const language = useLanguage();
   const t = useTranslation(language);
   
+  console.log('Rendering Landing Page');
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-base-100 to-base-200">
       {/* Header */}

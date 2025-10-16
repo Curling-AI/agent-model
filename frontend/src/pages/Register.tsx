@@ -17,34 +17,13 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useTranslation } from '../translations';
-
-interface PersonalData {
-  fullName: string;
-  email: string;
-  phone: string;
-  password: string;
-  confirmPassword: string;
-}
-
-interface CompanyData {
-  companyName: string;
-  cnpj: string;
-  cep: string;
-  address: string;
-  number: string;
-  city: string;
-  state: string;
-}
-
-interface CompanyDetails {
-  website: string;
-  segment: string;
-  language: 'pt' | 'en';
-}
+import { useUserStore } from '@/store/user';
+import { useOrganizationStore } from '@/store/organization';
+import { User as UserObject } from '@/types/user';
 
 const Register: React.FC = () => {
-  const { language } = useLanguage();
-  // const t = useTranslation(language);
+  const language = useLanguage();
+  const t = useTranslation(language);
   
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
@@ -53,28 +32,23 @@ const Register: React.FC = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [success, setSuccess] = useState(false);
 
-  const [personalData, setPersonalData] = useState<PersonalData>({
-    fullName: '',
+  const { organization, setOrganization, upsertOrganization} = useOrganizationStore();
+  const { upsertUser } = useUserStore();
+
+  const [user, setUser] = useState<UserObject>({
+    id: 0,
+    fullname: '',
+    name: '',
+    surname: '',
+    jobId: 1,
     email: '',
     phone: '',
     password: '',
-    confirmPassword: ''
-  });
-
-  const [companyData, setCompanyData] = useState<CompanyData>({
-    companyName: '',
-    cnpj: '',
-    cep: '',
-    address: '',
-    number: '',
-    city: '',
-    state: ''
-  });
-
-  const [companyDetails, setCompanyDetails] = useState<CompanyDetails>({
-    website: '',
-    segment: '',
-    language: 'pt'
+    confirmPassword: '',
+    status: 'active',
+    departmentId: 1,
+    organizationId: 0,
+    authId: '',
   });
 
   const segmentOptions = [
@@ -90,30 +64,30 @@ const Register: React.FC = () => {
     'Outros'
   ];
 
-  const validatePersonalData = (): boolean => {
+  const validateUser = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    if (!personalData.fullName.trim()) {
-      newErrors.fullName = 'Nome completo é obrigatório';
+    if (!user.fullname.trim()) {
+      newErrors.fullname = 'Nome completo é obrigatório';
     }
 
-    if (!personalData.email.trim()) {
+    if (!user.email.trim()) {
       newErrors.email = 'E-mail é obrigatório';
-    } else if (!/\S+@\S+\.\S+/.test(personalData.email)) {
+    } else if (!/\S+@\S+\.\S+/.test(user.email)) {
       newErrors.email = 'E-mail inválido';
     }
 
-    if (!personalData.phone.trim()) {
+    if (!user.phone.trim()) {
       newErrors.phone = 'Telefone é obrigatório';
     }
 
-    if (!personalData.password) {
+    if (!user.password) {
       newErrors.password = 'Senha é obrigatória';
-    } else if (personalData.password.length < 6) {
+    } else if (user.password.length < 6) {
       newErrors.password = 'Senha deve ter pelo menos 6 caracteres';
     }
 
-    if (personalData.password !== personalData.confirmPassword) {
+    if (user.password !== user.confirmPassword) {
       newErrors.confirmPassword = 'Senhas não coincidem';
     }
 
@@ -121,60 +95,54 @@ const Register: React.FC = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const validateCompanyData = (): boolean => {
+  const validateOrganization = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    if (!companyData.companyName.trim()) {
-      newErrors.companyName = 'Nome da empresa é obrigatório';
-    }
+    if (currentStep == 2) {
+      if (!organization.companyName.trim()) {
+        newErrors.companyName = 'Nome da empresa é obrigatório';
+      }
 
-    if (!companyData.cnpj.trim()) {
-      newErrors.cnpj = 'CNPJ é obrigatório';
-    }
+      if (!organization.cnpj.trim()) {
+        newErrors.cnpj = 'CNPJ é obrigatório';
+      }
 
-    if (!companyData.cep.trim()) {
-      newErrors.cep = 'CEP é obrigatório';
-    }
+      if (!organization.cep.trim()) {
+        newErrors.cep = 'CEP é obrigatório';
+      }
 
-    if (!companyData.address.trim()) {
-      newErrors.address = 'Endereço é obrigatório';
-    }
+      if (!organization.address.trim()) {
+        newErrors.address = 'Endereço é obrigatório';
+      }
 
-    if (!companyData.number.trim()) {
-      newErrors.number = 'Número é obrigatório';
-    }
+      if (!organization.number.trim()) {
+        newErrors.number = 'Número é obrigatório';
+      }
 
-    if (!companyData.city.trim()) {
-      newErrors.city = 'Cidade é obrigatória';
-    }
+      if (!organization.city.trim()) {
+        newErrors.city = 'Cidade é obrigatória';
+      }
 
-    if (!companyData.state.trim()) {
-      newErrors.state = 'Estado é obrigatório';
+      if (!organization.state.trim()) {
+        newErrors.state = 'Estado é obrigatório';
+      }
+    } else if (currentStep == 3) {
+      if (!organization.segment) {
+        newErrors.segment = 'Segmento é obrigatório';
+      }
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const validateCompanyDetails = (): boolean => {
-    const newErrors: Record<string, string> = {};
-
-    if (!companyDetails.segment) {
-      newErrors.segment = 'Segmento é obrigatório';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handlePersonalDataChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUserChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setPersonalData(prev => ({
-      ...prev,
+    setUser({
+      ...user,
       [name]: value
-    }));
+    });
     
-    // Limpar erro do campo específico
     if (errors[name]) {
       setErrors(prev => ({
         ...prev,
@@ -183,30 +151,13 @@ const Register: React.FC = () => {
     }
   };
 
-  const handleCompanyDataChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleOrganizationChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setCompanyData(prev => ({
-      ...prev,
+    setOrganization({
+      ...organization,
       [name]: value
-    }));
-    
-    // Limpar erro do campo específico
-    if (errors[name]) {
-      setErrors(prev => ({
-        ...prev,
-        [name]: ''
-      }));
-    }
-  };
+    });
 
-  const handleCompanyDetailsChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setCompanyDetails(prev => ({
-      ...prev,
-      [name]: value
-    }));
-    
-    // Limpar erro do campo específico
     if (errors[name]) {
       setErrors(prev => ({
         ...prev,
@@ -217,24 +168,24 @@ const Register: React.FC = () => {
 
   const handleCepChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const cep = e.target.value.replace(/\D/g, '');
-    setCompanyData(prev => ({
-      ...prev,
+    setOrganization({
+      ...organization,
       cep: cep
-    }));
+    });
 
     // Buscar CEP quando tiver 8 dígitos
-    if (cep.length === 8) {
+    if (cep.length > 8) {
       try {
         const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
         const data = await response.json();
         
         if (!data.erro) {
-          setCompanyData(prev => ({
-            ...prev,
+          setOrganization({
+            ...organization,
             address: data.logradouro || '',
             city: data.localidade || '',
             state: data.uf || ''
-          }));
+          });
         }
       } catch (error) {
         console.error('Erro ao buscar CEP:', error);
@@ -243,9 +194,9 @@ const Register: React.FC = () => {
   };
 
   const handleNextStep = () => {
-    if (currentStep === 1 && validatePersonalData()) {
+    if (currentStep === 1 && validateUser()) {
       setCurrentStep(2);
-    } else if (currentStep === 2 && validateCompanyData()) {
+    } else if (currentStep === 2 && validateOrganization()) {
       setCurrentStep(3);
     }
   };
@@ -261,17 +212,20 @@ const Register: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!validateCompanyDetails()) {
+    if (!validateOrganization()) {
       return;
     }
 
-    setIsLoading(true);
-    setErrors({});
-
     try {
-      // Aqui você implementaria a lógica de cadastro
-      // Por enquanto, apenas simular um delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      upsertOrganization(organization).then(async (data) => {
+        setIsLoading(true);
+        setErrors({});
+        user.organizationId = data?.id || 0;
+        const nameParts = user.fullname.trim().split(' ');
+        user.name = nameParts[0];
+        user.surname = nameParts.slice(1).join(' ');
+        await upsertUser(user);
+      });
       
       setSuccess(true);
     } catch (error) {
@@ -398,16 +352,16 @@ const Register: React.FC = () => {
                         </label>
                         <input
                           type="text"
-                          name="fullName"
-                          className={`input input-bordered w-full ${errors.fullName ? 'input-error' : ''}`}
+                          name="fullname"
+                          className={`input input-bordered w-full ${errors.fullname ? 'input-error' : ''}`}
                           placeholder="Seu nome completo"
-                          value={personalData.fullName}
-                          onChange={handlePersonalDataChange}
+                          value={user.fullname}
+                          onChange={handleUserChange}
                           disabled={isLoading}
                         />
-                        {errors.fullName && (
+                        {errors.fullname && (
                           <label className="label">
-                            <span className="label-text-alt text-error">{errors.fullName}</span>
+                            <span className="label-text-alt text-error">{errors.fullname}</span>
                           </label>
                         )}
                       </div>
@@ -424,8 +378,8 @@ const Register: React.FC = () => {
                           name="email"
                           className={`input input-bordered w-full ${errors.email ? 'input-error' : ''}`}
                           placeholder="seu@empresa.com"
-                          value={personalData.email}
-                          onChange={handlePersonalDataChange}
+                          value={user.email}
+                          onChange={handleUserChange}
                           disabled={isLoading}
                         />
                         {errors.email && (
@@ -447,8 +401,8 @@ const Register: React.FC = () => {
                           name="phone"
                           className={`input input-bordered w-full ${errors.phone ? 'input-error' : ''}`}
                           placeholder="(11) 99999-9999"
-                          value={personalData.phone}
-                          onChange={handlePersonalDataChange}
+                          value={user.phone}
+                          onChange={handleUserChange}
                           disabled={isLoading}
                         />
                         {errors.phone && (
@@ -471,8 +425,8 @@ const Register: React.FC = () => {
                             name="password"
                             className={`input input-bordered w-full pr-12 ${errors.password ? 'input-error' : ''}`}
                             placeholder="Mínimo 6 caracteres"
-                            value={personalData.password}
-                            onChange={handlePersonalDataChange}
+                            value={user.password}
+                            onChange={handleUserChange}
                             disabled={isLoading}
                           />
                           <button
@@ -508,8 +462,8 @@ const Register: React.FC = () => {
                             name="confirmPassword"
                             className={`input input-bordered w-full pr-12 ${errors.confirmPassword ? 'input-error' : ''}`}
                             placeholder="Confirme sua senha"
-                            value={personalData.confirmPassword}
-                            onChange={handlePersonalDataChange}
+                            value={user.confirmPassword}
+                            onChange={handleUserChange}
                             disabled={isLoading}
                           />
                           <button
@@ -547,8 +501,8 @@ const Register: React.FC = () => {
                           name="companyName"
                           className={`input input-bordered w-full ${errors.companyName ? 'input-error' : ''}`}
                           placeholder="Nome da sua empresa"
-                          value={companyData.companyName}
-                          onChange={handleCompanyDataChange}
+                          value={organization.companyName}
+                          onChange={handleOrganizationChange}
                           disabled={isLoading}
                         />
                         {errors.companyName && (
@@ -567,8 +521,8 @@ const Register: React.FC = () => {
                           name="cnpj"
                           className={`input input-bordered w-full ${errors.cnpj ? 'input-error' : ''}`}
                           placeholder="00.000.000/0000-00"
-                          value={companyData.cnpj}
-                          onChange={handleCompanyDataChange}
+                          value={organization.cnpj}
+                          onChange={handleOrganizationChange}
                           disabled={isLoading}
                         />
                         {errors.cnpj && (
@@ -590,7 +544,7 @@ const Register: React.FC = () => {
                           name="cep"
                           className={`input input-bordered w-full ${errors.cep ? 'input-error' : ''}`}
                           placeholder="00000-000"
-                          value={companyData.cep}
+                          value={organization.cep}
                           onChange={handleCepChange}
                           disabled={isLoading}
                         />
@@ -611,8 +565,8 @@ const Register: React.FC = () => {
                             name="address"
                             className={`input input-bordered w-full ${errors.address ? 'input-error' : ''}`}
                             placeholder="Rua, Avenida..."
-                            value={companyData.address}
-                            onChange={handleCompanyDataChange}
+                            value={organization.address}
+                            onChange={handleOrganizationChange}
                             disabled={isLoading}
                           />
                           {errors.address && (
@@ -631,8 +585,8 @@ const Register: React.FC = () => {
                             name="number"
                             className={`input input-bordered w-full ${errors.number ? 'input-error' : ''}`}
                             placeholder="123"
-                            value={companyData.number}
-                            onChange={handleCompanyDataChange}
+                            value={organization.number}
+                            onChange={handleOrganizationChange}
                             disabled={isLoading}
                           />
                           {errors.number && (
@@ -653,8 +607,8 @@ const Register: React.FC = () => {
                             name="city"
                             className={`input input-bordered w-full ${errors.city ? 'input-error' : ''}`}
                             placeholder="São Paulo"
-                            value={companyData.city}
-                            onChange={handleCompanyDataChange}
+                            value={organization.city}
+                            onChange={handleOrganizationChange}
                             disabled={isLoading}
                           />
                           {errors.city && (
@@ -673,8 +627,8 @@ const Register: React.FC = () => {
                             name="state"
                             className={`input input-bordered w-full ${errors.state ? 'input-error' : ''}`}
                             placeholder="SP"
-                            value={companyData.state}
-                            onChange={handleCompanyDataChange}
+                            value={organization.state}
+                            onChange={handleOrganizationChange}
                             disabled={isLoading}
                           />
                           {errors.state && (
@@ -700,8 +654,8 @@ const Register: React.FC = () => {
                           name="website"
                           className="input input-bordered w-full"
                           placeholder="https://www.empresa.com"
-                          value={companyDetails.website}
-                          onChange={handleCompanyDetailsChange}
+                          value={organization.website}
+                          onChange={handleOrganizationChange}
                           disabled={isLoading}
                         />
                       </div>
@@ -713,8 +667,8 @@ const Register: React.FC = () => {
                         <select
                           name="segment"
                           className={`select select-bordered w-full ${errors.segment ? 'select-error' : ''}`}
-                          value={companyDetails.segment}
-                          onChange={handleCompanyDetailsChange}
+                          value={organization.segment}
+                          onChange={handleOrganizationChange}
                           disabled={isLoading}
                         >
                           <option value="">Selecione um segmento</option>
@@ -740,8 +694,8 @@ const Register: React.FC = () => {
                               name="language"
                               value="pt"
                               className="radio radio-primary"
-                              checked={companyDetails.language === 'pt'}
-                              onChange={handleCompanyDetailsChange}
+                              checked={organization.language === 'pt'}
+                              onChange={handleOrganizationChange}
                               disabled={isLoading}
                             />
                             <span className="label-text ml-2">Português</span>
@@ -752,8 +706,8 @@ const Register: React.FC = () => {
                               name="language"
                               value="en"
                               className="radio radio-primary"
-                              checked={companyDetails.language === 'en'}
-                              onChange={handleCompanyDetailsChange}
+                              checked={organization.language === 'en'}
+                              onChange={handleOrganizationChange}
                               disabled={isLoading}
                             />
                             <span className="label-text ml-2">English</span>

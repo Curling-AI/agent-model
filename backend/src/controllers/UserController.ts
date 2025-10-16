@@ -1,3 +1,4 @@
+import { supabase } from '@/config/supabaseClient';
 import { getAll, getByFilter, getById, insert, remove, update, upsert } from '@/services/storage';
 
 import { Request, Response } from 'express';
@@ -14,7 +15,7 @@ export const UserController = {
 
   listUsers: async (req: Request, res: Response) => {
     const organizationId = Number(req.query.organizationId);
-    const users = await getByFilter('users', { 'organization_id': organizationId });
+    const users = await getByFilter('auth.users', { 'organization_id': organizationId });
 
     if (!users) return res.status(404).json({ error: 'No users found' });
 
@@ -23,25 +24,48 @@ export const UserController = {
 
   upsertUser: async (req: Request, res: Response) => {
     try {
-      const payload = {
+
+      let payload = {
         organization_id: req.body.organizationId,
         name: req.body.name,
         surname: req.body.surname,
         email: req.body.email,
         phone: req.body.phone,
         job_id: req.body.jobId,
-        department_id: req.body.departmentId,
+        location_name: req.body.locationName || '',
+        language: req.body.language || 'pt',
+        timezone: req.body.timezone || 'America/Sao_Paulo',
         permissions: req.body.permissions,
+        auth_id: req.body.authId,
         status: req.body.status,
+        department_id: req.body.departmentId
       }
 
-      if (req.body.id && req.body.id > 0) {
+      if (req.body.id === 0) {
+        console.log("Creating auth user");
+        const { email, password } = req.body;
+
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: { data: {
+            full_name: payload.name + ' ' + payload.surname,
+          }
+        }});
+
+        if (error) {
+          return res.status(400).json({ error: 'Error creating auth user' });
+        }
+        
+        payload['auth_id'] = data.user.id;
+      } else {
+        console.log("Updating auth user");
         payload['id'] = req.body.id;
       }
 
-      const response = await upsert('users', payload);
+      const response = await upsert('users', payload)
 
-      return res.json(response);
+      return res.status(201).json(response);
     } catch (error) {
       console.log(error.message);
       return res.status(500).json({ error: 'Error upserting user' });

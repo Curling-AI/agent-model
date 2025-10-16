@@ -1,9 +1,36 @@
 -- Tabela Organization
 CREATE TABLE organizations (
-  id serial PRIMARY KEY,
+  id SERIAL PRIMARY KEY,
+  company_name VARCHAR(255) NOT NULL,
+  cnpj VARCHAR(20) NOT NULL UNIQUE,
+  cep VARCHAR(10) NOT NULL,
+  address VARCHAR(255) NOT NULL,
+  number INTEGER NOT NULL,
+  city VARCHAR(100) NOT NULL,
+  state VARCHAR(50) NOT NULL,
+  website VARCHAR(255),
+  segment VARCHAR(100),
+  language VARCHAR(2) NOT NULL CHECK (language IN ('pt', 'en'))
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Tabela User
+CREATE TABLE "users" (
+  id SERIAL PRIMARY KEY,
+  organization_id INTEGER NOT NULL,
   name VARCHAR(255) NOT NULL,
-  credit NUMERIC NOT NULL,
-  payment_token VARCHAR(255),
+  surname VARCHAR(255),
+  email VARCHAR(255) NOT NULL,
+  phone VARCHAR(50),
+  job_id INTEGER REFERENCES jobs(id),
+  location_name VARCHAR(255),
+  language VARCHAR(50),
+  timezone VARCHAR(50),
+  permissions jsonb, 
+  auth_id VARCHAR(255) UNIQUE,
+  status VARCHAR(10) CHECK (status IN ('active', 'inactive', 'suspended')),
+  department_id INTEGER REFERENCES departments(id),
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
 );
@@ -216,25 +243,6 @@ CREATE TABLE departments (
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
--- Tabela User
-CREATE TABLE "users" (
-  id SERIAL PRIMARY KEY,
-  organization_id INTEGER NOT NULL,
-  name VARCHAR(255) NOT NULL,
-  surname VARCHAR(255),
-  email VARCHAR(255) NOT NULL,
-  phone VARCHAR(50),
-  job_id INTEGER REFERENCES jobs(id),
-  location_name VARCHAR(255),
-  language VARCHAR(50),
-  timezone VARCHAR(50),
-  permissions jsonb
-  status VARCHAR(10) CHECK (status IN ('active', 'inactive', 'suspended')),
-  department_id INTEGER REFERENCES departments(id),
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
-);
-
 -- Tabela Permission
 CREATE TABLE permissions (
   id SERIAL PRIMARY KEY,
@@ -373,3 +381,33 @@ CREATE TRIGGER after_follow_up_messages_delete
 AFTER DELETE ON follow_up_messages
 FOR EACH ROW
 EXECUTE FUNCTION remove_follow_up_message_documents_by_follow_up_id();
+
+-- Function: update_password_secure
+CREATE OR REPLACE FUNCTION update_password_secure(
+    "current_plain_password" TEXT,
+    "new_plain_password" TEXT,
+    "current_id" UUID
+)
+RETURNS TEXT
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    encpass auth.users.encrypted_password%TYPE;
+BEGIN
+    SELECT encrypted_password
+    INTO encpass
+    FROM auth.users
+    WHERE
+        id = current_id AND encrypted_password = crypt(current_plain_password, auth.users.encrypted_password);
+
+    IF NOT FOUND THEN
+        RETURN 'incorrect_password';
+    ELSE
+        UPDATE auth.users
+        SET encrypted_password = crypt(new_plain_password, gen_salt('bf'))
+        WHERE id = current_id;
+        RETURN 'success';
+    END IF;
+END;
+$$;

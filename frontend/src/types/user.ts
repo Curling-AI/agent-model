@@ -2,6 +2,7 @@ import { BaseInterface } from '.';
 
 export interface User extends BaseInterface {
   id: number;
+  fullname: string;
   name: string;
   surname: string;
   email: string;
@@ -13,9 +14,11 @@ export interface User extends BaseInterface {
   password?: string;
   confirmPassword?: string;
   status: 'active' | 'inactive' | 'suspended';
-  departmentId: number;
-  permissions: string[];
+  departmentId?: number;
+  permissions?: string[];
+  authId: string;
   updatedAt?: string;
+  createdAt?: string;
 }
 
 export interface Job extends BaseInterface {

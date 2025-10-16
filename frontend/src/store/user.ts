@@ -6,7 +6,7 @@ interface UserState {
   users: User[];
   loading: boolean;
   error: string | null;
-  fetchUsers: () => Promise<void>;
+  fetchUsers: (organizationId: number) => Promise<void>;
   upsertUser: (user: User) => Promise<void>;
   deleteUser: (userId: number) => Promise<void>;
 }
@@ -15,10 +15,10 @@ export const useUserStore = create<UserState>((set, get) => ({
   users: [],
   loading: false,
   error: null,
-  fetchUsers: async () => {
+  fetchUsers: async (organizationId: number) => {
     set({ loading: true, error: null });
     try {
-      const response = await fetch(`${BASE_URL}/users?organizationId=1`);
+      const response = await fetch(`${BASE_URL}/users?organizationId=${organizationId}`);
       const data = await response.json();
       set({ users: mapToUser(data), loading: false });
     } catch (error) {
@@ -28,7 +28,6 @@ export const useUserStore = create<UserState>((set, get) => ({
   },
   upsertUser: async (user) => {
     set({ loading: true, error: null });
-
     try {
       const response = await fetch(`${BASE_URL}/users`, {
         method: 'POST',
@@ -75,6 +74,7 @@ function mapToUser(data: any[]): User[] {
     organizationId: item.organization_id,
     name: item.name,
     surname: item.surname,
+    fullname: item.name + ' ' + item.surname,
     email: item.email,
     phone: item.phone,
     jobId: item.job_id,

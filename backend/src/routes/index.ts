@@ -16,6 +16,7 @@ import departmentRoutes from './department-routes';
 import leadRoutes from './lead-routes';
 import crmColumnRoutes from './crm-column-routes';
 import webhookRoutes from './webhook-routes';
+import organizationRoutes from './organization-routes';
 
 const router = Router();
 
@@ -36,5 +37,6 @@ router.use('/departments', departmentRoutes);
 router.use('/leads', leadRoutes);
 router.use('/crm-columns', crmColumnRoutes); 
 router.use('/webhooks', webhookRoutes);
+router.use('/organizations', organizationRoutes);
 
 export default router;
