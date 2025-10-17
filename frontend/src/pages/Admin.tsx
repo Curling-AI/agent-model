@@ -153,7 +153,7 @@ const Admin: React.FC = () => {
   };
 
   const tabs: Tab[] = [
-    { id: 'users', label: t.users, icon: Users, count: users.length },
+    { id: 'users', label: t.usersTitle, icon: Users, count: users.length },
     { id: 'departments', label: t.departments, icon: Building2, count: departments.length }
   ];
 

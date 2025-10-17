@@ -38,6 +38,23 @@ const UserModal: React.FC<UserModalProps> = ({ user, departments, permissions, o
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.fullname 
+        || !formData.email 
+        || !formData.jobId 
+        || !formData.status 
+        || !formData.password
+        || !formData.permissions 
+        || formData.permissions.length === 0
+      ) {
+      alert(t.fillAllFields);
+      return;
+    }
+
+    if (formData.password.length < 6 && !user) {
+      alert(t.passwordTooShort);
+      return;
+    }
+
     if (formData.password !== formData.confirmPassword) {
       alert(t.passwordsDontMatch);
       return;
@@ -48,70 +65,58 @@ const UserModal: React.FC<UserModalProps> = ({ user, departments, permissions, o
 
   return (
     <div className="modal modal-open">
-      <div className="modal-box max-w-2xl">
+      <div className="modal-box max-w-5xl">
         <h3 className="font-bold text-lg mb-4">
           {user ? t.editUser : t.createUser}
         </h3>
-        
+
         <form className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="form-control">
               <label className="label">
-                <span className="label-text">{t.firstName}</span>
+                <span className="label-text">{t.fullName}</span>
               </label>
               <input
                 type="text"
                 className="input input-bordered"
-                value={formData.name}
-                onChange={(e) => setFormData({...formData, name: e.target.value})}
+                value={formData.fullname}
+                onChange={(e) => setFormData({ ...formData, fullname: e.target.value })}
                 required
               />
             </div>
-            
+
             <div className="form-control">
               <label className="label">
-                <span className="label-text">{t.lastName}</span>
+                <span className="label-text">{t.email}</span>
               </label>
               <input
-                type="text"
+                type="email"
                 className="input input-bordered"
-                value={formData.surname}
-                onChange={(e) => setFormData({...formData, surname: e.target.value})}
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 required
               />
             </div>
+
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text">{t.phone}</span>
+              </label>
+              <input
+                type="tel"
+                maxLength={15}
+                className="input input-bordered"
+                value={formData.phone}
+                style={{ width: '100%' }}
+                onChange={(e) => {
+                  const numericValue = e.target.value.replace(/\D/g, '');
+                  setFormData({ ...formData, phone: numericValue })
+                }
+                }
+              />
+            </div>
           </div>
-          
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text">{t.email}</span>
-            </label>
-            <input
-              type="email"
-              className="input input-bordered"
-              value={formData.email}
-              onChange={(e) => setFormData({...formData, email: e.target.value})}
-              required
-            />
-          </div>
-          
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text">{t.phone}</span>
-            </label>
-            <input
-              type="tel"
-              maxLength={15}
-              className="input input-bordered"
-              value={formData.phone}
-              style={{ width: '100%' }}
-              onChange={(e) => {
-                const numericValue = e.target.value.replace(/\D/g, '');
-                setFormData({...formData, phone: numericValue})}
-              }
-            />
-          </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="form-control">
               <label className="label">
@@ -120,7 +125,7 @@ const UserModal: React.FC<UserModalProps> = ({ user, departments, permissions, o
               <select
                 className="select select-bordered"
                 value={formData.jobId}
-                onChange={(e) => setFormData({...formData, jobId: Number(e.target.value)})}
+                onChange={(e) => setFormData({ ...formData, jobId: Number(e.target.value) })}
                 required
               >
                 {jobs.map(job => (
@@ -128,7 +133,7 @@ const UserModal: React.FC<UserModalProps> = ({ user, departments, permissions, o
                 ))}
               </select>
             </div>
-            
+
             <div className="form-control">
               <label className="label">
                 <span className="label-text">{t.department}</span>
@@ -136,7 +141,7 @@ const UserModal: React.FC<UserModalProps> = ({ user, departments, permissions, o
               <select
                 className="select select-bordered"
                 value={formData.departmentId}
-                onChange={(e) => setFormData({...formData, departmentId: Number(e.target.value)})}
+                onChange={(e) => setFormData({ ...formData, departmentId: Number(e.target.value) })}
               >
                 <option value="">{t.noDepartment}</option>
                 {departments.map(dept => (
@@ -144,7 +149,7 @@ const UserModal: React.FC<UserModalProps> = ({ user, departments, permissions, o
                 ))}
               </select>
             </div>
-            
+
             <div className="form-control">
               <label className="label">
                 <span className="label-text">{t.status}</span>
@@ -152,18 +157,17 @@ const UserModal: React.FC<UserModalProps> = ({ user, departments, permissions, o
               <select
                 className="select select-bordered"
                 value={formData.status}
-                onChange={(e) => setFormData({...formData, status: e.target.value as 'active' | 'inactive' | 'suspended'})}
-                required
-              >
+                onChange={(e) => setFormData({ ...formData, status: e.target.value as 'active' | 'inactive' | 'suspended' })}
+                required>
                 <option value="active">{t.active}</option>
                 <option value="inactive">{t.inactive}</option>
                 <option value="suspended">{t.suspended}</option>
               </select>
             </div>
           </div>
-          
+
           {!user && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="form-control">
                 <label className="label">
                   <span className="label-text">{t.password}</span>
@@ -172,12 +176,12 @@ const UserModal: React.FC<UserModalProps> = ({ user, departments, permissions, o
                   type="password"
                   className="input input-bordered"
                   value={formData.password}
-                  onChange={(e) => setFormData({...formData, password: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   required={!user}
                   minLength={6}
                 />
               </div>
-              
+
               <div className="form-control">
                 <label className="label">
                   <span className="label-text">{t.confirmPassword}</span>
@@ -186,20 +190,20 @@ const UserModal: React.FC<UserModalProps> = ({ user, departments, permissions, o
                   type="password"
                   className="input input-bordered"
                   value={formData.confirmPassword}
-                  onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                   required={!user}
                 />
               </div>
             </div>
           )}
-          
+
           {/* Permissions Section */}
           <div className="form-control">
             <label className="label">
               <span className="label-text font-semibold">{t.userPermissions}</span>
             </label>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-2">
-              {[1,2,3,4].map(group => {
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-2">
+              {[1, 2, 3, 4].map(group => {
                 const permissionLabels: Record<string, string> = {
                   1: t.agentPermissions,
                   2: t.crmPermissions,
@@ -243,7 +247,7 @@ const UserModal: React.FC<UserModalProps> = ({ user, departments, permissions, o
               })}
             </div>
           </div>
-          
+
           <div className="modal-action">
             <button type="button" className="btn" onClick={onClose} style={{ textTransform: 'uppercase' }}>
               {t.cancel}

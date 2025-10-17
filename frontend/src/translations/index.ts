@@ -70,6 +70,7 @@ export const translations = {
     qualified: 'Qualificados',
     clients: 'Clientes',
     users: 'usuários',
+    usersTitle: 'Usuários',
     conversion: 'conv.',
     
     // Agent Performance
@@ -769,6 +770,8 @@ export const translations = {
 
     passwordChangeSuccess: 'Senha atualizada com sucesso. Por favor, faça login novamente.',
     invalidCurrentPassword: 'Senha atual inválida',
+    passwordTooShort: 'A nova senha deve ter pelo menos 8 caracteres',
+    fillAllFields: 'Por favor, preencha todos os campos',
   },
   en: {
     // Header
@@ -839,6 +842,7 @@ export const translations = {
     qualified: 'Qualified',
     clients: 'Clients',
     users: 'users',
+    usersTitle: 'Users',
     conversion: 'conv.',
     
     // Agent Performance
@@ -1537,6 +1541,8 @@ export const translations = {
 
     passwordChangeSuccess: 'Password changed successfully. Please log in again.',
     invalidCurrentPassword: 'Invalid current password',
+    passwordTooShort: 'New password must be at least 8 characters long',
+    fillAllFields: 'Please fill in all fields',
   }
 };
 

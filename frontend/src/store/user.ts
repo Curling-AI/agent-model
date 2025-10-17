@@ -80,6 +80,7 @@ function mapToUser(data: any[]): User[] {
     jobId: item.job_id,
     departmentId: item.department_id,
     status: item.status,
+    authId: item.auth_id,
     permissions: item.permissions,
     createdAt: item.created_at,
     updatedAt: item.updated_at,
