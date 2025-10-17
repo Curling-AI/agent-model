@@ -2,12 +2,26 @@ import { Sun, Moon, Bell, Menu } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext.tsx';
 import { useLanguage } from '@/context/LanguageContext';
 import { useTranslation } from '@/translations';
+import { useAuthStore } from '@/store/auth.ts';
+import { useEffect } from 'react';
 
 const Header: React.FC<{ onToggleSidebar: () => void; isMobile: boolean; mobileMenuOpen: boolean }> = ({ onToggleSidebar, isMobile, mobileMenuOpen }) => {
   const { theme, toggleTheme } = useTheme();
   const language  = useLanguage();
   const toggleLanguage = language.toggleLanguage;
   const t = useTranslation(language);
+
+  const { logout } = useAuthStore();
+  const { user, getLoggedUser } = useAuthStore();
+
+  useEffect(() => {
+    getLoggedUser();
+  }, []);
+
+  const handleLogout = () => {
+    logout();
+    window.location.href = '/login';
+  };
 
   return (
     <header className="bg-base-100 border-b border-base-300 px-4 md:px-6 py-4">
@@ -76,12 +90,12 @@ const Header: React.FC<{ onToggleSidebar: () => void; isMobile: boolean; mobileM
             </button>
             <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 bg-base-100 rounded-box w-52">
               <li className="menu-title">
-                <span>{t.user}</span>
+                <span>{user?.name}</span>
               </li>
               <li><a href="/profile">{t.profile}</a></li>
               <li><a href="/plans">{t.plans}</a></li>
               <li><hr className="my-2" /></li>
-              <li><a href="/logout">{t.logout}</a></li>
+              <li><a href="#" onClick={handleLogout}>{t.logout}</a></li>
             </ul>
           </div>
         </div>

@@ -1,8 +1,15 @@
 export interface Organization {
-  id: string;
-  name: string;
-  credit: number;
-  payment_token: string;
+  id: number;
+  companyName: string;
+  cnpj: string;
+  cep: string;
+  address: string;
+  number: string;
+  city: string;
+  state: string;
+  website: string;
+  segment: string;
+  language: 'pt' | 'en';
 }
 
 export interface BaseInterface {

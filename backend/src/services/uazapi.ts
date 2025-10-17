@@ -42,10 +42,11 @@ export const sendMedia = async (to: string, media: string, type: string, token: 
         file: media
       })
     });
-
+     
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(`Error sending media: ${errorData}`);
+      console.log('Error data:', errorData);
+      throw new Error(`Error sending media`);
     }
 
     const data = await response.json();

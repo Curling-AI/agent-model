@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { 
-  Calendar,
   Edit,
   Save,
   X,
@@ -8,63 +7,64 @@ import {
   EyeOff,
   Shield,
   Camera,
-  AlertCircle
+  AlertCircle,
+  Calendar
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useTranslation } from '../translations';
+import { useAuthStore } from '@/store/auth';
+import { useUserStore } from '@/store/user';
+import { useSystemStore } from '@/store/system';
+import { useNavigate } from 'react-router-dom';
 
 const Profile = () => {
-  const { language } = useLanguage();
+  const language = useLanguage();
   const t = useTranslation(language);
   const [isEditing, setIsEditing] = useState(false);
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const { upsertUser } = useUserStore();
+  const { jobs, fetchJobs } = useSystemStore();
 
-  // Dados do usuário
-  const [userData, setUserData] = useState({
-    name: 'João Silva',
-    email: 'joao.silva@empresa.com',
-    phone: '+55 11 99999-9999',
-    company: 'Minha Empresa LTDA',
-    position: 'CEO',
-    location: 'São Paulo, SP',
-    joinDate: '2024-01-15',
-    timezone: 'America/Sao_Paulo',
-    language: 'pt-BR'
-  });
+  const {user, setUser, getLoggedUser, changePassword} = useAuthStore();
 
-  // Dados da senha
+  const navigate  = useNavigate();
+
+  useEffect(() => {
+    getLoggedUser();
+    fetchJobs();
+  }, []);
+  
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
     newPassword: '',
     confirmPassword: ''
   });
 
-
-
-  const handleSaveProfile = () => {
-    // Salvar dados do perfil
-    console.log('Saving profile:', userData);
-    setIsEditing(false);
+  const handleSaveProfile = async () => {
+    await upsertUser(user!)
     // Mostrar toast de sucesso
   };
 
-  const handleChangePassword = () => {
+  const handleChangePassword = async () => {
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       alert(t.passwordsDontMatch);
       return;
     }
     
-    // Alterar senha
-    console.log('Changing password');
-    setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
-    setShowPasswordForm(false);
-    // Mostrar toast de sucesso
+    const response = await changePassword(passwordData.currentPassword, passwordData.newPassword);
+    
+    if (response?.success) {
+      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      setShowPasswordForm(false);
+      alert(t.passwordChangeSuccess);
+      navigate('/login');
+    } else {
+      alert(t.invalidCurrentPassword);
+    }
   };
-
-
 
   return (
     <div className="space-y-6">
@@ -113,7 +113,7 @@ const Profile = () => {
               <div className="flex items-center space-x-4 mb-6">
                 <div className="relative">
                   <div className="w-20 h-20 bg-primary rounded-full flex items-center justify-center text-primary-content text-2xl font-bold">
-                    {userData.name.split(' ').map(n => n[0]).join('')}
+                    {user?.fullname}
                   </div>
                   {isEditing && (
                     <button className="absolute -bottom-1 -right-1 btn btn-circle btn-xs btn-primary">
@@ -122,11 +122,11 @@ const Profile = () => {
                   )}
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold">{userData.name}</h3>
-                  <p className="text-neutral">{userData.position} • {userData.company}</p>
+                  <h3 className="text-xl font-bold">{user?.name}</h3>
+                  <p className="text-neutral">{user?.jobId} • {user?.organizationId}</p>
                   <div className="flex items-center space-x-1 text-sm text-neutral mt-1">
                     <Calendar className="w-4 h-4" />
-                    <span>{t.memberSince} {new Date(userData.joinDate).toLocaleDateString(language === 'pt' ? 'pt-BR' : 'en-US')}</span>
+                    {/* <span>{t.memberSince} {new Date(user?.createdAt).toLocaleDateString(language.language === 'pt' ? 'pt-BR' : 'en-US')}</span> */}
                   </div>
                 </div>
               </div>
@@ -140,8 +140,8 @@ const Profile = () => {
                   <input 
                     type="text" 
                     className="input input-bordered w-full"
-                    value={userData.name}
-                    onChange={(e) => setUserData(prev => ({...prev, name: e.target.value}))}
+                    value={user?.name}
+                    onChange={(e) => setUser({...user!, name: e.target.value})}
                     disabled={!isEditing}
                   />
                 </div>
@@ -153,8 +153,8 @@ const Profile = () => {
                   <input 
                     type="email" 
                     className="input input-bordered w-full"
-                    value={userData.email}
-                    onChange={(e) => setUserData(prev => ({...prev, email: e.target.value}))}
+                    value={user?.email}
+                    onChange={(e) => setUser({...user!, email: e.target.value})}
                     disabled={!isEditing}
                   />
                 </div>
@@ -166,21 +166,8 @@ const Profile = () => {
                   <input 
                     type="tel" 
                     className="input input-bordered w-full"
-                    value={userData.phone}
-                    onChange={(e) => setUserData(prev => ({...prev, phone: e.target.value}))}
-                    disabled={!isEditing}
-                  />
-                </div>
-
-                <div>
-                  <label className="label">
-                    <span className="label-text font-medium">{t.company}</span>
-                  </label>
-                  <input 
-                    type="text" 
-                    className="input input-bordered w-full"
-                    value={userData.company}
-                    onChange={(e) => setUserData(prev => ({...prev, company: e.target.value}))}
+                    value={user?.phone}
+                    onChange={(e) => setUser({...user!, phone: e.target.value})}
                     disabled={!isEditing}
                   />
                 </div>
@@ -189,26 +176,16 @@ const Profile = () => {
                   <label className="label">
                     <span className="label-text font-medium">{t.position}</span>
                   </label>
-                  <input 
-                    type="text" 
-                    className="input input-bordered w-full"
-                    value={userData.position}
-                    onChange={(e) => setUserData(prev => ({...prev, position: e.target.value}))}
-                    disabled={!isEditing}
-                  />
-                </div>
-
-                <div>
-                  <label className="label">
-                    <span className="label-text font-medium">{t.location}</span>
-                  </label>
-                  <input 
-                    type="text" 
-                    className="input input-bordered w-full"
-                    value={userData.location}
-                    onChange={(e) => setUserData(prev => ({...prev, location: e.target.value}))}
-                    disabled={!isEditing}
-                  />
+                  <select
+                    className="select select-bordered"
+                    value={user?.jobId}
+                    onChange={(e) => setUser({...user!, jobId: Number(e.target.value)})}
+                    required
+                  >
+                    {jobs.map(job => (
+                      <option key={job.id} value={job.id}>{job.title}</option>
+                    ))}
+                  </select>
                 </div>
 
                 <div>
@@ -217,8 +194,8 @@ const Profile = () => {
                   </label>
                   <select 
                     className="select select-bordered w-full"
-                    value={userData.timezone}
-                    onChange={(e) => setUserData(prev => ({...prev, timezone: e.target.value}))}
+                    value={user?.timezone}
+                    onChange={(e) => setUser({...user!, timezone: e.target.value})}
                     disabled={!isEditing}
                   >
                     <option value="America/Sao_Paulo">{t.brasilia}</option>
@@ -234,13 +211,13 @@ const Profile = () => {
                   </label>
                   <select 
                     className="select select-bordered w-full"
-                    value={userData.language}
-                    onChange={(e) => setUserData(prev => ({...prev, language: e.target.value}))}
+                    value={user?.language}
+                    onChange={(e) => setUser({...user!, language: e.target.value})}
                     disabled={!isEditing}
                   >
-                    <option value="pt-BR">{t.portuguese}</option>
-                    <option value="en-US">{t.english}</option>
-                    <option value="es-ES">{t.spanish}</option>
+                    <option value="pt">{t.portuguese}</option>
+                    <option value="en">{t.english}</option>
+                    <option value="es">{t.spanish}</option>
                   </select>
                 </div>
               </div>
@@ -266,7 +243,7 @@ const Profile = () => {
             </div>
           </div>
 
-          {/* Account Stats */}
+          {/* Account Stats
           <div className="card bg-base-100">
             <div className="card-body">
               <h3 className="text-lg font-bold mb-4">{t.accountStats}</h3>
@@ -289,7 +266,7 @@ const Profile = () => {
                 </div>
               </div>
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
 
@@ -297,7 +274,7 @@ const Profile = () => {
 
       {/* Password Change Modal */}
       {showPasswordForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 bg-opacity-custom">
           <div className="bg-base-100 rounded-2xl w-full max-w-md">
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">

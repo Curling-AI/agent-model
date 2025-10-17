@@ -3,10 +3,11 @@ import { Link } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock, ArrowRight, Hexagon } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useTranslation } from '../translations';
+import { useAuthStore } from '../store/auth';
 
 const Login: React.FC = () => {
-  const { language } = useLanguage();
-  // const t = useTranslation(language);
+  const language = useLanguage();
+  const t = useTranslation(language);
   
   const [formData, setFormData] = useState({
     email: '',
@@ -15,6 +16,7 @@ const Login: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const { login } = useAuthStore();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -22,7 +24,6 @@ const Login: React.FC = () => {
       ...prev,
       [name]: value
     }));
-    // Limpar erro quando o usuário começar a digitar
     if (error) setError('');
   };
 
@@ -32,24 +33,22 @@ const Login: React.FC = () => {
     setError('');
 
     try {
-      // Validação básica
       if (!formData.email || !formData.password) {
         setError('Por favor, preencha todos os campos');
         return;
       }
 
-      // Aqui você implementaria a lógica de autenticação
-      // Por enquanto, apenas simular um delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // Simular erro para demonstração
-      if (formData.email === 'erro@teste.com') {
+      await login(formData.email, formData.password).then((data) => {
+        setIsLoading(false);
+        if (data?.user) {
+          window.location.href = '/dashboard';
+        } else {
+          setError('E-mail ou senha inválidos');
+        }
+      }).catch((_) => {
         setError('E-mail ou senha inválidos');
-        return;
-      }
-
-      // Redirecionar para dashboard em caso de sucesso
-      window.location.href = '/dashboard';
+        setIsLoading(false);
+      });
       
     } catch (err) {
       setError('Erro ao fazer login. Tente novamente.');

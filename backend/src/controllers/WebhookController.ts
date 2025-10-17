@@ -1,7 +1,7 @@
 import { getByFilter, getById, upsert } from '@/services/storage';
 import { Request, Response } from 'express';
-import { AiExecutor } from '@/services/ai-executor';
-import { getMediaContent, sendMessage } from '@/services/uazapi';
+import { AiExecutor } from '@/services/ai/ai-executor';
+import { getMediaContent, sendMedia, sendMessage } from '@/services/uazapi';
 import { sendMessage as sendMessageZapi } from '@/services/zapi';
 import Stripe from 'stripe';
 import { supabase } from '../config/supabaseClient';
@@ -109,12 +109,17 @@ export const WebhookController = {
           message = await AiExecutor.executeAgentText(agent['id'], conversation['lead_id'], webhookContent.message.text);
         }
 
-        await upsert('conversation_messages', { conversation_id: conversation['id'], sender: 'agent', content: message.output, metadata: message, timestamp: new Date() });
-        
-        await sendMessage(phone, message.output, webhookContent.token);
-      }
+        await upsert('conversation_messages', { conversation_id: conversation['id'], sender: 'agent', content: message.outputText, metadata: message, timestamp: new Date() });
 
-      res.status(200).json({ message: 'Webhook processed successfully', conversation });
+        res.status(200).json({ message: 'Webhook processed successfully', conversation });
+
+        if (message.type === 'audio') {
+          await sendMedia(phone, message.output, 'audio', webhookContent.token);
+        } else {
+          await sendMessage(phone, message.outputText, webhookContent.token);
+        }
+
+      }
     } catch (err) {
       console.log(err);
       res.status(500).json({ error: 'Failed to upsert conversation', details: err });

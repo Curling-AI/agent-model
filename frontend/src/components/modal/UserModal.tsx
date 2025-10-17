@@ -23,6 +23,7 @@ const UserModal: React.FC<UserModalProps> = ({ user, departments, permissions, o
     id: 0,
     organizationId: 1,
     name: '',
+    fullname: '',
     surname: '',
     email: '',
     phone: '',
@@ -31,6 +32,7 @@ const UserModal: React.FC<UserModalProps> = ({ user, departments, permissions, o
     status: 'active' as 'active' | 'inactive' | 'suspended',
     password: '',
     confirmPassword: '',
+    authId: '',
     permissions: []
   });
 
@@ -216,17 +218,17 @@ const UserModal: React.FC<UserModalProps> = ({ user, departments, permissions, o
                               <input
                                 type="checkbox"
                                 className="checkbox checkbox-primary checkbox-sm"
-                                checked={formData.permissions.includes(permission.code)}
+                                checked={formData.permissions?.includes(permission.code)}
                                 onChange={(e) => {
                                   if (e.target.checked) {
                                     setFormData({
                                       ...formData,
-                                      permissions: [...formData.permissions, permission.code]
+                                      permissions: [...formData.permissions || [], permission.code]
                                     });
                                   } else {
                                     setFormData({
                                       ...formData,
-                                      permissions: user!.permissions.filter(code => code !== permission.code)
+                                      permissions: user?.permissions?.filter(code => code !== permission.code)
                                     });
                                   }
                                 }}

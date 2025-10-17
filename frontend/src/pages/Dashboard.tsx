@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Users,
   Target,
@@ -19,6 +19,7 @@ import {
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { useLanguage } from '@/context/LanguageContext';
 import { useTranslation } from '@/translations';
+import { useAuthStore } from '@/store/auth';
 
 type AgentId = 'all' | 'sales' | 'technical' | 'marketing' | 'financial';
 
