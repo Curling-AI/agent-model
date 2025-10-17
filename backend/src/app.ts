@@ -6,6 +6,11 @@ const app: Express = express();
 
 // Middleware
 app.use(cors());
+
+// Middleware especial para webhook do Stripe (precisa de raw body)
+app.use('/api/v1/webhook/stripe', express.raw({ type: 'application/json' }));
+
+// Middleware padrão para outras rotas
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

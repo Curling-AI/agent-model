@@ -6,5 +6,6 @@ const router = Router();
 router.post('/meta', WebhookController.upsertMeta);
 router.post('/zapi', WebhookController.upsertZapi);
 router.post('/uazapi', WebhookController.upsertUazapi);
+router.post('/stripe', WebhookController.handleStripeWebhook);
 
 export default router;
