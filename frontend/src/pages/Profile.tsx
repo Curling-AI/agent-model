@@ -44,11 +44,31 @@ const Profile = () => {
   });
 
   const handleSaveProfile = async () => {
-    await upsertUser(user!)
-    // Mostrar toast de sucesso
+    if (user?.fullname.trim() === '' 
+      || user?.email.trim() === '' 
+      || !user?.jobId
+      || !user?.language
+      || !user?.timezone
+      || user?.phone.trim() === ''
+    ) {
+      alert(t.fillAllFields);
+      return;
+    }
+
+    user!.name = user!.fullname.split(' ')[0];
+    user!.surname = user!.fullname.split(' ').slice(1).join(' ');
+    
+    await upsertUser(user!);
+    setIsEditing(false);
   };
 
   const handleChangePassword = async () => {
+
+    if (passwordData.newPassword.length < 8) {
+      alert(t.passwordTooShort);
+      return;
+    }
+
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       alert(t.passwordsDontMatch);
       return;
@@ -113,7 +133,7 @@ const Profile = () => {
               <div className="flex items-center space-x-4 mb-6">
                 <div className="relative">
                   <div className="w-20 h-20 bg-primary rounded-full flex items-center justify-center text-primary-content text-2xl font-bold">
-                    {user?.fullname}
+                    {user?.name.charAt(0).toUpperCase()}
                   </div>
                   {isEditing && (
                     <button className="absolute -bottom-1 -right-1 btn btn-circle btn-xs btn-primary">
@@ -122,11 +142,10 @@ const Profile = () => {
                   )}
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold">{user?.name}</h3>
-                  <p className="text-neutral">{user?.jobId} • {user?.organizationId}</p>
+                  <h3 className="text-xl font-bold">{user?.name!.toLocaleLowerCase().charAt(0).toUpperCase() + user?.name.toLocaleLowerCase().slice(1)!}</h3>
                   <div className="flex items-center space-x-1 text-sm text-neutral mt-1">
                     <Calendar className="w-4 h-4" />
-                    {/* <span>{t.memberSince} {new Date(user?.createdAt).toLocaleDateString(language.language === 'pt' ? 'pt-BR' : 'en-US')}</span> */}
+                    <span>{t.memberSince} {new Date(user?.createdAt!).toLocaleDateString(language.language === 'pt' ? 'pt-BR' : 'en-US')}</span>
                   </div>
                 </div>
               </div>
@@ -140,8 +159,8 @@ const Profile = () => {
                   <input 
                     type="text" 
                     className="input input-bordered w-full"
-                    value={user?.name}
-                    onChange={(e) => setUser({...user!, name: e.target.value})}
+                    value={user?.fullname}
+                    onChange={(e) => setUser({...user!, fullname: e.target.value})}
                     disabled={!isEditing}
                   />
                 </div>
@@ -167,7 +186,7 @@ const Profile = () => {
                     type="tel" 
                     className="input input-bordered w-full"
                     value={user?.phone}
-                    onChange={(e) => setUser({...user!, phone: e.target.value})}
+                    onChange={(e) => setUser({...user!, phone: e.target.value.replace(/\D/g, '').slice(0, 11)})}
                     disabled={!isEditing}
                   />
                 </div>
@@ -177,10 +196,11 @@ const Profile = () => {
                     <span className="label-text font-medium">{t.position}</span>
                   </label>
                   <select
-                    className="select select-bordered"
+                    className="select input-bordered w-full"
                     value={user?.jobId}
                     onChange={(e) => setUser({...user!, jobId: Number(e.target.value)})}
                     required
+                    disabled={!isEditing}
                   >
                     {jobs.map(job => (
                       <option key={job.id} value={job.id}>{job.title}</option>

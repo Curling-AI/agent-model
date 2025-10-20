@@ -86,7 +86,7 @@ const Header: React.FC<{ onToggleSidebar: () => void; isMobile: boolean; mobileM
           {/* User Menu */}
           <div className="dropdown dropdown-end">
             <button tabIndex={0} className="w-10 h-10 rounded-full bg-gradient-to-br from-primary via-primary/90 to-primary/70 text-primary-content flex items-center justify-center hover:bg-primary-focus transition-colors shadow-md">
-              <span className="text-sm font-semibold drop-shadow-sm">L</span>
+              <span className="text-sm font-semibold drop-shadow-sm">{user?.name.charAt(0).toUpperCase()}</span>
             </button>
             <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 bg-base-100 rounded-box w-52">
               <li className="menu-title">
