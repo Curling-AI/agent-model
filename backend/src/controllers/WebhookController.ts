@@ -3,6 +3,12 @@ import { Request, Response } from 'express';
 import { AiExecutor } from '@/services/ai/ai-executor';
 import { getMediaContent, sendMedia, sendMessage } from '@/services/uazapi';
 import { sendMessage as sendMessageZapi } from '@/services/zapi';
+import Stripe from 'stripe';
+import { StripeService } from '../services/stripe';
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: '2025-09-30.clover',
+});
 
 
 export const WebhookController = {
@@ -119,5 +125,68 @@ export const WebhookController = {
       res.status(500).json({ error: 'Failed to upsert conversation', details: err });
     }
   },
-  
+
+  handleStripeWebhook: async (req: Request, res: Response) => {
+    const sig = req.headers['stripe-signature'] as string;
+    let event: Stripe.Event;
+
+    try {
+      if (process.env.STRIPE_WEBHOOK_SECRET) {
+        event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+      } else {
+        console.warn('STRIPE_WEBHOOK_SECRET não configurado - processando evento sem verificação');
+        event = JSON.parse(req.body.toString());
+      }
+
+      switch (event.type) {
+        case 'checkout.session.completed':
+          await StripeService.handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session);
+          break;
+        
+        case 'customer.subscription.created':
+          await StripeService.handleSubscriptionCreated(event.data.object as Stripe.Subscription);
+          break;
+          
+        case 'customer.subscription.updated':
+          await StripeService.handleSubscriptionUpdated(event.data.object as Stripe.Subscription);
+          break;
+          
+        case 'invoice.payment_succeeded':
+          await StripeService.handleInvoicePaid(event.data.object as Stripe.Invoice);
+          break;
+          
+        case 'customer.subscription.deleted':
+          await StripeService.handleSubscriptionCanceled(event.data.object as Stripe.Subscription);
+          break;
+          
+        case 'checkout.session.async_payment_failed':
+          await StripeService.handleCheckoutFailed(event.data.object as Stripe.Checkout.Session);
+          break;
+          
+        case 'checkout.session.expired':
+          await StripeService.handleCheckoutExpired(event.data.object as Stripe.Checkout.Session);
+          break;
+          
+        default:
+          break;
+      }
+
+      res.json({ success: true, message: 'Webhook processado com sucesso' });
+
+    } catch (error) {
+      console.error('Erro ao processar webhook:', error);
+      
+      if (error instanceof Stripe.errors.StripeSignatureVerificationError) {
+        return res.status(400).json({
+          success: false,
+          error: 'Assinatura do webhook inválida'
+        });
+      }
+      
+      res.status(500).json({
+        success: false,
+        error: 'Erro interno ao processar webhook'
+      });
+    }
+  },
 }
