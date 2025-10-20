@@ -37,8 +37,8 @@ export async function processMediaFromUrlLangchainGemini(
 
     return response.content.toString();
   } catch (error) {
-    console.error("Erro no processamento de áudio:", error);
-    throw new Error(`Falha ao processar o áudio com Gemini: ${(error as Error).message}`);
+    console.error("Erro no processamento de mídia:", error);
+    throw new Error(`Falha ao processar a mídia com Gemini: ${(error as Error).message}`);
   }
 }
 

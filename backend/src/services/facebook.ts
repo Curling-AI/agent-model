@@ -1,5 +1,6 @@
 
-import { getByFilter } from "./storage";
+import { fileToBase64, getExtensionFromMimeType, saveRemoteFile } from "@/utils";
+import fs from 'fs/promises';
 
 export const sendMessage = async (to: string, message: string, token: string) => {
   try {
@@ -57,11 +58,10 @@ export const sendMedia = async (to: string, media: string, type: string, token: 
   }
 };
 
-export const getMetaMediaContent = async (mediaBodyContent: string, token: string): Promise<string> => {
-  console.log('Getting media content for media ID:', mediaBodyContent);
-  const mediaId = mediaBodyContent;
-  console.log('Using media ID:', token);
-  const response = await fetch(`${process.env.FACEBOOK_API_URL}/${process.env.FACEBOOK_GRAPH_API_VERSION}/${mediaId}`, {
+export const getMetaMediaContent = async (mediaBodyContent: any, token: string): Promise<any> => {
+  const mediaId = mediaBodyContent.image.id;
+  
+  const response = await fetch(`${process.env.FACEBOOK_URL}/${process.env.FACEBOOK_GRAPH_API_VERSION}/${mediaId}`, {
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`
@@ -73,5 +73,19 @@ export const getMetaMediaContent = async (mediaBodyContent: string, token: strin
     throw new Error('Error getting content');
   }
 
-  return data;
+  const filePath = await saveRemoteFile(
+    data.url, 
+    './uploads', `media_${mediaId}.${getExtensionFromMimeType(mediaBodyContent.image.mime_type)}`,
+    token
+  );
+
+  const base64String = await fileToBase64(filePath);
+
+  await fs.unlink(filePath)
+
+  return {
+    base64Data: base64String,
+    mimetype: data.mime_type,
+    fileUrl: data.url
+  };
 }

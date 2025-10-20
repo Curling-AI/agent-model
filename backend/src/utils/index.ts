@@ -4,11 +4,13 @@ import wav from 'wav';
 import ffmpeg from 'fluent-ffmpeg';
 import ffmpegStatic from 'ffmpeg-static';
 import fss from 'fs/promises';
+import { Readable } from 'stream';
 
 export async function saveRemoteFile(
   fileUrl: string,
   destinationFolder: string,
-  fileName: string
+  fileName: string, 
+  token?: string
 ): Promise<string> {
   const filePath = path.join(destinationFolder, fileName);
 
@@ -19,6 +21,7 @@ export async function saveRemoteFile(
 
     const response = await fetch(fileUrl, {
       method: 'GET',
+      headers: token ? { 'Authorization': `Bearer ${token}` } : {}
     });
 
     if (!response.ok || !response.body) {
@@ -27,9 +30,13 @@ export async function saveRemoteFile(
 
     const writer = fs.createWriteStream(filePath);
 
+     // Corrigido: converte ReadableStream web para Node.js Readable
+    // @ts-ignore
+    const nodeStream = response.body.pipe ? response.body : Readable.fromWeb(response.body);
+
     await new Promise<void>((resolve, reject) => {
       // @ts-ignore: O response.body é um ReadableStream
-      response.body.pipe(writer); 
+      nodeStream.pipe(writer);
 
       writer.on('finish', () => resolve());
       writer.on('error', (err) => {
@@ -100,4 +107,40 @@ export function fileToBase64(filePath: string): Promise<string> {
     const base64Content = content.toString('base64');
     resolve(base64Content);
   });
+}
+
+/**
+ * Retorna a extensão do arquivo a partir do seu mime type.
+ * Exemplo: "audio/mpeg" => "mp3"
+ */
+export function getExtensionFromMimeType(mimeType: string): string | undefined {
+  const mimeMap: { [key: string]: string } = {
+    'audio/mpeg': 'mp3',
+    'audio/wav': 'wav',
+    'audio/x-wav': 'wav',
+    'audio/webm': 'webm',
+    'audio/ogg': 'ogg',
+    'audio/amr': 'amr',
+    'audio/mp4': 'mp4',
+    'audio/aac': 'aac',
+    'audio/flac': 'flac',
+    'audio/3gpp': '3gp',
+    'audio/opus': 'opus',
+    'video/mp4': 'mp4',
+    'video/quicktime': 'mov',
+    'video/x-msvideo': 'avi',
+    'video/x-matroska': 'mkv',
+    'video/webm': 'webm',
+    'image/jpeg': 'jpg',
+    'image/png': 'png',
+    'image/gif': 'gif',
+    'image/webp': 'webp',
+    'application/pdf': 'pdf',
+    'application/zip': 'zip',
+    'application/msword': 'doc',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
+    // Adicione outros conforme necessário
+  };
+
+  return mimeMap[mimeType];
 }
