@@ -48,7 +48,7 @@ const Conversations = () => {
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const mobileMessagesContainerRef = useRef<HTMLDivElement>(null)
 
-  const { conversations, isLoading, listConversations, subscribeToUpdates, unsubscribeFromUpdates, channel, sendMessage: sendMessageStore } = useConversationStore()
+  const { conversations, isLoading, listConversations, subscribeToUpdates, unsubscribeFromUpdates, channel, sendMessage: sendMessageStore, changeConversationMode } = useConversationStore()
   const [unread, setUnread] = useState<{ [key: number]: number }>({})
   const { organization } = useOrganizationStore()
   const organizationId = organization.id
@@ -59,8 +59,21 @@ const Conversations = () => {
   useEffect(() => {
     fetchCrmColumns()
   }, [fetchCrmColumns])
+
   useEffect(() => {
     listConversations(organizationId).then((conversations) => {
+      conversations.forEach((conversation) => {
+        if (conversation.mode !== 'agent') {
+          const lastHumanMessage = [...conversation.messages].reverse().findIndex((message: ConversationMessage) => message.sender === 'human')
+          const lastMemberMessage = [...conversation.messages].reverse().findIndex((message: ConversationMessage) => ['member', 'agent'].includes(message.sender))
+          if (lastMemberMessage > lastHumanMessage) {
+            setUnread((prev) => ({
+              ...prev,
+              [conversation.id]: lastMemberMessage,
+            }))
+          }
+        }
+      })
       subscribeToUpdates(conversations, (payload: any) => {
         // Atualizar contador de mensagens não lidas
         if (payload.new.conversation_id !== selectedConversation?.id) {
@@ -262,6 +275,14 @@ const Conversations = () => {
       }))
     }
     setSelectedConversation(conversation)
+  }
+
+  const handleSwitchConversationMode = async (conversation: Conversation) => {
+    const newMode = conversation.mode === 'agent' ? 'human' : 'agent'
+    await changeConversationMode(conversation.id, newMode)
+    if (selectedConversation) {
+      setSelectedConversation(prev => prev?.id === conversation.id ? { ...prev, mode: newMode } : prev)
+    }
   }
 
   // Effect para scroll automático quando uma conversa é selecionada
@@ -753,10 +774,12 @@ const Conversations = () => {
 
                 <div className="mt-3 flex items-center justify-between">
                   <div className="text-neutral flex items-center space-x-4 text-xs">
-                    <div className="flex items-center space-x-1">
-                      <Zap className="h-4 w-4" />
-                      <span>{t.agentActive}</span>
-                    </div>
+                    {selectedConversation?.mode === 'agent' && (
+                      <div className="flex items-center space-x-1">
+                        <Zap className="h-4 w-4" />
+                        <span>{t.agentActive}</span>
+                      </div>
+                    )}
                     <button
                       onClick={() => setQuickReplies(!quickReplies)}
                       className="btn btn-ghost btn-xs"
@@ -765,9 +788,9 @@ const Conversations = () => {
                       {t.quickReplies}
                     </button>
                   </div>
-                  <button className="btn btn-outline btn-xs text-accent">
+                  <button className="btn btn-outline btn-xs text-accent" onClick={() => handleSwitchConversationMode(selectedConversation as Conversation)}>
                     <AlertCircle className="mr-1 h-3 w-3" />
-                    {t.assumeConversation}
+                    {selectedConversation?.mode === 'agent' ? t.assumeConversation : t.switchToAgent}
                   </button>
                 </div>
               </div>

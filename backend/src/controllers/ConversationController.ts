@@ -1,4 +1,4 @@
-import { getByFilter, getById, remove, upsert } from '@/services/storage';
+import { getByFilter, getById, remove, upsert, update } from '@/services/storage';
 
 import { Request, Response } from 'express';
 
@@ -89,4 +89,22 @@ export const ConversationController = {
       return res.status(500).json({ error: 'Error processing messages' });
     }
   },
+
+  changeConversationMode: async (req: Request, res: Response) => {
+    const conversationId = Number(req.params.id);
+    const mode = req.body.mode as 'agent' | 'human';
+    if (!mode || !conversationId || !['agent', 'human'].includes(mode)) {
+      res.status(400).json({ error: 'mode required and must be agent or human' })
+    }
+    try {
+      const conversation = await getById('conversations', conversationId);
+      if (!conversation) {
+        return res.status(404).json({ error: 'Conversation not found' });
+      }
+      await update('conversations', conversationId, { mode });
+      return res.status(200).json({ message: 'Conversation mode changed successfully' });
+    } catch (error) {
+      return res.status(500).json({ error: 'Error changing conversation mode' });
+    }
+  }
 }

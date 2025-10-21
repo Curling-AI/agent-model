@@ -17,6 +17,7 @@ interface ConversationState {
   subscribeToUpdates: (conversations: Conversation[], listener?: (payload: any) => void) => RealtimeChannel
   unsubscribeFromUpdates: (channel: RealtimeChannel) => void
   sendMessage: (agentId: number, userId: number, message: string, to: string, conversationId: number) => Promise<string | undefined>
+  changeConversationMode: (conversationId: number, mode: 'agent' | 'human') => Promise<void>
 }
 
 export const useConversationStore = create<ConversationState>((set) => ({
@@ -123,5 +124,19 @@ export const useConversationStore = create<ConversationState>((set) => ({
     if (!res.ok) return
     const msg = await res.json()
     return msg
+  },
+
+  changeConversationMode: async (conversationId: number, mode: 'agent' | 'human') => {
+    const res = await fetch(`${BASE_URL}/conversations/${conversationId}/mode`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode }),
+    })
+    if (!res.ok) throw new Error('Failed to change conversation mode')
+    const data = await res.json()
+    set((state) => ({
+      conversations: state.conversations.map((c) => c.id === conversationId ? { ...c, mode } : c),
+    }))
+    return data
   },
 }))
