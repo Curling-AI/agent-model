@@ -1,29 +1,42 @@
 import { Conversation } from '@/types/conversation'
 import { create } from 'zustand'
 import { BASE_URL } from '@/utils/constants'
+import { supabase } from '@/config/supabaseClient'
+import { RealtimeChannel } from '@supabase/supabase-js'
 
 interface ConversationState {
   conversations: Conversation[]
   currentConversationId: number | null
+  channel: RealtimeChannel | null
+  isLoading: boolean
   listConversations: (organizationId: number) => Promise<Conversation[]>
   createConversation: (name: string) => Promise<Conversation | null>
   deleteConversation: (id: number) => Promise<void>
   sendMessage: (agentId: number, userId: number, message: string) => Promise<string | undefined>
   setCurrentConversation: (id: number) => void
+  subscribeToUpdates: (conversations: Conversation[], listener?: (payload: any) => void) => RealtimeChannel
+  unsubscribeFromUpdates: (channel: RealtimeChannel) => void
 }
 
 export const useConversationStore = create<ConversationState>((set) => ({
   conversations: [],
   currentConversationId: null,
-
+  channel: null,
+  isLoading: false,
   listConversations: async (organizationId: number) => {
-    const url = new URL(`${BASE_URL}/conversations`)
-    url.searchParams.set('organizationId', organizationId.toString())
-    const res = await fetch(url.toString())
-    const data = await res.json()
-    if (!res.ok) return []
-    set({ conversations: data })
-    return data
+    set({ isLoading: true })
+    try {
+      const url = new URL(`${BASE_URL}/conversations`)
+      url.searchParams.set('organizationId', organizationId.toString())
+      const res = await fetch(url.toString())
+      const data = await res.json()
+      if (!res.ok) return []
+      set({ conversations: data, isLoading: false })
+      return data
+    } catch (error) {
+      set({ isLoading: false })
+      return []
+    }
   },
 
   createConversation: async (name: string) => {
@@ -63,5 +76,39 @@ export const useConversationStore = create<ConversationState>((set) => ({
 
   setCurrentConversation: (id: number) => {
     set(() => ({ currentConversationId: id }))
+  },
+
+  subscribeToUpdates: (conversations: Conversation[], listener: (payload: any) => void = () => {}) => {
+    const channel = supabase.channel('conversations')
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'conversation_messages', filter: `conversation_id=in.(${Array.from(new Set(conversations.map((c) => c.id))).join(',')})` }, (payload: any) => {
+      set((state) => ({
+        conversations: state.conversations.map((c) => {
+          if (c.id === payload.new.conversation_id) {
+            // Verificar se a mensagem já existe para evitar duplicatas
+            const messageExists = c.messages.some(m => m.id === payload.new.id)
+            if (!messageExists) {
+              return {
+                ...c, 
+                messages: [...c.messages, {
+                  ...payload.new,
+                  timestamp: new Date(payload.new.timestamp)
+                }]
+              }
+            }
+          }
+          return c
+        }),
+      }));
+      listener(payload);
+    }).subscribe();
+    set({ channel: channel });
+    return channel;
+  },
+
+  unsubscribeFromUpdates: (channel: RealtimeChannel) => {
+    if (channel) {
+      channel.unsubscribe();
+      set({ channel: null });
+    }
   },
 }))

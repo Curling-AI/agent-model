@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
   Search,
   MoreVertical,
@@ -20,6 +20,7 @@ import {
 import { useLanguage } from '../context/LanguageContext'
 import { useTranslation } from '../translations'
 import ConversationStats from '@/components/conversations/ConversationStats'
+import ConversationSkeleton from '@/components/conversations/ConversationSkeleton'
 import { Conversation, ConversationMessage } from '@/types/conversation'
 import { useConversationStore } from '@/store/conversation'
 import { useOrganizationStore } from '@/store/organization'
@@ -40,8 +41,13 @@ const Conversations = () => {
 
   const [channelFilter, setChannelFilter] = useState('all')
   const [showStats, setShowStats] = useState(false)
+  
+  // Refs para scroll automático
+  const messagesContainerRef = useRef<HTMLDivElement>(null)
+  const mobileMessagesContainerRef = useRef<HTMLDivElement>(null)
 
-  const { conversations, listConversations } = useConversationStore()
+  const { conversations, isLoading, listConversations, subscribeToUpdates, unsubscribeFromUpdates, channel } = useConversationStore()
+  const [unread, setUnread] = useState<{ [key: number]: number }>({})
   const { organization } = useOrganizationStore()
   const organizationId = organization.id
   const { fetchCrmColumns, crmColumns } = useCrmColumnStore()
@@ -49,8 +55,46 @@ const Conversations = () => {
     fetchCrmColumns()
   }, [fetchCrmColumns])
   useEffect(() => {
-    listConversations(organizationId)
-  }, [listConversations, organizationId])
+    listConversations(organizationId).then((conversations) => {
+      subscribeToUpdates(conversations, (payload: any) => {
+        // Atualizar contador de mensagens não lidas
+        setUnread((prev) => ({
+          ...prev,
+          [payload.new.conversation_id]: (prev[payload.new.conversation_id] || 0) + 1,
+        }))
+      })
+    })
+  }, [listConversations, organizationId, subscribeToUpdates])
+
+  // Effect para cleanup quando o componente for desmontado
+  useEffect(() => {
+    return () => {
+      if (channel) {
+        unsubscribeFromUpdates(channel)
+      }
+    }
+  }, [channel, unsubscribeFromUpdates])
+
+  // Effect para sincronizar a conversa selecionada com as atualizações do store
+  useEffect(() => {
+    if (selectedConversation) {
+      const updatedConversation = conversations.find(c => c.id === selectedConversation.id)
+      if (updatedConversation) {
+        // Verificar se há novas mensagens comparando o número de mensagens primeiro (mais eficiente)
+        if (updatedConversation.messages.length !== selectedConversation.messages.length) {
+          setSelectedConversation(updatedConversation)
+        } else {
+          // Se o número é igual, verificar se há mensagens diferentes pelos IDs
+          const currentMessageIds = selectedConversation.messages.map(m => m.id).sort()
+          const updatedMessageIds = updatedConversation.messages.map(m => m.id).sort()
+          
+          if (JSON.stringify(currentMessageIds) !== JSON.stringify(updatedMessageIds)) {
+            setSelectedConversation(updatedConversation)
+          }
+        }
+      }
+    }
+  }, [conversations, selectedConversation])
 
   // Respostas rápidas
   const quickReplyOptions = [
@@ -72,7 +116,7 @@ const Conversations = () => {
     const searchMatch =
       searchTerm === '' ||
       conv.lead.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      conv.messages[0].content.toLowerCase().includes(searchTerm.toLowerCase())
+      conv.messages[conv.messages.length - 1].content.toLowerCase().includes(searchTerm.toLowerCase())
 
     return statusMatch && channelMatch && searchMatch
   })
@@ -90,7 +134,7 @@ const Conversations = () => {
     }
   }
 
-  const sendQuickReply = (message: string) => {
+  const sendQuickReply = () => {
     // setNewMessage({ ...newMessage, content: message });
     setQuickReplies(false)
   }
@@ -172,12 +216,60 @@ const Conversations = () => {
   const getProfileImage = (conversation: Conversation) => {
     if (conversation.lead.source === 'whatsapp') {
       return (
-        conversation.messages.find((message) => message.sender === 'human')?.metadata.chat
-          .imagePreview ?? ''
+        conversation.messages.find((message) => message.sender === 'human')?.metadata?.chat?.imagePreview ?? ''
       )
     }
     return ''
   }
+
+  // Função para fazer scroll automático para o final
+  const scrollToBottom = () => {
+    setTimeout(() => {
+      if (messagesContainerRef.current) {
+        messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight
+      }
+      if (mobileMessagesContainerRef.current) {
+        mobileMessagesContainerRef.current.scrollTop = mobileMessagesContainerRef.current.scrollHeight
+      }
+    }, 100)
+  }
+
+  const handleSelectConversation = (conversation: Conversation) => {
+    if (selectedConversation) {
+      setUnread((prev) => ({
+        ...prev,
+        [conversation.id]: 0,
+        [selectedConversation.id]: 0,
+      }))
+    } else {
+      setUnread((prev) => ({
+        ...prev,
+        [conversation.id]: 0,
+      }))
+    }
+    setSelectedConversation(conversation)
+  }
+
+  // Effect para scroll automático quando uma conversa é selecionada
+  useEffect(() => {
+    if (selectedConversation) {
+      scrollToBottom()
+    }
+  }, [selectedConversation])
+
+  // Effect para scroll automático quando novas mensagens chegam
+  useEffect(() => {
+    if (selectedConversation && !isTyping) {
+      scrollToBottom()
+    }
+  }, [selectedConversation?.messages, isTyping])
+
+  // Effect adicional para scroll quando a conversa selecionada é atualizada
+  useEffect(() => {
+    if (selectedConversation) {
+      scrollToBottom()
+    }
+  }, [selectedConversation])
 
   return (
     <div className="bg-base-100 flex h-[calc(100vh-8rem)] flex-col">
@@ -196,7 +288,13 @@ const Conversations = () => {
             <div className="mb-4 flex flex-col justify-between space-y-2 md:flex-row md:items-center md:space-y-0">
               <div className="flex items-center space-x-2">
                 <h2 className="mobile-text-lg font-bold md:text-xl">{t.conversationsTitle}</h2>
-                <div className="badge badge-primary badge-sm">{filteredConversations.length}</div>
+                {isLoading ? (
+                  <div className="badge badge-neutral badge-sm">
+                    <RefreshCw className="h-3 w-3 animate-spin" />
+                  </div>
+                ) : (
+                  <div className="badge badge-primary badge-sm">{filteredConversations.length}</div>
+                )}
               </div>
               <div className="flex items-center space-x-2">
                 <button
@@ -225,6 +323,7 @@ const Conversations = () => {
                   <select
                     value={filter}
                     onChange={(e) => setFilter(e.target.value)}
+                    disabled={isLoading}
                     className="select select-bordered select-sm flex-1"
                   >
                     <option key="all" value="all">
@@ -240,6 +339,7 @@ const Conversations = () => {
                 <select
                   value={channelFilter}
                   onChange={(e) => setChannelFilter(e.target.value)}
+                  disabled={isLoading}
                   className="select select-bordered select-sm w-full"
                 >
                   <option value="all">{t.allChannels}</option>
@@ -254,7 +354,8 @@ const Conversations = () => {
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder={t.searchConversations}
+                placeholder={isLoading ? t.loading : t.searchConversations}
+                disabled={isLoading}
                 className="input input-bordered input-sm w-full pl-10"
               />
               {searchTerm && (
@@ -270,7 +371,14 @@ const Conversations = () => {
 
           {/* Lista de Conversas */}
           <div className="scrollbar-thin scrollbar-thumb-base-300 scrollbar-track-base-100 flex-1 overflow-x-hidden overflow-y-auto">
-            {filteredConversations.length === 0 ? (
+            {isLoading ? (
+              // Skeleton loading state
+              <div className="space-y-0">
+                {Array.from({ length: 5 }).map((_, index) => (
+                  <ConversationSkeleton key={index} />
+                ))}
+              </div>
+            ) : filteredConversations.length === 0 ? (
               <div className="flex h-full items-center justify-center">
                 <div className="text-center">
                   <MessageSquare className="text-neutral mx-auto mb-2 h-12 w-12" />
@@ -281,7 +389,7 @@ const Conversations = () => {
               filteredConversations.map((conversation) => (
                 <div
                   key={conversation.id}
-                  onClick={() => setSelectedConversation(conversation as Conversation)}
+                  onClick={() => handleSelectConversation(conversation as Conversation)}
                   className={`conversation-card border-base-300 hover:bg-base-200 cursor-pointer border-b p-4 ${
                     selectedConversation?.id === conversation.id
                       ? 'bg-primary/10 border-primary shadow-sm'
@@ -348,7 +456,8 @@ const Conversations = () => {
                             {getStatusText(conversation.mode)}
                           </span>
                           <span
-                            className={`badge badge-xs badge-primary py-2 bg-[${crmColumns.find((column) => column.id === conversation.lead.status)?.color}]`}
+                            className={`badge badge-xs py-2`}
+                            style={{ backgroundColor: crmColumns.find((column) => column.id === conversation.lead.status)?.color }}
                           >
                             {getColumnName(conversation.lead.status)}
                           </span>
@@ -363,6 +472,11 @@ const Conversations = () => {
                         </div>
 
                         <div className="flex items-center space-x-1">
+                          {unread[conversation.id] > 0 && (
+                            <span className="badge badge-xs badge-primary py-2 bg-primary text-primary-content">
+                              {unread[conversation.id]}
+                            </span>
+                          )}
                           {getChannelIcon(conversation.lead.source)}
                         </div>
                       </div>
@@ -389,18 +503,8 @@ const Conversations = () => {
                   <div className="flex items-center space-x-3">
                     <div className="relative">
                       <div className="mobile-avatar bg-primary text-primary-content flex items-center justify-center overflow-hidden rounded-full font-semibold">
-                        {selectedConversation.lead.source === 'whatsapp' &&
-                        selectedConversation.messages.find((message) => message.sender === 'human')
-                          ?.metadata.chat.imagePreview ? (
-                          <img
-                            src={
-                              selectedConversation.messages.find(
-                                (message) => message.sender === 'human',
-                              )?.metadata.chat.imagePreview
-                            }
-                            alt="Whatsapp"
-                            className="h-12 w-12 object-cover"
-                          />
+                        {getProfileImage(selectedConversation) ? (
+                          <img src={getProfileImage(selectedConversation)} alt="Whatsapp" className="h-12 w-12 object-cover" />
                         ) : (
                           selectedConversation.lead.name
                             .split(' ')
@@ -475,7 +579,10 @@ const Conversations = () => {
               </div>
 
               {/* Mensagens */}
-              <div className="bg-base-200 scrollbar-thin scrollbar-thumb-base-300 scrollbar-track-base-200 flex-1 overflow-y-auto p-4">
+              <div 
+                ref={messagesContainerRef}
+                className="bg-base-200 scrollbar-thin scrollbar-thumb-base-300 scrollbar-track-base-200 flex-1 overflow-y-auto p-4"
+              >
                 <div className="space-y-4">
                   {selectedConversation.messages?.map((message) => (
                     <div
@@ -546,7 +653,7 @@ const Conversations = () => {
                       {quickReplyOptions.map((reply, index) => (
                         <button
                           key={index}
-                          onClick={() => sendQuickReply(reply)}
+                          onClick={() => sendQuickReply()}
                           className="btn btn-outline btn-xs"
                         >
                           {reply}
@@ -639,18 +746,8 @@ const Conversations = () => {
                 </button>
                 <div className="relative">
                   <div className="bg-primary text-primary-content flex h-10 w-10 items-center justify-center overflow-hidden rounded-full font-semibold">
-                    {selectedConversation.lead.source === 'whatsapp' &&
-                    selectedConversation.messages.find((message) => message.sender === 'human')
-                      ?.metadata.chat.imagePreview ? (
-                      <img
-                        src={
-                          selectedConversation.messages.find(
-                            (message) => message.sender === 'human',
-                          )?.metadata.chat.imagePreview
-                        }
-                        alt="Whatsapp"
-                        className="h-12 w-12 object-cover"
-                      />
+                    {getProfileImage(selectedConversation) ? (
+                      <img src={getProfileImage(selectedConversation)} alt="Whatsapp" className="h-12 w-12 object-cover" />
                     ) : (
                       selectedConversation.lead.name
                         .split(' ')
@@ -694,7 +791,10 @@ const Conversations = () => {
           </div>
 
           {/* Mensagens Mobile */}
-          <div className="flex-1 space-y-4 overflow-y-auto p-4">
+          <div 
+            ref={mobileMessagesContainerRef}
+            className="flex-1 space-y-4 overflow-y-auto p-4"
+          >
             {selectedConversation.messages?.map((message) => (
               <div
                 key={message.id}
