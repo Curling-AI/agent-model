@@ -18,7 +18,7 @@ import { useTranslation } from '../translations';
 import { usePlansStore } from '../store/plansStore';
 import { useAuthStore } from '../store/auth';
 
-type PlanForCheckout = { price_id: string; plan_id?: number };
+type PlanForCheckout = { price_id: string; plan_id?: number; mode?: 'subscription' | 'payment' };
 
 const Plans = () => {
   const language  = useLanguage();
@@ -64,13 +64,14 @@ const Plans = () => {
       const email = user?.email as string | undefined;
       const checkoutData = {
         price_id: plan.price_id,
+        mode: plan.mode || 'subscription',
         user_id: numericUserId,
         plan_id: plan.plan_id,
         customer_email: email,
         success_url: `${window.location.origin}/plans?success=true`,
         cancel_url: `${window.location.origin}/plans?canceled=true`
       };
-      
+
       const sessionUrl = await createCheckoutSession(checkoutData);
       
       if (sessionUrl?.checkout_url) {
@@ -122,7 +123,7 @@ const Plans = () => {
   };
 
   const plans = (products || [])
-    .filter((p) => p.active)
+    .filter((p) => p.active && p.metadata?.is_loose === "False")
     .map((product, index) => {
       const iconMap = [Zap, Star, Crown];
       const colorMap = ['text-accent', 'text-primary', 'text-primary'];
@@ -177,12 +178,32 @@ const Plans = () => {
       return toKey(a.name) - toKey(b.name);
     });
 
-  const creditOptions = [
-    { credits: 1000, price: 29, bonus: 0 },
-    { credits: 2500, price: 69, bonus: 100 },
-    { credits: 5000, price: 129, bonus: 250 },
-    { credits: 10000, price: 249, bonus: 750 }
-  ];
+  const creditProducts = (products || [])
+    .filter((p) => p.active && p.metadata?.is_loose === "True")
+    .map((product) => {
+      const defaultPriceObj = typeof product.default_price === 'object' ? product.default_price : undefined;
+      const productPrices = (product as any).prices ?? [];
+      const allPrices = Array.isArray(productPrices) ? productPrices : [];
+      const chosenPrice = defaultPriceObj ?? (allPrices.length > 0 ? allPrices[0] : null);
+      const unitAmount = chosenPrice && typeof chosenPrice.unit_amount === 'number' ? chosenPrice.unit_amount : 0;
+      const priceAmount = unitAmount / 100;
+      const priceId = chosenPrice && chosenPrice.id ? String(chosenPrice.id) : 
+                     (typeof product.default_price === 'string' ? product.default_price : '');
+      
+      return {
+        id: product.id,
+        name: product.name,
+        description: product.description ?? '',
+        credits: parseInt(product.name) || 0,
+        price: priceAmount,
+        price_id: priceId,
+        bonus: 0,
+      };
+    })
+    .sort((a, b) => a.credits - b.credits);
+
+  // Use only dynamic products from Stripe for credits
+  const creditOptions = creditProducts;
 
   const formatPrice = (price: number, currency: string = 'BRL') => {
     return new Intl.NumberFormat(language.language === 'pt' ? 'pt-BR' : 'en-US', {
@@ -598,11 +619,14 @@ const Plans = () => {
           </div>
           
           <div className="grid md:grid-cols-4 gap-6">
-            {creditOptions.map((option, index) => {
-  
-              
-              return (
-                <div key={index} className="card border-2 border-base-300 hover:border-primary hover:shadow-lg transition-all duration-300 flex flex-col">
+            {creditOptions.length === 0 ? (
+              <div className="col-span-4 text-center py-8">
+                <p className="text-neutral">{t.noCreditsAvailable || 'No credit packages available at the moment.'}</p>
+              </div>
+            ) : (
+              creditOptions.map((option, index) => {
+                return (
+                  <div key={option.id ?? index} className="card border-2 border-base-300 hover:border-primary hover:shadow-lg transition-all duration-300 flex flex-col">
                   <div className="card-body p-6 flex flex-col h-full">
                     {/* Header */}
                     <div className="text-center mb-4">
@@ -632,7 +656,15 @@ const Plans = () => {
                     <div className="flex-grow"></div>
 
                     {/* Action Button */}
-                    <button className="btn btn-primary w-full">
+                    <button 
+                      className="btn btn-primary w-full"
+                      onClick={() => {
+                        if (option.price_id) {
+                          void handlePlanPurchase({ price_id: option.price_id, mode: 'payment' });
+                        }
+                      }}
+                      disabled={!option.price_id}
+                    >
                       {t.buyNow}
                     </button>
 
@@ -647,7 +679,7 @@ const Plans = () => {
                   </div>
                 </div>
               );
-            })}
+            }))}
           </div>
 
           {/* Additional Info */}
