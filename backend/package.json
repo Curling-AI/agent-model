@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "tsx --env-file=.env src/server.ts",
     "sync:stripe": "tsx --env-file=.env ../scripts/stripe.ts",
-    "sync:prices-from-stripe": "tsx --env-file=.env -e 'import(\"../scripts/stripe.ts\").then(m => m.syncPricesFromStripe())'"
+    "sync:prices-from-stripe": "tsx --env-file=.env -e 'import(\"../scripts/stripe.ts\").then(m => m.syncPricesFromStripe())'",
+    "backfill:subscription": "tsx --env-file=.env ../scripts/backfill-subscription.ts"
   },
   "dependencies": {
     "@google/genai": "^1.24.0",
@@ -40,6 +41,7 @@
     "@types/babel__core": "^7.20.5",
     "@types/cors": "^2.8.12",
     "@types/express": "^5.0.3",
+    "@types/wav": "^1.0.4",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.9.2"
