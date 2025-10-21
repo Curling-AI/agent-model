@@ -130,7 +130,6 @@ const Conversations = () => {
 
   const sendMessage = () => {
     if (newMessage?.content.trim() && selectedConversation) {
-      console.log('Sending message:', newMessage)
       sendMessageStore(selectedConversation.agent.id, userId, newMessage.content, selectedConversation.lead.phone, selectedConversation.id)
         setNewMessage(null)
       }

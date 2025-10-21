@@ -25,7 +25,7 @@ export function EmojiPicker({ onEmojiSelect, isOpen, onClose }: EmojiPickerProps
   if (!isOpen) return null
 
   return (
-    <div className="emoji-picker-container absolute bottom-full right-0 mb-2 w-96 rounded-lg border border-base-300 bg-base-100 shadow-lg">
+    <div className="emoji-picker-container absolute bottom-full right-0 mb-2 w-80 rounded-lg border border-base-300 bg-base-100 shadow-lg sm:w-96">
       {/* Header */}
       <div className="border-base-300 flex items-center justify-between border-b p-3">
         <h3 className="text-sm font-semibold">Emojis</h3>
@@ -55,15 +55,15 @@ export function EmojiPicker({ onEmojiSelect, isOpen, onClose }: EmojiPickerProps
       </div>
 
       {/* Emojis Grid */}
-      <div className="max-h-80 overflow-y-auto p-3">
-        <div className="grid grid-cols-10 gap-1">
+      <div className="max-h-60 overflow-y-auto p-3 sm:max-h-72 md:max-h-80">
+        <div className="grid grid-cols-6 gap-1 sm:grid-cols-8 md:grid-cols-10">
           {EMOJI_CATEGORIES[selectedCategory as keyof typeof EMOJI_CATEGORIES].map((emoji, index) => (
             <button
               key={index}
               onClick={() => {
                 onEmojiSelect(emoji)
               }}
-              className="hover:bg-base-200 flex h-9 w-9 items-center justify-center rounded text-lg transition-colors"
+              className="hover:bg-base-200 flex h-8 w-8 items-center justify-center rounded text-base transition-colors sm:h-9 sm:w-9 sm:text-lg"
             >
               {emoji}
             </button>
