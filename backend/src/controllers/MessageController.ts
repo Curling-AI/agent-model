@@ -1,4 +1,4 @@
-import { getByFilter } from '@/services/storage';
+import { getByFilter, upsert } from '@/services/storage';
 import { createInstance, deleteInstance, generateQrCode, getTokenFromInstance, registerWebhook, sendMedia, sendMessage } from '@/services/uazapi';
 import { generate } from '@langchain/core/dist/utils/fast-json-patch';
 import { Request, Response } from 'express';
@@ -41,10 +41,10 @@ export const MessageController = {
 
   async sendMessage(req: Request, res: Response) {
     try {
-      const { to, message, instanceName } = req.body;
+      const { to, message, instanceName, conversationId } = req.body;
 
-      if (!to || !message) {
-        return res.status(400).json({ error: 'to e message são obrigatórios' });
+      if (!to || !message || !conversationId || !instanceName) {
+        return res.status(400).json({ error: 'to, message, conversationId e instanceName são obrigatórios' });
       }
 
       const token = await getTokenFromInstance(instanceName as string);
@@ -55,6 +55,8 @@ export const MessageController = {
         const errorData = response;
         return res.status(500).json({ error: 'Erro ao enviar mensagem', details: errorData });
       }
+
+      await upsert('conversation_messages', { conversation_id: conversationId, sender: 'member', content: message, metadata: response, timestamp: new Date() });
      
       res.json({ success: true, response });
     } catch (error: any) {

@@ -24,7 +24,7 @@ const TestAgent: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const { agents, fetchAgents } = useAgentStore();
-  const { sendMessage } = useConversationStore();
+  const { sendTestMessage } = useConversationStore();
 
   useEffect(() => {
     fetchAgents(1, 'all');
@@ -51,21 +51,23 @@ const TestAgent: React.FC = () => {
       conversationId: 0,
       sender: 'human',
       content: inputMessage,
-      timestamp: new Date()
+      timestamp: new Date(),
+      metadata: {}
     };
 
     setMessages(prev => [...prev, userMessage]);
     setInputMessage('');
     setIsLoading(true);
 
-    const agentResponse = await sendMessage(selectedAgent.id, 1, inputMessage);
+    const agentResponse = await sendTestMessage(selectedAgent.id, 1, inputMessage);
 
     const botMessage: ConversationMessage = {
       id: Date.now(),
       conversationId: 0,
       sender: 'agent',
       content: agentResponse!,
-      timestamp: new Date()
+      timestamp: new Date(),
+      metadata: {}
     };
 
     setMessages(prev => [...prev, botMessage]);

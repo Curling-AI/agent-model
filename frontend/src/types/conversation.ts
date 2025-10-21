@@ -14,7 +14,7 @@ export interface Conversation extends BaseInterface {
 export interface ConversationMessage {
   id: number
   conversationId: number
-  sender: 'human' | 'agent'
+  sender: 'human' | 'agent' | 'member'
   content: string
   timestamp: Date
   metadata: any

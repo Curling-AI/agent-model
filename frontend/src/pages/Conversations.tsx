@@ -17,6 +17,7 @@ import {
   X,
   BarChart3,
 } from 'lucide-react'
+import { EmojiPicker } from '@/components/ui/emoji-picker'
 import { useLanguage } from '../context/LanguageContext'
 import { useTranslation } from '../translations'
 import ConversationStats from '@/components/conversations/ConversationStats'
@@ -37,19 +38,23 @@ const Conversations = () => {
   const [searchTerm, setSearchTerm] = useState('')
   const [showFilters, setShowFilters] = useState(false)
   const [quickReplies, setQuickReplies] = useState(false)
-  const [isTyping, setIsTyping] = useState(false)
+  const [isTyping] = useState(false)
 
   const [channelFilter, setChannelFilter] = useState('all')
   const [showStats, setShowStats] = useState(false)
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   
   // Refs para scroll automático
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const mobileMessagesContainerRef = useRef<HTMLDivElement>(null)
 
-  const { conversations, isLoading, listConversations, subscribeToUpdates, unsubscribeFromUpdates, channel } = useConversationStore()
+  const { conversations, isLoading, listConversations, subscribeToUpdates, unsubscribeFromUpdates, channel, sendMessage: sendMessageStore } = useConversationStore()
   const [unread, setUnread] = useState<{ [key: number]: number }>({})
   const { organization } = useOrganizationStore()
   const organizationId = organization.id
+  const userId = 1
+
+  
   const { fetchCrmColumns, crmColumns } = useCrmColumnStore()
   useEffect(() => {
     fetchCrmColumns()
@@ -58,10 +63,12 @@ const Conversations = () => {
     listConversations(organizationId).then((conversations) => {
       subscribeToUpdates(conversations, (payload: any) => {
         // Atualizar contador de mensagens não lidas
-        setUnread((prev) => ({
-          ...prev,
-          [payload.new.conversation_id]: (prev[payload.new.conversation_id] || 0) + 1,
-        }))
+        if (payload.new.conversation_id !== selectedConversation?.id) {
+          setUnread((prev) => ({
+            ...prev,
+            [payload.new.conversation_id]: (prev[payload.new.conversation_id] || 0) + 1,
+          }))
+        }
       })
     })
   }, [listConversations, organizationId, subscribeToUpdates])
@@ -124,25 +131,33 @@ const Conversations = () => {
   const sendMessage = () => {
     if (newMessage?.content.trim() && selectedConversation) {
       console.log('Sending message:', newMessage)
-      setNewMessage(null)
-      setIsTyping(true)
-
-      // Simular resposta automática
-      setTimeout(() => {
-        setIsTyping(false)
-      }, 2000)
+      sendMessageStore(selectedConversation.agent.id, userId, newMessage.content, selectedConversation.lead.phone, selectedConversation.id)
+        setNewMessage(null)
+      }
     }
-  }
-
-  const sendQuickReply = () => {
-    // setNewMessage({ ...newMessage, content: message });
-    setQuickReplies(false)
-  }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       sendMessage()
+    }
+  }
+
+  const handleEmojiSelect = (emoji: string) => {
+    if (newMessage) {
+      setNewMessage({
+        ...newMessage,
+        content: newMessage.content + emoji
+      })
+    } else if (selectedConversation) {
+      setNewMessage({
+        id: 0,
+        conversationId: selectedConversation.id,
+        sender: 'human' as const,
+        content: emoji,
+        timestamp: new Date(),
+        metadata: {}
+      })
     }
   }
 
@@ -270,6 +285,23 @@ const Conversations = () => {
       scrollToBottom()
     }
   }, [selectedConversation])
+
+  // Effect para fechar o emoji picker quando clicar fora
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showEmojiPicker) {
+        const target = event.target as HTMLElement
+        if (!target.closest('.emoji-picker-container')) {
+          setShowEmojiPicker(false)
+        }
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showEmojiPicker])
 
   return (
     <div className="bg-base-100 flex h-[calc(100vh-8rem)] flex-col">
@@ -653,7 +685,19 @@ const Conversations = () => {
                       {quickReplyOptions.map((reply, index) => (
                         <button
                           key={index}
-                          onClick={() => sendQuickReply()}
+                          onClick={() => {
+                            if (selectedConversation) {
+                              setNewMessage({
+                                id: 0,
+                                conversationId: selectedConversation.id,
+                                sender: 'human' as const,
+                                content: reply,
+                                timestamp: new Date(),
+                                metadata: {}
+                              })
+                              sendMessage()
+                            }
+                          }}
                           className="btn btn-outline btn-xs"
                         >
                           {reply}
@@ -666,17 +710,34 @@ const Conversations = () => {
                 <div className="flex items-center space-x-2">
                   <div className="relative flex-1">
                     <textarea
-                      value={newMessage?.content}
-                      // onChange={(e) => setNewMessage({ ...newMessage, content: e.target.value })}
+                      value={newMessage?.content || ''}
+                      onChange={(e) => setNewMessage({ 
+                        id: 0, 
+                        conversationId: selectedConversation?.id ?? 0, 
+                        sender: 'human' as const, 
+                        content: e.target.value, 
+                        timestamp: new Date(), 
+                        metadata: {} 
+                      })}
                       onKeyPress={handleKeyPress}
                       placeholder={t.typeMessage}
                       className="textarea textarea-bordered min-h-[60px] w-full resize-none"
                       rows={1}
                     />
                     <div className="absolute right-2 bottom-2 flex items-center space-x-1">
-                      <button className="btn btn-ghost btn-xs">
-                        <Smile className="h-4 w-4" />
-                      </button>
+                      <div className="emoji-picker-container relative">
+                        <button 
+                          onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                          className="btn btn-ghost btn-xs"
+                        >
+                          <Smile className="h-4 w-4" />
+                        </button>
+                        <EmojiPicker
+                          isOpen={showEmojiPicker}
+                          onClose={() => setShowEmojiPicker(false)}
+                          onEmojiSelect={handleEmojiSelect}
+                        />
+                      </div>
                       <button className="btn btn-ghost btn-xs">
                         <Paperclip className="h-4 w-4" />
                       </button>
@@ -840,13 +901,35 @@ const Conversations = () => {
             <div className="flex items-center space-x-2">
               <div className="relative flex-1">
                 <textarea
-                  value={newMessage?.content}
-                  // onChange={(e) => setNewMessage({ ...newMessage, content: e.target.value })}
+                  value={newMessage?.content || ''}
+                  onChange={(e) => setNewMessage({ 
+                    id: 0, 
+                    conversationId: selectedConversation?.id ?? 0, 
+                    sender: 'human' as const, 
+                    content: e.target.value, 
+                    timestamp: new Date(), 
+                    metadata: {} 
+                  })}
                   onKeyPress={handleKeyPress}
                   placeholder={t.typeMessage}
-                  className="textarea textarea-bordered min-h-[50px] w-full resize-none"
+                  className="textarea textarea-bordered min-h-[50px] w-full resize-none pr-12"
                   rows={1}
                 />
+                <div className="absolute right-2 bottom-2 flex items-center space-x-1">
+                  <div className="emoji-picker-container relative">
+                    <button 
+                      onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                      className="btn btn-ghost btn-xs"
+                    >
+                      <Smile className="h-4 w-4" />
+                    </button>
+                    <EmojiPicker
+                      isOpen={showEmojiPicker}
+                      onClose={() => setShowEmojiPicker(false)}
+                      onEmojiSelect={handleEmojiSelect}
+                    />
+                  </div>
+                </div>
               </div>
               <button
                 onClick={sendMessage}

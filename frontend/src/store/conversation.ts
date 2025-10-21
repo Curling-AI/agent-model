@@ -12,10 +12,11 @@ interface ConversationState {
   listConversations: (organizationId: number) => Promise<Conversation[]>
   createConversation: (name: string) => Promise<Conversation | null>
   deleteConversation: (id: number) => Promise<void>
-  sendMessage: (agentId: number, userId: number, message: string) => Promise<string | undefined>
+  sendTestMessage: (agentId: number, userId: number, message: string) => Promise<string | undefined>
   setCurrentConversation: (id: number) => void
   subscribeToUpdates: (conversations: Conversation[], listener?: (payload: any) => void) => RealtimeChannel
   unsubscribeFromUpdates: (channel: RealtimeChannel) => void
+  sendMessage: (agentId: number, userId: number, message: string, to: string, conversationId: number) => Promise<string | undefined>
 }
 
 export const useConversationStore = create<ConversationState>((set) => ({
@@ -63,7 +64,7 @@ export const useConversationStore = create<ConversationState>((set) => ({
     }))
   },
 
-  sendMessage: async (agentId, userId, message) => {
+  sendTestMessage: async (agentId, userId, message) => {
     const res = await fetch(`${BASE_URL}/conversations/process-message`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -110,5 +111,17 @@ export const useConversationStore = create<ConversationState>((set) => ({
       channel.unsubscribe();
       set({ channel: null });
     }
+  },
+
+  sendMessage: async (agentId: number, userId: number, message: string, to: string, conversationId: number) => {
+    const instance = `agent-${agentId}-user-${userId}`
+    const res = await fetch(`${BASE_URL}/messages/send-message`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message, to, instanceName: instance, conversationId: conversationId }),
+    })
+    if (!res.ok) return
+    const msg = await res.json()
+    return msg
   },
 }))
