@@ -8,7 +8,7 @@ import { getById } from '../storage';
 import { PostgresChatMessageHistory } from "@langchain/community/stores/message/postgres";
 import { Pool } from "pg";
 import { RunnableWithMessageHistory } from "@langchain/core/runnables";
-import { processMediaFromUrlLangchainGemini, textToSpeechGemini } from "./gemini";
+import { processMediaFromBase64LangchainGemini, textToSpeechGemini } from "./gemini";
 import { processMediaFromUrlLangchainOpenAI, textToSpeechOpenAI } from "./openai";
 
 export const AiExecutor = {
@@ -43,9 +43,9 @@ async function executeAgent(agentId: number, userId: number, userInput: string, 
 
     if (type !== 'text' && process.env.LLM_PROVIDER === 'gemini') {
       if (type === 'image') {
-        message = await processMediaFromUrlLangchainGemini(messageContent.base64Data, IMAGE_PROMPT, messageContent.mimetype);
+        message = await processMediaFromBase64LangchainGemini(messageContent.base64Data, IMAGE_PROMPT, messageContent.mimetype);
       } else if (type === 'audio') {
-        message = await processMediaFromUrlLangchainGemini(messageContent.base64Data, AUDIO_PROMPT, messageContent.mimetype);
+        message = await processMediaFromBase64LangchainGemini(messageContent.base64Data, AUDIO_PROMPT, messageContent.mimetype);
       }
     } else if (type !== 'text' && process.env.LLM_PROVIDER === 'openai') {
       if (type === 'image') {
@@ -159,7 +159,9 @@ function generateAgentPrompt(agent: any) {
     Start conversations with this greeting: ${agent.greetings} and use a tone that is ${agent.tone}.
     You have to answer using audio messages in this case: ${agent.voice_configuration}.
     Always refer to yourself as ${agent.name} and never as an AI model or language model. 
-    It's important that you answer suscintly and objectively. Avoid create long texts.`;
+    It's important that you answer suscintly and objectively. Avoid create long texts.
+    If user ask for an audio message and your voice configuration allows it, you have to answer using an audio message, so generates audio files when needed.
+    `;
   return basePrompt;
 }
 

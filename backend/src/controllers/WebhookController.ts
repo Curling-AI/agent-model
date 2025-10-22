@@ -1,9 +1,9 @@
 import { getByFilter, getById, upsert } from '@/services/storage';
-import { Request, Response } from 'express';
+import { Request, response, Response } from 'express';
 import { AiExecutor } from '@/services/ai/ai-executor';
 import { getMediaContent, sendMedia, sendMessage } from '@/services/uazapi';
 import { sendMessage as sendMessageZapi } from '@/services/zapi';
-import { getMetaMediaContent } from '@/services/facebook';
+import { getMetaMediaContent, sendMetaMedia, sendMetaMessage } from '@/services/facebook';
 import Stripe from 'stripe';
 import { StripeService } from '../services/stripe';
 
@@ -94,24 +94,23 @@ export const WebhookController = {
                 if (conversation['mode'] === 'agent') {
                   let responseMessage;
                   const token = integrations[0]['metadata']['accessToken'];
+                  const wpNumberId = integrations[0]['metadata']['phoneNumberId'];
 
                   if (type === 'video' || type === 'document') {
-                    responseMessage = "Tipo de mídia não suportado no momento.";
+                    responseMessage.outputText = "Tipo de mídia não suportado no momento.";
                   } else if (type !== 'text') {
                     const mediaContent = await getMetaMediaContent(message, token);
-                    responseMessage = await AiExecutor.executeAgentMedia(agent['id'], conversation['lead_id'], mediaContent, type);
+                    responseMessage = await AiExecutor.executeAgentMedia(agent['id'], conversation['lead_id'], mediaContent, process.env.LLM_PROVIDER === 'openai' ? 'image' : type);
                   } else {
                     responseMessage = await AiExecutor.executeAgentText(agent['id'], conversation['lead_id'], text);
                   }
 
                   await upsert('conversation_messages', { conversation_id: conversation['id'], sender: 'agent', content: responseMessage.outputText, metadata: responseMessage, timestamp: new Date() });
 
-                  res.status(200).json({ message: 'Webhook processed successfully', conversation });
-
-                  if (type === 'audio') {
-                    await sendMedia(phone, message.output, 'audio', token);
+                  if (responseMessage.type === 'audio') {
+                    await sendMetaMedia(wpNumberId, phone, responseMessage.output, 'audio/ogg', token);
                   } else {
-                    await sendMessage(phone, message.outputText, token);
+                    await sendMetaMessage(wpNumberId, phone, responseMessage.outputText, token);
                   }
                 }
               }

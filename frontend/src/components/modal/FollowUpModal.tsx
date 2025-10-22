@@ -215,7 +215,7 @@ console.log(crmColumns, followUpTriggers);
                 })}>
 
                 {crmColumns.length > 0 && crmColumns.map(option => (
-                  <option key={option.id} value={option.id}>{option.name}</option>
+                  <option key={option.id} value={option.id}>{t.language === 'pt' ? option.titlePt : option.titleEn}</option>
                 ))}
               </select>
             </div>
