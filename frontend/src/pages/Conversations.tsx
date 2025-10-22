@@ -23,6 +23,8 @@ import { useTranslation } from '../translations'
 import ConversationStats from '@/components/conversations/ConversationStats'
 import ConversationSkeleton from '@/components/conversations/ConversationSkeleton'
 import { AudioMessage } from '@/components/conversations/audio-message'
+import { ImageMessage } from '@/components/conversations/image-message'
+import { VideoMessage } from '@/components/conversations/video-message'
 import { Conversation, ConversationMessage } from '@/types/conversation'
 import { useConversationStore } from '@/store/conversation'
 import { useOrganizationStore } from '@/store/organization'
@@ -244,7 +246,7 @@ const Conversations = () => {
   const getProfileImage = (conversation: Conversation) => {
     if (conversation.lead.source === 'whatsapp') {
       return (
-        conversation.messages.find((message) => message.sender === 'human')?.metadata?.chat?.imagePreview ?? ''
+        [...conversation.messages].reverse().find((message) => message.sender === 'human')?.metadata?.chat?.imagePreview ?? ''
       )
     }
     return ''
@@ -659,6 +661,20 @@ const Conversations = () => {
                       audioBase64={message.sender === 'agent' ? message.metadata?.output : undefined}
                     />
                           : 
+                      message.metadata?.message?.messageType === 'ImageMessage' ?
+                      <ImageMessage 
+                        messageId={message.id}
+                        thumbnailBase64={message.metadata.message?.content?.JPEGThumbnail}
+                        textContent={message.content}
+                      />
+                      :
+                      message.metadata?.message?.messageType === 'VideoMessage' ?
+                      <VideoMessage 
+                        messageId={message.id}
+                        thumbnailBase64={message.metadata.message?.content?.JPEGThumbnail}
+                        textContent={message.content}
+                      />
+                      :
                           <p className="text-sm leading-relaxed">{message.content}</p>
                         }
                         <div className="mt-2 flex items-center justify-end space-x-1">
@@ -912,6 +928,20 @@ const Conversations = () => {
                        audioBase64={message.sender === 'agent' ? message.metadata?.output : undefined}
                      />
                     : 
+                    message.metadata?.message?.messageType === 'ImageMessage' ?
+                    <ImageMessage 
+                      messageId={message.id}
+                      thumbnailBase64={message.metadata.message?.content?.JPEGThumbnail}
+                      textContent={message.content}
+                    />
+                    :
+                    message.metadata?.message?.messageType === 'VideoMessage' ?
+                    <VideoMessage 
+                      messageId={message.id}
+                      thumbnailBase64={message.metadata.message?.content?.JPEGThumbnail}
+                      textContent={message.content}
+                    />
+                    :
                     <p className="text-sm leading-relaxed">{message.content}</p>
                   }
                   <p className="mt-1 text-xs opacity-70">

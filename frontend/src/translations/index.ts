@@ -380,6 +380,12 @@ export const translations = {
     yesterday: 'Ontem',
     minutes: 'min',
     agentSales: 'Agente Vendas',
+    errorLoadingImage: 'Erro ao carregar imagem',
+    lowQuality: 'Baixa qualidade',
+    downloadImage: 'Baixar imagem',
+    downloadVideo: 'Baixar vídeo',
+    unmute: 'Ativar som',
+    mute: 'Silenciar',
 
     // Quick Replies
     quickReply1: 'Olá! Como posso ajudá-lo hoje?',
@@ -1348,6 +1354,12 @@ export const translations = {
     yesterday: 'Yesterday',
     minutes: 'min',
     agentSales: 'Sales Agent',
+    errorLoadingImage: 'Error loading image',
+    lowQuality: 'Low quality',
+    downloadImage: 'Download image',
+    downloadVideo: 'Download video',
+    unmute: 'Unmute',
+    mute: 'Mute',
 
     // Quick Replies
     quickReply1: 'Hello! How can I help you today?',
