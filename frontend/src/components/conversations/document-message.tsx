@@ -109,7 +109,7 @@ export function DocumentMessage({
       if (data && data.base64Data) {
         // Usar base64Data se disponível
         const extension = documentTitle?.split('.').pop() || 'bin'
-        const mimeType = getMimeType(extension)
+        const mimeType = data.mimeType || 'application/octet-stream'
         
         const link = document.createElement('a')
         link.href = `data:${mimeType};base64,${data.base64Data}`
@@ -126,26 +126,6 @@ export function DocumentMessage({
     } finally {
       setIsLoading(false)
     }
-  }
-
-  const getMimeType = (extension: string) => {
-    const mimeTypes: { [key: string]: string } = {
-      'pdf': 'application/pdf',
-      'doc': 'application/msword',
-      'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'txt': 'text/plain',
-      'jpg': 'image/jpeg',
-      'jpeg': 'image/jpeg',
-      'png': 'image/png',
-      'gif': 'image/gif',
-      'mp4': 'video/mp4',
-      'mp3': 'audio/mpeg',
-      'wav': 'audio/wav',
-      'zip': 'application/zip',
-      'rar': 'application/x-rar-compressed'
-    }
-    
-    return mimeTypes[extension.toLowerCase()] || 'application/octet-stream'
   }
 
   return (
