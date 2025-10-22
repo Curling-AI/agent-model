@@ -110,10 +110,10 @@ export function AudioMessage({ waveform, className, messageId, durationSeconds, 
     }
   }, [audioUrl])
 
-  // Atualiza o tempo atual do áudio
+  // Atualiza o tempo atual do áudio quando o audioUrl muda
   useEffect(() => {
     const audio = audioRef.current
-    if (!audio) return
+    if (!audio || !audioUrl) return
 
     const updateTime = () => setCurrentTime(audio.currentTime)
     const updateDuration = () => {
@@ -132,7 +132,7 @@ export function AudioMessage({ waveform, className, messageId, durationSeconds, 
       audio.removeEventListener('loadedmetadata', updateDuration)
       audio.removeEventListener('ended', () => setIsPlaying(false))
     }
-  }, [])
+  }, [audioUrl])
 
   const loadAudioContent = async () => {
     if (hasLoaded || isLoading) return
@@ -159,6 +159,9 @@ export function AudioMessage({ waveform, className, messageId, durationSeconds, 
           setHasLoaded(true)
         }
       }
+      
+      // Reset do tempo atual quando carrega novo áudio
+      setCurrentTime(0)
     } catch (error) {
       console.error('Erro ao carregar áudio:', error)
     } finally {
@@ -167,21 +170,22 @@ export function AudioMessage({ waveform, className, messageId, durationSeconds, 
   }
 
   const togglePlayPause = async () => {
-    const audio = audioRef.current
-    if (!audio) return
-
     // Se ainda não carregou o áudio e não é uma mensagem do agent, carrega primeiro
     if (!hasLoaded && sender !== 'agent') {
       await loadAudioContent()
-      // Aguarda um pouco para o áudio ser carregado
+      // Aguarda um pouco para o áudio ser carregado e então reproduz
       setTimeout(() => {
-        if (audioRef.current) {
-          audioRef.current.play()
+        const audio = audioRef.current
+        if (audio) {
+          audio.play()
           setIsPlaying(true)
         }
       }, 100)
       return
     }
+
+    const audio = audioRef.current
+    if (!audio) return
 
     if (isPlaying) {
       audio.pause()
@@ -193,14 +197,16 @@ export function AudioMessage({ waveform, className, messageId, durationSeconds, 
   }
 
   const handleSeek = async (e: React.MouseEvent<HTMLDivElement>) => {
-    const audio = audioRef.current
-    if (!audio || !duration) return
+    if (!duration) return
 
     // Se ainda não carregou o áudio e não é uma mensagem do agent, carrega primeiro
     if (!hasLoaded && sender !== 'agent') {
       await loadAudioContent()
       return
     }
+
+    const audio = audioRef.current
+    if (!audio) return
 
     const rect = e.currentTarget.getBoundingClientRect()
     const clickX = e.clientX - rect.left
@@ -229,7 +235,7 @@ export function AudioMessage({ waveform, className, messageId, durationSeconds, 
 
   return (
     <div className={`flex flex-col space-y-2 ${className || ''}`}>
-      <audio ref={audioRef} src={audioUrl} preload="none" />
+      {audioUrl && <audio ref={audioRef} src={audioUrl} preload="none" />}
       
       {/* Waveform visual - maior verticalmente */}
       {waveformData.length > 0 && (
