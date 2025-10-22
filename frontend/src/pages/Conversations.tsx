@@ -25,6 +25,7 @@ import ConversationSkeleton from '@/components/conversations/ConversationSkeleto
 import { AudioMessage } from '@/components/conversations/audio-message'
 import { ImageMessage } from '@/components/conversations/image-message'
 import { VideoMessage } from '@/components/conversations/video-message'
+import { DocumentMessage } from '@/components/conversations/document-message'
 import { Conversation, ConversationMessage } from '@/types/conversation'
 import { useConversationStore } from '@/store/conversation'
 import { useOrganizationStore } from '@/store/organization'
@@ -675,6 +676,13 @@ const Conversations = () => {
                         textContent={message.content}
                       />
                       :
+                      message.metadata?.message?.messageType === 'DocumentMessage' ?
+                      <DocumentMessage 
+                        messageId={message.id}
+                        documentTitle={message.metadata.message?.content?.title}
+                        textContent={message.content}
+                      />
+                      :
                           <p className="text-sm leading-relaxed">{message.content}</p>
                         }
                         <div className="mt-2 flex items-center justify-end space-x-1">
@@ -939,6 +947,13 @@ const Conversations = () => {
                     <VideoMessage 
                       messageId={message.id}
                       thumbnailBase64={message.metadata.message?.content?.JPEGThumbnail}
+                      textContent={message.content}
+                    />
+                    :
+                    message.metadata?.message?.messageType === 'DocumentMessage' ?
+                    <DocumentMessage 
+                      messageId={message.id}
+                      documentTitle={message.metadata.message?.content?.title}
                       textContent={message.content}
                     />
                     :

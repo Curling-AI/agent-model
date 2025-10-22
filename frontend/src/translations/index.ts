@@ -386,6 +386,9 @@ export const translations = {
     downloadVideo: 'Baixar vídeo',
     unmute: 'Ativar som',
     mute: 'Silenciar',
+    downloading: 'Baixando...',
+    errorDownloadingDocument: 'Erro ao baixar documento',
+    downloadDocument: 'Clique para baixar',
 
     // Quick Replies
     quickReply1: 'Olá! Como posso ajudá-lo hoje?',
@@ -1360,6 +1363,9 @@ export const translations = {
     downloadVideo: 'Download video',
     unmute: 'Unmute',
     mute: 'Mute',
+    downloading: 'Downloading...',
+    errorDownloadingDocument: 'Error downloading document',
+    downloadDocument: 'Click to download',
 
     // Quick Replies
     quickReply1: 'Hello! How can I help you today?',
