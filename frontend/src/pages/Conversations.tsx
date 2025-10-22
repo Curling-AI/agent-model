@@ -22,6 +22,7 @@ import { useLanguage } from '../context/LanguageContext'
 import { useTranslation } from '../translations'
 import ConversationStats from '@/components/conversations/ConversationStats'
 import ConversationSkeleton from '@/components/conversations/ConversationSkeleton'
+import { AudioMessage } from '@/components/conversations/audio-message'
 import { Conversation, ConversationMessage } from '@/types/conversation'
 import { useConversationStore } from '@/store/conversation'
 import { useOrganizationStore } from '@/store/organization'
@@ -648,7 +649,18 @@ const Conversations = () => {
                             : 'bg-primary text-primary-content'
                         }`}
                       >
-                        <p className="text-sm leading-relaxed">{message.content}</p>
+                        {
+                    message.metadata?.message?.messageType === 'AudioMessage' || message.metadata?.type === 'audio' ? 
+                    <AudioMessage 
+                      messageId={message.id}
+                      waveform={message.metadata.message?.content?.waveform}
+                      durationSeconds={message.metadata.message?.content?.seconds}
+                      sender={message.sender as 'human' | 'agent'}
+                      audioBase64={message.sender === 'agent' ? message.metadata?.output : undefined}
+                    />
+                          : 
+                          <p className="text-sm leading-relaxed">{message.content}</p>
+                        }
                         <div className="mt-2 flex items-center justify-end space-x-1">
                           <span className="text-xs opacity-70">
                             {formatRelative(new Date(message.timestamp), new Date(), {
@@ -890,7 +902,18 @@ const Conversations = () => {
                       : 'bg-primary text-primary-content'
                   }`}
                 >
-                  <p className="text-sm">{message.content}</p>
+                  {
+                     message.metadata?.message?.messageType === 'AudioMessage' || message.metadata?.type === 'audio' ? 
+                     <AudioMessage 
+                       messageId={message.id}
+                       waveform={message.metadata.message?.content?.waveform}
+                       durationSeconds={message.metadata.message?.content?.seconds}
+                       sender={message.sender as 'human' | 'agent'}
+                       audioBase64={message.sender === 'agent' ? message.metadata?.output : undefined}
+                     />
+                    : 
+                    <p className="text-sm leading-relaxed">{message.content}</p>
+                  }
                   <p className="mt-1 text-xs opacity-70">
                     {formatRelative(new Date(message.timestamp), new Date(), {
                       locale: language.language === 'pt' ? ptBR : enUS,

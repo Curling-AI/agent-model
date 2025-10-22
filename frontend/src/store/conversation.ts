@@ -18,6 +18,7 @@ interface ConversationState {
   unsubscribeFromUpdates: (channel: RealtimeChannel) => void
   sendMessage: (agentId: number, userId: number, message: string, to: string, conversationId: number) => Promise<string | undefined>
   changeConversationMode: (conversationId: number, mode: 'agent' | 'human') => Promise<void>
+  getMediaContent: (messageId: number) => Promise<{ data: any, success: boolean }>
 }
 
 export const useConversationStore = create<ConversationState>((set) => ({
@@ -137,6 +138,16 @@ export const useConversationStore = create<ConversationState>((set) => ({
     set((state) => ({
       conversations: state.conversations.map((c) => c.id === conversationId ? { ...c, mode } : c),
     }))
+    return data
+  },
+
+  getMediaContent: async (messageId: number) => {
+    const res = await fetch(`${BASE_URL}/messages/media-content?id=${messageId}`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    })
+    if (!res.ok) return
+    const data = await res.json()
     return data
   },
 }))

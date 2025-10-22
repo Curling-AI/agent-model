@@ -1,6 +1,5 @@
-import { getByFilter, upsert } from '@/services/storage';
-import { createInstance, deleteInstance, generateQrCode, getTokenFromInstance, registerWebhook, sendMedia, sendMessage } from '@/services/uazapi';
-import { generate } from '@langchain/core/dist/utils/fast-json-patch';
+import { getById, upsert } from '@/services/storage';
+import { createInstance, deleteInstance, generateQrCode, getMediaContent, getTokenFromInstance, registerWebhook, sendMedia, sendMessage } from '@/services/uazapi';
 import { Request, Response } from 'express';
 
 export const MessageController = {
@@ -100,4 +99,22 @@ export const MessageController = {
       res.status(500).json({ error: 'Erro ao gerar QR Code', details: error.message });
     }
   },
+
+  async getMediaContent(req: Request, res: Response) {
+    try {
+      const { id: messageId } = req.query;
+      if (!messageId) {
+        return res.status(400).json({ error: 'messageId é obrigatório' });
+      }
+      const message = await getById<any>('conversation_messages', Number(messageId));
+
+      if (!message || !message.metadata || !message.metadata.token) {
+        return res.status(404).json({ error: 'Mensagem não encontrada' });
+      }
+      const data = await getMediaContent(message.metadata.message.id, message.metadata.token as string);
+      res.json({ success: true, data });
+    } catch (error: any) {
+      res.status(500).json({ error: 'Erro ao obter conteúdo da mídia', details: error.message });
+    }
+  }
 };
