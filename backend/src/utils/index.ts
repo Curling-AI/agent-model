@@ -116,7 +116,7 @@ export async function base64ToFile(base64Data: string, filename: string, type: s
     const regex = /^data:([a-zA-Z0-9-+\./]+);base64,(.*)$/;
     const match = base64Data.match(regex);
 
-    const mimeType = match ? match[1] :type;
+    const mimeType = match ? match[1] : type;
     const rawBase64 = match ? match[2] : base64Data;
 
     const extensao = getExtensionFromMimeType(mimeType) || null;
@@ -197,4 +197,18 @@ export async function removeFromSupabaseStorage(
     return false;
   }
   return true;
+}
+
+export function isBase64String(str: string): boolean {
+  // Verifica se é um data URL base64
+  return /^data:([a-zA-Z0-9-+\./]+);base64,/.test(str);
+}
+
+export function isUrl(str: string): boolean {
+  try {
+    const url = new URL(str);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
 }

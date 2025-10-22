@@ -43,22 +43,21 @@ export const sendMetaMessage = async (wpNumberId: string, to: string, message: s
   }
 };
 
-export const sendMetaMedia = async (wpNumberId: string, to: string, media: string, type: string, token: string) => {
+export const sendMetaMedia = async (wpNumberId: string, to: string, media: string, type: string, mimeType: string, token: string) => {
   try {
-    const filePath = await base64ToFile(media, `./uploads/${Date.now()}`, type);
+    const filePath = await base64ToFile(media, `./uploads/${Date.now()}`, mimeType);
 
     if (!fs.existsSync(filePath)) {
       throw new Error(`Arquivo não encontrado no caminho: ${filePath}`);
     }
-
-    const mediaFilePath = './uploads/1761086033601.ogg';
-    const mediaFileName = path.basename(mediaFilePath);
-
+    
+    const mediaFileName = path.basename(filePath);
+    
     const formData = new FormDataLib();
     formData.append('messaging_product', 'whatsapp');
-    formData.append('file', fs.createReadStream(mediaFilePath), {
+    formData.append('file', fs.createReadStream(filePath), {
       filename: mediaFileName,
-      contentType: type
+      contentType: mimeType
     });
 
     const headers = {
@@ -82,21 +81,43 @@ export const sendMetaMedia = async (wpNumberId: string, to: string, media: strin
 
     fss.unlink(filePath);
 
+    let payload = {
+        messaging_product: 'whatsapp',
+        recipient_type: "individual",
+        to: to,
+    };
+
+    switch (type) {
+      case 'audio':
+        payload['type'] = "audio";
+        payload['audio'] = { id: response.data.id, voice: true };
+        break;
+      case 'image':
+        payload['type'] = "image";
+        payload['image'] = { id: response.data.id };
+        break;
+      case 'document':
+        payload['type'] = "document";
+        payload['document'] = { id: response.data.id };
+        break;
+      case 'video':
+        payload['type'] = "video";
+        payload['video'] = { id: response.data.id };
+        break;
+      default:
+        payload['type'] = "audio";
+        payload['audio'] = {
+          id: response.data.id
+        };
+    }
+    console.log('Payload for message:', payload);
     const messageResponse = await fetch(`${process.env.FACEBOOK_URL}/${process.env.FACEBOOK_GRAPH_API_VERSION}/${wpNumberId}/messages`, {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       },
       method: 'POST',
-      body: JSON.stringify({
-        messaging_product: 'whatsapp',
-        recipient_type: "individual",
-        to: to,
-        type: "audio",
-        audio: {
-          id: response.data.id
-        }
-      })
+      body: JSON.stringify(payload)
     });
 
     console.log('Message response status:', await messageResponse.json());
