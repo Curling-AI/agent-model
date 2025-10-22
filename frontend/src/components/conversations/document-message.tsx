@@ -10,13 +10,17 @@ interface DocumentMessageProps {
   documentTitle?: string
   textContent?: string
   className?: string
+  userId?: number
+  agentId?: number
 }
 
 export function DocumentMessage({ 
   messageId, 
   documentTitle, 
   textContent,
-  className = '' 
+  className = '',
+  userId,
+  agentId
 }: DocumentMessageProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(false)
@@ -105,7 +109,7 @@ export function DocumentMessage({
     setError(false)
 
     try {
-      const { data } = await getMediaContent(messageId)
+      const { data } = await getMediaContent(messageId, userId, agentId)
       if (data && data.base64Data) {
         // Usar base64Data se disponível
         const extension = documentTitle?.split('.').pop() || 'bin'

@@ -18,6 +18,7 @@ import {
   BarChart3,
 } from 'lucide-react'
 import { EmojiPicker } from '@/components/ui/emoji-picker'
+import { FileUpload } from '@/components/conversations/file-upload'
 import { useLanguage } from '../context/LanguageContext'
 import { useTranslation } from '../translations'
 import ConversationStats from '@/components/conversations/ConversationStats'
@@ -47,12 +48,13 @@ const Conversations = () => {
   const [channelFilter, setChannelFilter] = useState('all')
   const [showStats, setShowStats] = useState(false)
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
+  const [showFileUpload, setShowFileUpload] = useState(false)
   
   // Refs para scroll automático
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const mobileMessagesContainerRef = useRef<HTMLDivElement>(null)
 
-  const { conversations, isLoading, listConversations, subscribeToUpdates, unsubscribeFromUpdates, channel, sendMessage: sendMessageStore, changeConversationMode } = useConversationStore()
+  const { conversations, isLoading, listConversations, subscribeToUpdates, unsubscribeFromUpdates, channel, sendMessage: sendMessageStore, sendMedia, changeConversationMode } = useConversationStore()
   const [unread, setUnread] = useState<{ [key: number]: number }>({})
   const { organization } = useOrganizationStore()
   const organizationId = organization.id
@@ -151,6 +153,41 @@ const Conversations = () => {
         setNewMessage(null)
       }
     }
+
+  const handleFileUpload = async (file: File) => {
+    if (!selectedConversation) return
+
+    try {
+      // Converter arquivo para base64
+      const reader = new FileReader()
+      reader.onload = async () => {
+        const base64 = reader.result as string
+        const mediaData = base64.split(',')[1] // Remove o prefixo data:image/...;base64,
+        
+        // Determinar o tipo de arquivo
+        let fileType = 'document'
+        if (file.type.startsWith('image/')) {
+          fileType = 'image'
+        } else if (file.type.startsWith('video/')) {
+          fileType = 'video'
+        }
+
+        await sendMedia(
+          selectedConversation.agent.id,
+          userId,
+          selectedConversation.lead.phone,
+          mediaData,
+          file.name,
+          fileType,
+          selectedConversation.id
+        )
+      }
+      reader.readAsDataURL(file)
+      setShowFileUpload(false)
+    } catch (error) {
+      console.error('Erro ao enviar arquivo:', error)
+    }
+  }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -653,7 +690,7 @@ const Conversations = () => {
                         }`}
                       >
                         {
-                    message.metadata?.message?.messageType === 'AudioMessage' || message.metadata?.type === 'audio' ? 
+                    message.metadata?.message?.messageType === 'AudioMessage' || message.metadata?.type === 'audio' || message.metadata?.messageType === 'AudioMessage' ? 
                     <AudioMessage 
                       messageId={message.id}
                       waveform={message.metadata.message?.content?.waveform}
@@ -662,25 +699,31 @@ const Conversations = () => {
                       audioBase64={message.sender === 'agent' ? message.metadata?.output : undefined}
                     />
                           : 
-                      message.metadata?.message?.messageType === 'ImageMessage' ?
+                      message.metadata?.message?.messageType === 'ImageMessage' || message.metadata?.messageType === 'ImageMessage' ?
                       <ImageMessage 
                         messageId={message.id}
-                        thumbnailBase64={message.metadata.message?.content?.JPEGThumbnail}
+                        thumbnailBase64={message.metadata.message?.content?.JPEGThumbnail || message.metadata?.content?.JPEGThumbnail}
                         textContent={message.content}
+                        userId={userId}
+                        agentId={selectedConversation.agent.id}
                       />
                       :
-                      message.metadata?.message?.messageType === 'VideoMessage' ?
+                      message.metadata?.message?.messageType === 'VideoMessage' || message.metadata?.messageType === 'VideoMessage' ?
                       <VideoMessage 
                         messageId={message.id}
-                        thumbnailBase64={message.metadata.message?.content?.JPEGThumbnail}
+                        thumbnailBase64={message.metadata.message?.content?.JPEGThumbnail || message.metadata?.content?.JPEGThumbnail}
                         textContent={message.content}
+                        userId={userId}
+                        agentId={selectedConversation.agent.id}
                       />
                       :
-                      message.metadata?.message?.messageType === 'DocumentMessage' ?
+                      message.metadata?.message?.messageType === 'DocumentMessage' || message.metadata?.messageType === 'DocumentMessage' ?
                       <DocumentMessage 
                         messageId={message.id}
-                        documentTitle={message.metadata.message?.content?.title}
+                        documentTitle={message.metadata.message?.content?.title || message.metadata?.content?.fileName}
                         textContent={message.content}
+                        userId={userId}
+                        agentId={selectedConversation.agent.id}
                       />
                       :
                           <p className="text-sm leading-relaxed">{message.content}</p>
@@ -794,7 +837,10 @@ const Conversations = () => {
                           onEmojiSelect={handleEmojiSelect}
                         />
                       </div>
-                      <button className="btn btn-ghost btn-xs">
+                      <button 
+                        className="btn btn-ghost btn-xs"
+                        onClick={() => setShowFileUpload(!showFileUpload)}
+                      >
                         <Paperclip className="h-4 w-4" />
                       </button>
                     </div>
@@ -806,6 +852,16 @@ const Conversations = () => {
                   >
                     <Send className="h-4 w-4" />
                   </button>
+                </div>
+
+                {/* Componente de upload de arquivos */}
+                <div className="relative">
+                  <FileUpload
+                    onFileSelect={handleFileUpload}
+                    disabled={!selectedConversation}
+                    isOpen={showFileUpload}
+                    onClose={() => setShowFileUpload(false)}
+                  />
                 </div>
 
                 <div className="mt-3 flex items-center justify-between">
@@ -927,7 +983,7 @@ const Conversations = () => {
                   }`}
                 >
                   {
-                     message.metadata?.message?.messageType === 'AudioMessage' || message.metadata?.type === 'audio' ? 
+                     message.metadata?.message?.messageType === 'AudioMessage' || message.metadata?.type === 'audio' || message.metadata?.messageType === 'AudioMessage' ? 
                      <AudioMessage 
                        messageId={message.id}
                        waveform={message.metadata.message?.content?.waveform}
@@ -936,25 +992,29 @@ const Conversations = () => {
                        audioBase64={message.sender === 'agent' ? message.metadata?.output : undefined}
                      />
                     : 
-                    message.metadata?.message?.messageType === 'ImageMessage' ?
+                    message.metadata?.message?.messageType === 'ImageMessage' || message.metadata?.messageType === 'ImageMessage' ?
                     <ImageMessage 
                       messageId={message.id}
-                      thumbnailBase64={message.metadata.message?.content?.JPEGThumbnail}
+                      thumbnailBase64={message.metadata.message?.content?.JPEGThumbnail || message.metadata?.content?.JPEGThumbnail}
                       textContent={message.content}
+                      userId={userId}
+                      agentId={selectedConversation.agent.id}
                     />
                     :
-                    message.metadata?.message?.messageType === 'VideoMessage' ?
+                    message.metadata?.message?.messageType === 'VideoMessage' || message.metadata?.messageType === 'VideoMessage' ?
                     <VideoMessage 
                       messageId={message.id}
-                      thumbnailBase64={message.metadata.message?.content?.JPEGThumbnail}
+                      thumbnailBase64={message.metadata.message?.content?.JPEGThumbnail || message.metadata?.content?.JPEGThumbnail}
                       textContent={message.content}
                     />
                     :
-                    message.metadata?.message?.messageType === 'DocumentMessage' ?
+                    message.metadata?.message?.messageType === 'DocumentMessage' || message.metadata?.messageType === 'DocumentMessage' ?
                     <DocumentMessage 
                       messageId={message.id}
-                      documentTitle={message.metadata.message?.content?.title}
+                      documentTitle={message.metadata.message?.content?.title || message.metadata?.content?.fileName}
                       textContent={message.content}
+                      userId={userId}
+                      agentId={selectedConversation.agent.id}
                     />
                     :
                     <p className="text-sm leading-relaxed">{message.content}</p>
@@ -1019,6 +1079,12 @@ const Conversations = () => {
                       onEmojiSelect={handleEmojiSelect}
                     />
                   </div>
+                  <button 
+                    className="btn btn-ghost btn-xs"
+                    onClick={() => setShowFileUpload(!showFileUpload)}
+                  >
+                    <Paperclip className="h-4 w-4" />
+                  </button>
                 </div>
               </div>
               <button
@@ -1028,6 +1094,16 @@ const Conversations = () => {
               >
                 <Send className="h-4 w-4" />
               </button>
+            </div>
+
+            {/* Componente de upload de arquivos - Mobile */}
+            <div className="relative">
+              <FileUpload
+                onFileSelect={handleFileUpload}
+                disabled={!selectedConversation}
+                isOpen={showFileUpload}
+                onClose={() => setShowFileUpload(false)}
+              />
             </div>
           </div>
         </div>

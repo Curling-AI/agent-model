@@ -389,6 +389,15 @@ export const translations = {
     downloading: 'Baixando...',
     errorDownloadingDocument: 'Erro ao baixar documento',
     downloadDocument: 'Clique para baixar',
+    fileUploadedSuccessfully: 'Arquivo enviado com sucesso!',
+    errorUploadingFile: 'Erro ao enviar arquivo',
+    sendFile: 'Enviar Arquivo',
+    clickToSelect: 'Clique para selecionar',
+    orDragFilesHere: 'ou arraste arquivos aqui',
+    supportsImagesVideosDocumentsMax2MB: 'Suporta imagens, vídeos e documentos (máx. 2MB)',
+    selectedFiles: 'Arquivos selecionados',
+    sending: 'Enviando...',
+    clear: 'Limpar',
 
     // Quick Replies
     quickReply1: 'Olá! Como posso ajudá-lo hoje?',
@@ -1366,6 +1375,15 @@ export const translations = {
     downloading: 'Downloading...',
     errorDownloadingDocument: 'Error downloading document',
     downloadDocument: 'Click to download',
+    fileUploadedSuccessfully: 'File uploaded successfully!',
+    errorUploadingFile: 'Error uploading file',
+    sendFile: 'Send File',
+    clickToSelect: 'Click to select',
+    orDragFilesHere: 'or drag files here',
+    supportsImagesVideosDocumentsMax2MB: 'Supports images, videos and documents (max. 2MB)',
+    selectedFiles: 'Selected files',
+    sending: 'Sending...',
+    clear: 'Clear',
 
     // Quick Replies
     quickReply1: 'Hello! How can I help you today?',

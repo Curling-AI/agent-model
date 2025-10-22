@@ -10,13 +10,17 @@ interface ImageMessageProps {
   thumbnailBase64?: string
   textContent?: string
   className?: string
+  userId?: number
+  agentId?: number
 }
 
 export function ImageMessage({ 
   messageId, 
   thumbnailBase64, 
   textContent,
-  className = '' 
+  className = '',
+  userId,
+  agentId
 }: ImageMessageProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [hasLoadedHighQuality, setHasLoadedHighQuality] = useState(false)
@@ -34,7 +38,7 @@ export function ImageMessage({
     setError(false)
 
     try {
-      const data = await getMediaContent(messageId)
+      const data = await getMediaContent(messageId, userId, agentId)
       if (data.success && data.data.fileURL) {
         setHighQualityImageUrl(data.data.fileURL)
         setHasLoadedHighQuality(true)
@@ -52,15 +56,32 @@ export function ImageMessage({
   }
 
   const handleDownload = async () => {
-    const base64 = await handleImageClick()
-    if (base64) {
-      const link = document.createElement('a')
-      link.href = `data:image/jpeg;base64,${base64}`
-      link.download = `image-${messageId}.jpg`
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-    } else {
+    try {
+      let base64: string | null = null
+      
+      if (hasLoadedHighQuality) {
+        // Se já está carregada, buscar o base64Data diretamente
+        const data = await getMediaContent(messageId, userId, agentId)
+        if (data.success && data.data.base64Data) {
+          base64 = data.data.base64Data
+        }
+      } else {
+        // Se não está carregada, usar handleImageClick
+        base64 = await handleImageClick()
+      }
+      
+      if (base64) {
+        const link = document.createElement('a')
+        link.href = `data:image/jpeg;base64,${base64}`
+        link.download = `image-${messageId}.jpg`
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+      } else {
+        setError(true)
+      }
+    } catch (err) {
+      console.error('Erro ao baixar imagem:', err)
       setError(true)
     }
   }

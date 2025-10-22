@@ -65,21 +65,20 @@ export const MessageController = {
 
   async sendMedia(req: Request, res: Response) {
     try {
-      const { to, media, type, instanceName } = req.body;
-      if (!to || !media || !type) {
+      const { to, media, name, type, instanceName, conversationId } = req.body;
+      if (!to || !media || !type || !conversationId) {
         return res.status(400).json({ error: 'to, media e type são obrigatórios' });
       }
 
       const token = await getTokenFromInstance(instanceName as string);
 
-      const response = await sendMedia(to, media, type, token);
+      const data = await sendMedia(to, media, type, token, name);
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        return res.status(500).json({ error: 'Erro ao enviar mídia', details: errorData });
+      if (!data) {
+        return res.status(500).json({ error: 'Erro ao enviar mídia', details: data });
       }
 
-      const data = await response.json();
+      await upsert('conversation_messages', { conversation_id: conversationId, sender: 'member', content: '', metadata: data, timestamp: new Date() });
 
       res.json({ success: true, data });
     } catch (error: any) {
@@ -102,16 +101,17 @@ export const MessageController = {
 
   async getMediaContent(req: Request, res: Response) {
     try {
-      const { id: messageId } = req.query;
+      const { id: messageId, instanceName } = req.query;
       if (!messageId) {
         return res.status(400).json({ error: 'messageId é obrigatório' });
       }
       const message = await getById<any>('conversation_messages', Number(messageId));
+      const token = instanceName ? await getTokenFromInstance(instanceName as string) : message.metadata.token as string;
 
-      if (!message || !message.metadata || !message.metadata.token) {
+      if (!message || !token) {
         return res.status(404).json({ error: 'Mensagem não encontrada' });
       }
-      const data = await getMediaContent(message.metadata.message.id, message.metadata.token as string);
+      const data = await getMediaContent(message.metadata.message?.id || message.metadata.id, token);
       res.json({ success: true, data });
     } catch (error: any) {
       res.status(500).json({ error: 'Erro ao obter conteúdo da mídia', details: error.message });

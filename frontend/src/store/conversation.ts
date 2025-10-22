@@ -17,8 +17,9 @@ interface ConversationState {
   subscribeToUpdates: (conversations: Conversation[], listener?: (payload: any) => void) => RealtimeChannel
   unsubscribeFromUpdates: (channel: RealtimeChannel) => void
   sendMessage: (agentId: number, userId: number, message: string, to: string, conversationId: number) => Promise<string | undefined>
+  sendMedia: (agentId: number, userId: number, to: string, media: string, name: string, type: string, conversationId: number) => Promise<string | undefined>
   changeConversationMode: (conversationId: number, mode: 'agent' | 'human') => Promise<void>
-  getMediaContent: (messageId: number) => Promise<{ data: any, success: boolean }>
+  getMediaContent: (messageId: number, userId?: number, agentId?: number) => Promise<{ data: any, success: boolean }>
 }
 
 export const useConversationStore = create<ConversationState>((set) => ({
@@ -127,6 +128,18 @@ export const useConversationStore = create<ConversationState>((set) => ({
     return msg
   },
 
+  sendMedia: async (agentId: number, userId: number, to: string, media: string, name: string, type: string, conversationId: number) => {
+    const instance = `agent-${agentId}-user-${userId}`
+    const res = await fetch(`${BASE_URL}/messages/send-media`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to, media, name, type, instanceName: instance, conversationId }),
+    })
+    if (!res.ok) return
+    const data = await res.json()
+    return data
+  },
+
   changeConversationMode: async (conversationId: number, mode: 'agent' | 'human') => {
     const res = await fetch(`${BASE_URL}/conversations/${conversationId}/mode`, {
       method: 'PUT',
@@ -141,12 +154,19 @@ export const useConversationStore = create<ConversationState>((set) => ({
     return data
   },
 
-  getMediaContent: async (messageId: number) => {
-    const res = await fetch(`${BASE_URL}/messages/media-content?id=${messageId}`, {
+  getMediaContent: async (messageId: number, userId?: number, agentId?: number) => {
+    const url = new URL(`${BASE_URL}/messages/media-content`)
+    url.searchParams.set('id', messageId.toString())
+    if (userId && agentId) {
+      const instance = `agent-${agentId}-user-${userId}`
+      url.searchParams.set('instanceName', instance)
+    }
+    const res = await fetch(url.toString(), {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
     })
     if (!res.ok) return
+
     const data = await res.json()
     return data
   },

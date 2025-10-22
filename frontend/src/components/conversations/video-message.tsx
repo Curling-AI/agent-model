@@ -10,13 +10,17 @@ interface VideoMessageProps {
   thumbnailBase64?: string
   textContent?: string
   className?: string
+  userId?: number
+  agentId?: number
 }
 
 export function VideoMessage({ 
   messageId, 
   thumbnailBase64, 
   textContent,
-  className = '' 
+  className = '',
+  userId,
+  agentId
 }: VideoMessageProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [hasLoadedHighQuality, setHasLoadedHighQuality] = useState(false)
@@ -45,7 +49,7 @@ export function VideoMessage({
     setError(false)
 
     try {
-      const data = await getMediaContent(messageId)
+      const data = await getMediaContent(messageId, userId, agentId)
       if (data.success && data.data.fileURL) {
         setHighQualityVideoUrl(data.data.fileURL)
         setHasLoadedHighQuality(true)
