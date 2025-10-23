@@ -85,9 +85,9 @@ export function FileUpload({ onFileSelect, disabled = false, isOpen, onClose }: 
     e.preventDefault()
     e.stopPropagation()
     setDragActive(false)
-    
+
     if (disabled) return
-    
+
     handleFiles(e.dataTransfer.files)
   }
 
@@ -126,14 +126,11 @@ export function FileUpload({ onFileSelect, disabled = false, isOpen, onClose }: 
   }
 
   return (
-    <div className="file-upload-container absolute bottom-full right-0 mb-2 w-80 rounded-lg border border-base-300 bg-base-100 shadow-lg sm:w-96">
+    <div className="file-upload-container border-base-300 bg-base-100 absolute right-0 bottom-full mb-2 w-80 rounded-lg border shadow-lg sm:w-96">
       {/* Header */}
       <div className="border-base-300 flex items-center justify-between border-b p-3">
         <h3 className="text-sm font-semibold">{t.sendFile}</h3>
-        <button
-          onClick={onClose}
-          className="btn btn-ghost btn-xs"
-        >
+        <button onClick={onClose} className="btn btn-ghost btn-xs">
           <X className="h-4 w-4" />
         </button>
       </div>
@@ -141,11 +138,7 @@ export function FileUpload({ onFileSelect, disabled = false, isOpen, onClose }: 
       {/* Área de upload */}
       <div className="p-4">
         <div
-          className={`
-            relative border-2 border-dashed rounded-lg p-6 text-center transition-colors
-            ${dragActive ? 'border-primary bg-primary/5' : 'border-gray-300 hover:border-gray-400'}
-            ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
-          `}
+          className={`relative rounded-lg border-2 border-dashed p-6 text-center transition-colors ${dragActive ? 'border-primary bg-primary/5' : 'border-gray-300 hover:border-gray-400'} ${disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'} `}
           onDragEnter={handleDrag}
           onDragLeave={handleDrag}
           onDragOver={handleDrag}
@@ -160,56 +153,57 @@ export function FileUpload({ onFileSelect, disabled = false, isOpen, onClose }: 
             className="hidden"
             disabled={disabled}
           />
-          
+
           <div className="flex flex-col items-center space-y-2">
             <Upload className={`h-8 w-8 ${dragActive ? 'text-primary' : 'text-gray-400'}`} />
             <div className="text-sm text-gray-600">
-              <span className="font-medium text-primary">{t.clickToSelect}</span> {t.orDragFilesHere}
+              <span className="text-primary font-medium">{t.clickToSelect}</span>{' '}
+              {t.orDragFilesHere}
             </div>
-            <div className="text-xs text-gray-500">
-              {t.supportsImagesVideosDocumentsMax2MB}
-            </div>
+            <div className="text-xs text-gray-500">{t.supportsImagesVideosDocumentsMax2MB}</div>
           </div>
         </div>
       </div>
 
       {/* Preview dos arquivos selecionados */}
       {selectedFiles.length > 0 && (
-        <div className="border-t border-base-300 p-4">
+        <div className="border-base-300 border-t p-4">
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <h4 className="font-medium text-sm">{t.selectedFiles} ({selectedFiles.length})</h4>
+              <h4 className="text-sm font-medium">
+                {t.selectedFiles} ({selectedFiles.length})
+              </h4>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setSelectedFiles([])}
                 disabled={uploading}
               >
-                <X className="h-4 w-4 mr-1" />
+                <X className="mr-1 h-4 w-4" />
                 {t.clear}
               </Button>
             </div>
 
-            <div className="max-h-40 overflow-y-auto space-y-2">
+            <div className="max-h-40 space-y-2 overflow-y-auto">
               {selectedFiles.map((filePreview, index) => (
-                <div key={index} className="flex items-center space-x-3 p-2 bg-gray-50 rounded-lg">
-                  <div className="flex-1 min-w-0">
+                <div key={index} className="flex items-center space-x-3 rounded-lg bg-gray-50 p-2">
+                  <div className="min-w-0 flex-1">
                     <div className="flex items-center space-x-2">
-                      <p className="text-sm font-medium text-gray-900 truncate">
+                      <p className="truncate text-sm font-medium text-gray-900">
                         {filePreview.file.name}
                       </p>
                       <span className="text-xs text-gray-500">
                         {formatFileSize(filePreview.file.size)}
                       </span>
                     </div>
-                    
+
                     {/* Preview para imagens */}
                     {filePreview.type === 'image' && filePreview.preview && (
                       <div className="mt-2">
                         <img
                           src={filePreview.preview}
                           alt={filePreview.file.name}
-                          className="h-12 w-12 object-cover rounded border"
+                          className="h-12 w-12 rounded border object-cover"
                         />
                       </div>
                     )}
@@ -230,11 +224,7 @@ export function FileUpload({ onFileSelect, disabled = false, isOpen, onClose }: 
 
             {/* Botão de upload */}
             <div className="flex justify-end space-x-2 pt-2">
-              <Button
-                variant="outline"
-                onClick={() => setSelectedFiles([])}
-                disabled={uploading}
-              >
+              <Button variant="outline" onClick={() => setSelectedFiles([])} disabled={uploading}>
                 {t.cancel}
               </Button>
               <Button
@@ -244,12 +234,12 @@ export function FileUpload({ onFileSelect, disabled = false, isOpen, onClose }: 
               >
                 {uploading ? (
                   <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                    <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-white" />
                     {t.sending}
                   </>
                 ) : (
                   <>
-                    <Upload className="h-4 w-4 mr-2" />
+                    <Upload className="mr-2 h-4 w-4" />
                     {t.send}
                   </>
                 )}

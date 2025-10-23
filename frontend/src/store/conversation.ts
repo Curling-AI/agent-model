@@ -14,12 +14,33 @@ interface ConversationState {
   deleteConversation: (id: number) => Promise<void>
   sendTestMessage: (agentId: number, userId: number, message: string) => Promise<string | undefined>
   setCurrentConversation: (id: number) => void
-  subscribeToUpdates: (conversations: Conversation[], listener?: (payload: any) => void) => RealtimeChannel
+  subscribeToUpdates: (
+    conversations: Conversation[],
+    listener?: (payload: any) => void,
+  ) => RealtimeChannel
   unsubscribeFromUpdates: (channel: RealtimeChannel) => void
-  sendMessage: (agentId: number, userId: number, message: string, to: string, conversationId: number) => Promise<string | undefined>
-  sendMedia: (agentId: number, userId: number, to: string, media: string, name: string, type: string, conversationId: number) => Promise<string | undefined>
+  sendMessage: (
+    agentId: number,
+    userId: number,
+    message: string,
+    to: string,
+    conversationId: number,
+  ) => Promise<string | undefined>
+  sendMedia: (
+    agentId: number,
+    userId: number,
+    to: string,
+    media: string,
+    name: string,
+    type: string,
+    conversationId: number,
+  ) => Promise<string | undefined>
   changeConversationMode: (conversationId: number, mode: 'agent' | 'human') => Promise<void>
-  getMediaContent: (messageId: number, userId?: number, agentId?: number) => Promise<{ data: any, success: boolean }>
+  getMediaContent: (
+    messageId: number,
+    userId?: number,
+    agentId?: number,
+  ) => Promise<{ data: any; success: boolean }>
 }
 
 export const useConversationStore = create<ConversationState>((set) => ({
@@ -82,41 +103,64 @@ export const useConversationStore = create<ConversationState>((set) => ({
     set(() => ({ currentConversationId: id }))
   },
 
-  subscribeToUpdates: (conversations: Conversation[], listener: (payload: any) => void = () => {}) => {
-    const channel = supabase.channel('conversations')
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'conversation_messages', filter: `conversation_id=in.(${Array.from(new Set(conversations.map((c) => c.id))).join(',')})` }, (payload: any) => {
-      set((state) => ({
-        conversations: state.conversations.map((c) => {
-          if (c.id === payload.new.conversation_id) {
-            // Verificar se a mensagem já existe para evitar duplicatas
-            const messageExists = c.messages.some(m => m.id === payload.new.id)
-            if (!messageExists) {
-              return {
-                ...c, 
-                messages: [...c.messages, {
-                  ...payload.new,
-                  timestamp: new Date(payload.new.timestamp)
-                }]
+  subscribeToUpdates: (
+    conversations: Conversation[],
+    listener: (payload: any) => void = () => {},
+  ) => {
+    const channel = supabase
+      .channel('conversations')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'conversation_messages',
+          filter: `conversation_id=in.(${Array.from(new Set(conversations.map((c) => c.id))).join(',')})`,
+        },
+        (payload: any) => {
+          set((state) => ({
+            conversations: state.conversations.map((c) => {
+              if (c.id === payload.new.conversation_id) {
+                // Verificar se a mensagem já existe para evitar duplicatas
+                const messageExists = c.messages.some((m) => m.id === payload.new.id)
+                if (!messageExists) {
+                  return {
+                    ...c,
+                    messages: [
+                      ...c.messages,
+                      {
+                        ...payload.new,
+                        timestamp: new Date(payload.new.timestamp),
+                      },
+                    ],
+                  }
+                }
               }
-            }
-          }
-          return c
-        }),
-      }));
-      listener(payload);
-    }).subscribe();
-    set({ channel: channel });
-    return channel;
+              return c
+            }),
+          }))
+          listener(payload)
+        },
+      )
+      .subscribe()
+    set({ channel: channel })
+    return channel
   },
 
   unsubscribeFromUpdates: (channel: RealtimeChannel) => {
     if (channel) {
-      channel.unsubscribe();
-      set({ channel: null });
+      channel.unsubscribe()
+      set({ channel: null })
     }
   },
 
-  sendMessage: async (agentId: number, userId: number, message: string, to: string, conversationId: number) => {
+  sendMessage: async (
+    agentId: number,
+    userId: number,
+    message: string,
+    to: string,
+    conversationId: number,
+  ) => {
     const instance = `agent-${agentId}-user-${userId}`
     const res = await fetch(`${BASE_URL}/messages/send-message`, {
       method: 'POST',
@@ -128,7 +172,15 @@ export const useConversationStore = create<ConversationState>((set) => ({
     return msg
   },
 
-  sendMedia: async (agentId: number, userId: number, to: string, media: string, name: string, type: string, conversationId: number) => {
+  sendMedia: async (
+    agentId: number,
+    userId: number,
+    to: string,
+    media: string,
+    name: string,
+    type: string,
+    conversationId: number,
+  ) => {
     const instance = `agent-${agentId}-user-${userId}`
     const res = await fetch(`${BASE_URL}/messages/send-media`, {
       method: 'POST',
@@ -149,7 +201,7 @@ export const useConversationStore = create<ConversationState>((set) => ({
     if (!res.ok) throw new Error('Failed to change conversation mode')
     const data = await res.json()
     set((state) => ({
-      conversations: state.conversations.map((c) => c.id === conversationId ? { ...c, mode } : c),
+      conversations: state.conversations.map((c) => (c.id === conversationId ? { ...c, mode } : c)),
     }))
     return data
   },

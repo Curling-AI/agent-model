@@ -14,13 +14,13 @@ interface VideoMessageProps {
   agentId?: number
 }
 
-export function VideoMessage({ 
-  messageId, 
-  thumbnailBase64, 
+export function VideoMessage({
+  messageId,
+  thumbnailBase64,
   textContent,
   className = '',
   userId,
-  agentId
+  agentId,
 }: VideoMessageProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [hasLoadedHighQuality, setHasLoadedHighQuality] = useState(false)
@@ -37,9 +37,9 @@ export function VideoMessage({
 
   const language = useLanguage()
   const t = useTranslation(language)
-  
+
   const videoRef = useRef<HTMLVideoElement>(null)
-  
+
   const { getMediaContent } = useConversationStore()
 
   const handleVideoClick = async () => {
@@ -90,25 +90,31 @@ export function VideoMessage({
     } else {
       // Garantir que o vídeo não esteja mutado quando iniciar a reprodução
       videoRef.current.muted = isMuted
-      videoRef.current.play().then(() => {
-        setIsPlaying(true)
-      }).catch((error) => {
-        console.error('Erro ao reproduzir vídeo:', error)
-        // Se falhar por causa de autoplay, tentar com muted
-        if (error.name === 'NotAllowedError') {
-          videoRef.current!.muted = true
-          setIsMuted(true)
-          videoRef.current!.play().then(() => {
-            setIsPlaying(true)
-          }).catch(console.error)
-        }
-      })
+      videoRef.current
+        .play()
+        .then(() => {
+          setIsPlaying(true)
+        })
+        .catch((error) => {
+          console.error('Erro ao reproduzir vídeo:', error)
+          // Se falhar por causa de autoplay, tentar com muted
+          if (error.name === 'NotAllowedError') {
+            videoRef.current!.muted = true
+            setIsMuted(true)
+            videoRef
+              .current!.play()
+              .then(() => {
+                setIsPlaying(true)
+              })
+              .catch(console.error)
+          }
+        })
     }
   }
 
   const toggleMute = () => {
     if (!videoRef.current) return
-    
+
     const newMutedState = !isMuted
     videoRef.current.muted = newMutedState
     videoRef.current.volume = newMutedState ? 0 : 1
@@ -143,7 +149,7 @@ export function VideoMessage({
     if (!videoRef.current || !duration) return
 
     e.stopPropagation()
-    
+
     const rect = e.currentTarget.getBoundingClientRect()
     const clickX = e.clientX - rect.left
     const progressBarWidth = rect.width
@@ -156,15 +162,15 @@ export function VideoMessage({
   // Funções para controles mobile
   const showControlsTemporarily = () => {
     setShowControls(true)
-    
+
     if (controlsTimeout) {
       clearTimeout(controlsTimeout)
     }
-    
+
     const timeout = setTimeout(() => {
       setShowControls(false)
     }, 3000)
-    
+
     setControlsTimeout(timeout)
   }
 
@@ -179,12 +185,15 @@ export function VideoMessage({
   // Detectar dispositivo móvel
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768 || /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent))
+      setIsMobile(
+        window.innerWidth < 768 ||
+          /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
+      )
     }
-    
+
     checkMobile()
     window.addEventListener('resize', checkMobile)
-    
+
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
@@ -202,7 +211,7 @@ export function VideoMessage({
     if (videoRef.current && hasLoadedHighQuality) {
       videoRef.current.muted = isMuted
       videoRef.current.volume = isMuted ? 0 : 1
-      
+
       // Reproduzir automaticamente após carregar
       const playVideo = async () => {
         try {
@@ -223,18 +232,20 @@ export function VideoMessage({
           }
         }
       }
-      
+
       playVideo()
     }
   }, [hasLoadedHighQuality, isMuted])
 
-  const videoUrl = hasLoadedHighQuality ? highQualityVideoUrl : `data:video/mp4;base64,${thumbnailBase64}`
+  const videoUrl = hasLoadedHighQuality
+    ? highQualityVideoUrl
+    : `data:video/mp4;base64,${thumbnailBase64}`
 
   return (
     <div className={`space-y-2 ${className}`}>
       {/* Container do vídeo */}
-      <div className="relative group">
-        <div 
+      <div className="group relative">
+        <div
           className={`relative overflow-hidden rounded-lg transition-all duration-200 ${
             !hasLoadedHighQuality ? 'cursor-pointer hover:scale-105 hover:shadow-lg' : ''
           }`}
@@ -247,7 +258,7 @@ export function VideoMessage({
             <video
               ref={videoRef}
               src={videoUrl}
-              className="w-full h-auto sm:max-w-sm object-contain"
+              className="h-auto w-full object-contain sm:max-w-sm"
               onTimeUpdate={handleTimeUpdate}
               onLoadedMetadata={handleLoadedMetadata}
               onEnded={handleVideoEnd}
@@ -258,64 +269,66 @@ export function VideoMessage({
               onClick={handleVideoTouch}
             />
           ) : (
-            <img 
+            <img
               src={`data:image/jpeg;base64,${thumbnailBase64}`}
               alt="Video thumbnail"
-              className={`w-xl h-xl sm:max-w-sm object-contain ${
-                !hasLoadedHighQuality ? 'filter brightness-90' : ''
+              className={`h-xl w-xl object-contain sm:max-w-sm ${
+                !hasLoadedHighQuality ? 'brightness-90 filter' : ''
               }`}
               onError={() => setError(true)}
             />
           )}
-          
+
           {/* Overlay de loading */}
           {isLoading && (
-            <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-              <Loader2 className="h-8 w-8 text-white animate-spin" />
+            <div className="bg-opacity-50 absolute inset-0 flex items-center justify-center bg-black">
+              <Loader2 className="h-8 w-8 animate-spin text-white" />
             </div>
           )}
-          
+
           {/* Overlay de erro */}
           {error && (
-            <div className="absolute inset-0 bg-red-500 bg-opacity-50 flex items-center justify-center">
-              <div className="text-white text-center">
-                <VideoIcon className="h-8 w-8 mx-auto mb-2" />
+            <div className="bg-opacity-50 absolute inset-0 flex items-center justify-center bg-red-500">
+              <div className="text-center text-white">
+                <VideoIcon className="mx-auto mb-2 h-8 w-8" />
                 <p className="text-sm">Erro ao carregar vídeo</p>
               </div>
             </div>
           )}
-          
+
           {/* Botão de play para thumbnail */}
           {!hasLoadedHighQuality && !isLoading && !error && (
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="bg-black bg-opacity-60 rounded-full p-4 cursor-pointer">
+              <div className="bg-opacity-60 cursor-pointer rounded-full bg-black p-4">
                 <Play className="h-8 w-8 text-white" />
               </div>
             </div>
           )}
-          
+
           {/* Controles do vídeo */}
           {hasLoadedHighQuality && !isLoading && !error && (
-            <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-200 ${
-              showControls ? 'opacity-100' : 'opacity-0'
-            }`}>
-              <div className="bg-black bg-opacity-60 rounded-full p-3 sm:p-4 cursor-pointer">
+            <div
+              className={`absolute inset-0 flex items-center justify-center transition-opacity duration-200 ${
+                showControls ? 'opacity-100' : 'opacity-0'
+              }`}
+            >
+              <div className="bg-opacity-60 cursor-pointer rounded-full bg-black p-3 sm:p-4">
                 {isPlaying ? (
-                  <Pause className="h-6 w-6 sm:h-8 sm:w-8 text-white" onClick={togglePlayPause} />
+                  <Pause className="h-6 w-6 text-white sm:h-8 sm:w-8" onClick={togglePlayPause} />
                 ) : (
-                  <Play className="h-6 w-6 sm:h-8 sm:w-8 text-white" onClick={togglePlayPause} />
+                  <Play className="h-6 w-6 text-white sm:h-8 sm:w-8" onClick={togglePlayPause} />
                 )}
               </div>
             </div>
           )}
-          
+
           {/* Botão de download */}
           <button
             onClick={(e) => {
               e.stopPropagation()
               handleDownload()
             }}
-            className={`absolute top-2 left-2 bg-black bg-opacity-60 hover:bg-opacity-80 text-white p-1.5 rounded transition-all duration-200 cursor-pointer ${
+            className={`bg-opacity-60 hover:bg-opacity-80 absolute top-2 left-2 cursor-pointer rounded bg-black p-1.5 text-white transition-all duration-200 ${
               isMobile ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
             }`}
             title={t.downloadVideo}
@@ -330,7 +343,7 @@ export function VideoMessage({
                 e.stopPropagation()
                 toggleMute()
               }}
-              className={`absolute top-2 left-12 bg-black bg-opacity-60 hover:bg-opacity-80 text-white p-1.5 rounded transition-all duration-200 cursor-pointer ${
+              className={`bg-opacity-60 hover:bg-opacity-80 absolute top-2 left-12 cursor-pointer rounded bg-black p-1.5 text-white transition-all duration-200 ${
                 isMobile ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
               }`}
               title={isMuted ? t.unmute : t.mute}
@@ -341,19 +354,21 @@ export function VideoMessage({
 
           {/* Barra de progresso */}
           {hasLoadedHighQuality && !isLoading && !error && (
-            <div className={`absolute bottom-0 left-0 right-0 bg-black bg-opacity-60 text-white text-xs px-2 py-1 transition-opacity duration-200 cursor-pointer ${
-              isMobile ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-            }`}>
-              <div className="flex justify-between items-center">
+            <div
+              className={`bg-opacity-60 absolute right-0 bottom-0 left-0 cursor-pointer bg-black px-2 py-1 text-xs text-white transition-opacity duration-200 ${
+                isMobile ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+              }`}
+            >
+              <div className="flex items-center justify-between">
                 <span className="text-xs">{formatTime(currentTime)}</span>
                 <span className="text-xs">{formatTime(duration)}</span>
               </div>
-              <div 
-                className="w-full bg-gray-600 rounded-full h-1 mt-1 cursor-pointer hover:bg-gray-500 transition-colors duration-200"
+              <div
+                className="mt-1 h-1 w-full cursor-pointer rounded-full bg-gray-600 transition-colors duration-200 hover:bg-gray-500"
                 onClick={handleProgressClick}
               >
-                <div 
-                  className="bg-white h-1 rounded-full transition-all duration-200 hover:bg-blue-400"
+                <div
+                  className="h-1 rounded-full bg-white transition-all duration-200 hover:bg-blue-400"
                   style={{ width: `${duration > 0 ? (currentTime / duration) * 100 : 0}%` }}
                 />
               </div>
@@ -361,13 +376,9 @@ export function VideoMessage({
           )}
         </div>
       </div>
-      
+
       {/* Conteúdo textual */}
-      {textContent && (
-        <div className="text-sm leading-relaxed">
-          {textContent}
-        </div>
-      )}
+      {textContent && <div className="text-sm leading-relaxed">{textContent}</div>}
     </div>
   )
 }

@@ -9,7 +9,13 @@ interface AudioRecorderProps {
   show?: boolean
 }
 
-export function AudioRecorder({ onSendAudio, onClose, disabled = false, className = '', show = false }: AudioRecorderProps) {
+export function AudioRecorder({
+  onSendAudio,
+  onClose,
+  disabled = false,
+  className = '',
+  show = false,
+}: AudioRecorderProps) {
   const [isRecording, setIsRecording] = useState(false)
   const [isPaused, setIsPaused] = useState(false)
   const [recordedAudio, setRecordedAudio] = useState<Blob | null>(null)
@@ -73,28 +79,28 @@ export function AudioRecorder({ onSendAudio, onClose, disabled = false, classNam
     return new Promise((resolve) => {
       const audio = new Audio()
       const url = URL.createObjectURL(audioBlob)
-      
+
       audio.addEventListener('loadedmetadata', async () => {
         try {
           const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
           const response = await fetch(url)
           const arrayBuffer = await response.arrayBuffer()
           const audioBuffer = await audioContext.decodeAudioData(arrayBuffer)
-          
+
           const channelData = audioBuffer.getChannelData(0)
           const samples = 64
           const blockSize = Math.floor(channelData.length / samples)
           const waveformData: number[] = []
-          
+
           for (let i = 0; i < samples; i++) {
             let sum = 0
             const start = i * blockSize
             const end = Math.min(start + blockSize, channelData.length)
-            
+
             for (let j = start; j < end; j++) {
               sum += Math.abs(channelData[j])
             }
-            
+
             const average = sum / (end - start)
             let normalized = Math.max(10, Math.floor(average * 255 * 10))
             if (normalized > 128) {
@@ -102,7 +108,7 @@ export function AudioRecorder({ onSendAudio, onClose, disabled = false, classNam
             }
             waveformData.push(normalized)
           }
-          
+
           URL.revokeObjectURL(url)
           resolve(waveformData)
         } catch (error) {
@@ -111,12 +117,12 @@ export function AudioRecorder({ onSendAudio, onClose, disabled = false, classNam
           resolve([])
         }
       })
-      
+
       audio.addEventListener('error', () => {
         URL.revokeObjectURL(url)
         resolve([])
       })
-      
+
       audio.src = url
       audio.load()
     })
@@ -126,43 +132,42 @@ export function AudioRecorder({ onSendAudio, onClose, disabled = false, classNam
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: 'audio/webm;codecs=opus'
+        mimeType: 'audio/webm;codecs=opus',
       })
-      
+
       mediaRecorderRef.current = mediaRecorder
       audioChunksRef.current = []
-      
+
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
           audioChunksRef.current.push(event.data)
         }
       }
-      
+
       mediaRecorder.onstop = async () => {
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
         setRecordedAudio(audioBlob)
-        
+
         const url = URL.createObjectURL(audioBlob)
         setAudioUrl(url)
-        
+
         // Calcula waveform
         const waveform = await calculateWaveform(audioBlob)
         setWaveformData(waveform)
-        
+
         // Para o stream
-        stream.getTracks().forEach(track => track.stop())
+        stream.getTracks().forEach((track) => track.stop())
       }
-      
+
       mediaRecorder.start()
       setIsRecording(true)
       setIsPaused(false)
       recordingStartTimeRef.current = Date.now()
-      
+
       // Atualiza o tempo de gravação a cada 100ms
       recordingIntervalRef.current = setInterval(() => {
         setRecordingTime(Math.floor((Date.now() - recordingStartTimeRef.current) / 1000))
       }, 100)
-      
     } catch (error) {
       console.error('Erro ao iniciar gravação:', error)
     }
@@ -173,7 +178,7 @@ export function AudioRecorder({ onSendAudio, onClose, disabled = false, classNam
       mediaRecorderRef.current.stop()
       setIsRecording(false)
       setIsPaused(false)
-      
+
       if (recordingIntervalRef.current) {
         clearInterval(recordingIntervalRef.current)
         recordingIntervalRef.current = null
@@ -185,7 +190,7 @@ export function AudioRecorder({ onSendAudio, onClose, disabled = false, classNam
     if (mediaRecorderRef.current && isRecording) {
       if (isPaused) {
         mediaRecorderRef.current.resume()
-        recordingStartTimeRef.current = Date.now() - (recordingTime * 1000)
+        recordingStartTimeRef.current = Date.now() - recordingTime * 1000
       } else {
         mediaRecorderRef.current.pause()
       }
@@ -245,7 +250,7 @@ export function AudioRecorder({ onSendAudio, onClose, disabled = false, classNam
     setIsPlaying(false)
     setRecordingTime(0)
     setWaveformData([])
-    
+
     if (audioUrl && audioUrl.startsWith('blob:')) {
       URL.revokeObjectURL(audioUrl)
     }
@@ -262,48 +267,45 @@ export function AudioRecorder({ onSendAudio, onClose, disabled = false, classNam
   return (
     <div className={`flex items-center space-x-2 ${className}`}>
       {audioUrl && <audio ref={audioRef} src={audioUrl} preload="metadata" />}
-      
+
       {/* Container principal - similar à textarea */}
-      <div className="relative flex-1 flex items-center justify-center">
-        <div className="textarea textarea-bordered min-h-[60px] w-full flex items-center justify-center">
+      <div className="relative flex flex-1 items-center justify-center">
+        <div className="textarea textarea-bordered flex min-h-[60px] w-full items-center justify-center">
           {!recordedAudio ? (
             /* Estado de gravação */
             isRecording && (
               <div className="flex w-full items-center space-x-2">
-                <div className="w-2 h-2 bg-error rounded-full animate-pulse" />
-                <span className="text-sm font-medium">
-                  {formatTime(recordingTime)}
-                </span>
+                <div className="bg-error h-2 w-2 animate-pulse rounded-full" />
+                <span className="text-sm font-medium">{formatTime(recordingTime)}</span>
               </div>
-              )
+            )
           ) : (
             /* Estado de preview do áudio */
-            <div className="w-full flex items-center space-x-2">
+            <div className="flex w-full items-center space-x-2">
               {/* Controles de reprodução */}
-              <button
-                onClick={playRecordedAudio}
-                className="btn btn-outline btn-xs"
-              >
+              <button onClick={playRecordedAudio} className="btn btn-outline btn-xs">
                 {isPlaying ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
               </button>
 
               {/* Waveform */}
               {waveformData.length > 0 && (
                 <div
-                  className="hidden md:flex md:h-6 items-center space-x-px cursor-pointer"
+                  className="hidden cursor-pointer items-center space-x-px md:flex md:h-6"
                   onClick={handleSeek}
                 >
                   {waveformData.map((value, index) => {
                     const height = (value / 255) * 100
                     const isActive = (index / waveformData.length) * 100 <= progress
-                    
+
                     return (
                       <div
                         key={index}
-                        className="w-0.5 bg-primary/50 transition-colors"
-                        style={{ 
-                          height: `${Math.max(height, 8)}%`, 
-                          backgroundColor: isActive ? 'var(--color-primary)' : 'var(--color-primary/50)',
+                        className="bg-primary/50 w-0.5 transition-colors"
+                        style={{
+                          height: `${Math.max(height, 8)}%`,
+                          backgroundColor: isActive
+                            ? 'var(--color-primary)'
+                            : 'var(--color-primary/50)',
                         }}
                       />
                     )
@@ -313,25 +315,22 @@ export function AudioRecorder({ onSendAudio, onClose, disabled = false, classNam
 
               {/* Barra de progresso (fallback) */}
               {waveformData.length === 0 && (
-                <div
-                  className="h-2 bg-base-300 rounded-full cursor-pointer"
-                  onClick={handleSeek}
-                >
+                <div className="bg-base-300 h-2 cursor-pointer rounded-full" onClick={handleSeek}>
                   <div
-                    className="h-full bg-primary rounded-full transition-all duration-150"
+                    className="bg-primary h-full rounded-full transition-all duration-150"
                     style={{ width: `${progress}%` }}
                   />
                 </div>
               )}
-              
-              <div className="text-xs text-base-content/70">
+
+              <div className="text-base-content/70 text-xs">
                 <span>{formatTime(currentTime)}</span>
                 <span className="mx-1">/</span>
                 <span>{formatTime(duration)}</span>
               </div>
 
               <div className="absolute right-2 bottom-2 flex items-center space-x-1">
-                <Volume2 className="h-3 w-3 text-base-content/70" />
+                <Volume2 className="text-base-content/70 h-3 w-3" />
                 <input
                   type="range"
                   min="0"
@@ -339,27 +338,23 @@ export function AudioRecorder({ onSendAudio, onClose, disabled = false, classNam
                   step="0.1"
                   value={volume}
                   onChange={handleVolumeChange}
-                  className="w-12 h-1 bg-base-300 rounded-lg appearance-none cursor-pointer"
+                  className="bg-base-300 h-1 w-12 cursor-pointer appearance-none rounded-lg"
                 />
               </div>
             </div>
           )}
         </div>
         {/* Botões de ação - similar aos da textarea */}
-        {!recordedAudio &&
+        {!recordedAudio && (
           <div className="absolute right-2 bottom-2 flex items-center space-x-1">
-            <button
-              onClick={onClose}
-              className="btn btn-ghost btn-xs"
-            >
+            <button onClick={onClose} className="btn btn-ghost btn-xs">
               <X className="h-4 w-4" />
             </button>
           </div>
-        }
-        </div>
-        {
-          !recordedAudio ? (!isRecording ? 
-            (
+        )}
+      </div>
+      {!recordedAudio ? (
+        !isRecording ? (
           <button
             onClick={startRecording}
             disabled={disabled}
@@ -367,46 +362,40 @@ export function AudioRecorder({ onSendAudio, onClose, disabled = false, classNam
           >
             <Mic className="h-4 w-4" />
           </button>
-          )
-          :
-          (
-            /* Estado de gravação */
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={pauseRecording}
-                className="btn btn-outline btn-circle"
-              >
-                {isPaused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
-              </button>
-              <button
-                onClick={stopRecording}
-                className="btn btn-error btn-circle"
-              >
-                <Square className="h-4 w-4" />
-              </button>
-            </div>
-          )
-        )
-        :
-        (
+        ) : (
+          /* Estado de gravação */
           <div className="flex items-center space-x-2">
-            <button
-              onClick={() => {resetRecording(); onClose()}}
-              className="btn btn-outline btn-circle"
-            >
-              <Trash2 className="h-4 w-4" />
+            <button onClick={pauseRecording} className="btn btn-outline btn-circle">
+              {isPaused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
             </button>
-            <button
-              onClick={() => {sendAudio(); onClose()}}
-              disabled={disabled}
-              className="btn btn-primary btn-circle"
-            >
-              <Send className="h-4 w-4" />
+            <button onClick={stopRecording} className="btn btn-error btn-circle">
+              <Square className="h-4 w-4" />
             </button>
           </div>
-
         )
-        }
+      ) : (
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={() => {
+              resetRecording()
+              onClose()
+            }}
+            className="btn btn-outline btn-circle"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+          <button
+            onClick={() => {
+              sendAudio()
+              onClose()
+            }}
+            disabled={disabled}
+            className="btn btn-primary btn-circle"
+          >
+            <Send className="h-4 w-4" />
+          </button>
+        </div>
+      )}
     </div>
   )
 }

@@ -13,7 +13,16 @@ interface AudioMessageProps {
   agentId: number
 }
 
-export function AudioMessage({ waveform, className, messageId, durationSeconds, sender, audioBase64, userId, agentId }: AudioMessageProps) {
+export function AudioMessage({
+  waveform,
+  className,
+  messageId,
+  durationSeconds,
+  sender,
+  audioBase64,
+  userId,
+  agentId,
+}: AudioMessageProps) {
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(durationSeconds || 0)
@@ -34,7 +43,7 @@ export function AudioMessage({ waveform, className, messageId, durationSeconds, 
         for (let i = 0; i < binaryString.length; i++) {
           bytes[i] = binaryString.charCodeAt(i)
         }
-        
+
         // Converte para array de números (0-255)
         const data = Array.from(bytes)
         setWaveformData(data)
@@ -49,28 +58,28 @@ export function AudioMessage({ waveform, className, messageId, durationSeconds, 
   const calculateWaveform = async (audioUrl: string): Promise<number[]> => {
     return new Promise((resolve) => {
       const audio = new Audio()
-      
+
       audio.addEventListener('loadedmetadata', async () => {
         try {
           const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
           const response = await fetch(audioUrl)
           const arrayBuffer = await response.arrayBuffer()
           const audioBuffer = await audioContext.decodeAudioData(arrayBuffer)
-          
+
           const channelData = audioBuffer.getChannelData(0)
           const samples = 64 // Número de amostras para o waveform
           const blockSize = Math.floor(channelData.length / samples)
           const waveformData: number[] = []
-          
+
           for (let i = 0; i < samples; i++) {
             let sum = 0
             const start = i * blockSize
             const end = Math.min(start + blockSize, channelData.length)
-            
+
             for (let j = start; j < end; j++) {
               sum += Math.abs(channelData[j])
             }
-            
+
             const average = sum / (end - start)
             // Normaliza para 0-255 e adiciona um mínimo para visualização
             let normalized = Math.max(10, Math.floor(average * 255 * 10))
@@ -79,18 +88,18 @@ export function AudioMessage({ waveform, className, messageId, durationSeconds, 
             }
             waveformData.push(normalized)
           }
-          
+
           resolve(waveformData)
         } catch (error) {
           console.error('Erro ao calcular waveform:', error)
           resolve([])
         }
       })
-      
+
       audio.addEventListener('error', () => {
         resolve([])
       })
-      
+
       audio.src = audioUrl
       audio.load()
     })
@@ -138,16 +147,18 @@ export function AudioMessage({ waveform, className, messageId, durationSeconds, 
 
   const loadAudioContent = async () => {
     if (hasLoaded || isLoading) return
-    
+
     setIsLoading(true)
     try {
       if (sender === 'agent' && audioBase64) {
         // Para mensagens do agent, usa o base64 diretamente
-        const audioBlob = new Blob([Uint8Array.from(atob(audioBase64), c => c.charCodeAt(0))], { type: 'audio/mpeg' })
+        const audioBlob = new Blob([Uint8Array.from(atob(audioBase64), (c) => c.charCodeAt(0))], {
+          type: 'audio/mpeg',
+        })
         const audioUrl = URL.createObjectURL(audioBlob)
         setAudioUrl(audioUrl)
         setHasLoaded(true)
-        
+
         // Calcula o waveform se não tiver um waveform pré-definido
         if (!waveform) {
           const calculatedWaveform = await calculateWaveform(audioUrl)
@@ -161,7 +172,7 @@ export function AudioMessage({ waveform, className, messageId, durationSeconds, 
           setHasLoaded(true)
         }
       }
-      
+
       // Reset do tempo atual quando carrega novo áudio
       setCurrentTime(0)
     } catch (error) {
@@ -238,24 +249,25 @@ export function AudioMessage({ waveform, className, messageId, durationSeconds, 
   return (
     <div className={`flex flex-col space-y-2 ${className || ''}`}>
       {audioUrl && <audio ref={audioRef} src={audioUrl} preload="none" />}
-      
+
       {/* Waveform visual - maior verticalmente */}
       {waveformData.length > 0 && (
-        <div
-          className="flex h-8 items-center space-x-px cursor-pointer"
-          onClick={handleSeek}
-        >
+        <div className="flex h-8 cursor-pointer items-center space-x-px" onClick={handleSeek}>
           {waveformData.map((value, index) => {
             const height = (value / 255) * 200
             const isActive = (index / waveformData.length) * 100 <= progress
-            
+
             return (
               <div
                 key={index}
-                className="w-0.5 bg-base-content/50 transition-colors"
-                style={{ 
-                  height: `${ Math.min(Math.max(height, 12), 100) }%`, 
-                  backgroundColor: isActive ?  ['agent', 'member'].includes(sender) ? 'var(--color-base-300)' : 'var(--color-primary)' : 'var(--color-base-content/50)',
+                className="bg-base-content/50 w-0.5 transition-colors"
+                style={{
+                  height: `${Math.min(Math.max(height, 12), 100)}%`,
+                  backgroundColor: isActive
+                    ? ['agent', 'member'].includes(sender)
+                      ? 'var(--color-base-300)'
+                      : 'var(--color-primary)'
+                    : 'var(--color-base-content/50)',
                 }}
               />
             )
@@ -265,24 +277,21 @@ export function AudioMessage({ waveform, className, messageId, durationSeconds, 
 
       {/* Barra de progresso simples (fallback) - maior */}
       {waveformData.length === 0 && (
-        <div
-          className="h-2 bg-base-300 rounded-full cursor-pointer"
-          onClick={handleSeek}
-        >
+        <div className="bg-base-300 h-2 cursor-pointer rounded-full" onClick={handleSeek}>
           <div
-            className="h-full bg-primary rounded-full transition-all duration-150"
+            className="bg-primary h-full rounded-full transition-all duration-150"
             style={{ width: `${progress}%` }}
           />
         </div>
       )}
 
       {/* Controles na parte de baixo - responsivo para mobile */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center space-x-2">
           <button
             onClick={togglePlayPause}
             disabled={isLoading}
-            className="btn btn-outline btn-xs h-7 w-7 p-0 touch-manipulation disabled:opacity-50"
+            className="btn btn-outline btn-xs h-7 w-7 touch-manipulation p-0 disabled:opacity-50"
           >
             {isLoading ? (
               <div className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
@@ -294,7 +303,7 @@ export function AudioMessage({ waveform, className, messageId, durationSeconds, 
           </button>
 
           {/* Tempo */}
-          <div className="text-xs text-base-content/70 min-w-0">
+          <div className="text-base-content/70 min-w-0 text-xs">
             <span>{formatTime(currentTime)}</span>
             <span className="mx-1">/</span>
             <span>{formatTime(duration)}</span>
@@ -303,7 +312,7 @@ export function AudioMessage({ waveform, className, messageId, durationSeconds, 
 
         {/* Controle de volume - responsivo */}
         <div className="flex items-center space-x-2 sm:space-x-1">
-          <Volume2 className="h-3 w-3 text-base-content/70 flex-shrink-0" />
+          <Volume2 className="text-base-content/70 h-3 w-3 flex-shrink-0" />
           <input
             type="range"
             min="0"
@@ -312,8 +321,7 @@ export function AudioMessage({ waveform, className, messageId, durationSeconds, 
             value={volume}
             onChange={handleVolumeChange}
             disabled={!hasLoaded}
-            className="w-16 sm:w-12 h-1 bg-base-300 rounded-lg appearance-none cursor-pointer touch-manipulation disabled:opacity-50 border-base-content/50 border" 
-
+            className="bg-base-300 border-base-content/50 h-1 w-16 cursor-pointer touch-manipulation appearance-none rounded-lg border disabled:opacity-50 sm:w-12"
           />
         </div>
       </div>

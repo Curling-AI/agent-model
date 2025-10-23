@@ -4,7 +4,7 @@ const ConversationSkeleton = () => {
       <div className="flex items-start space-x-3">
         {/* Avatar skeleton */}
         <div className="bg-base-300 h-12 w-12 rounded-full"></div>
-        
+
         <div className="min-w-0 flex-1">
           {/* Name and time skeleton */}
           <div className="mb-1 flex items-center justify-between">
