@@ -212,6 +212,8 @@ export const WebhookController = {
           await sendMessage(phone, message.outputText, webhookContent.token);
         }
 
+      } else {
+        res.status(200).json({ message: 'Webhook processed successfully', conversation });
       }
     } catch (err) {
       console.log(err);

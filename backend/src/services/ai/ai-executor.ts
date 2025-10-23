@@ -77,7 +77,7 @@ async function executeAgent(agentId: number, userId: number, userInput: string, 
 
     return {
       outputText: response.output,
-      output: '',
+      output: response.output,
       type: 'text'
     };
   } catch (error) {

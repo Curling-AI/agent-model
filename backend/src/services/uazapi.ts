@@ -28,7 +28,7 @@ export const sendMessage = async (to: string, message: string, token: string) =>
   }
 };
 
-export const sendMedia = async (to: string, media: string, type: string, token: string) => {
+export const sendMedia = async (to: string, media: string, type: string, token: string, name?: string) => {
   try {
     const response = await fetch(`${process.env.UAZAPI_API_URL}/send/media`, {
       headers: {
@@ -39,7 +39,8 @@ export const sendMedia = async (to: string, media: string, type: string, token: 
       body: JSON.stringify({
         number: to,
         type,
-        file: media
+        file: media,
+        docName: name
       })
     });
      
