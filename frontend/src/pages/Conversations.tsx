@@ -52,18 +52,27 @@ const Conversations = () => {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   const [showFileUpload, setShowFileUpload] = useState(false)
   const [showAudioRecorder, setShowAudioRecorder] = useState(false)
-  
+
   // Refs para scroll automático
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const mobileMessagesContainerRef = useRef<HTMLDivElement>(null)
 
-  const { conversations, isLoading, listConversations, subscribeToUpdates, unsubscribeFromUpdates, channel, sendMessage: sendMessageStore, sendMedia, changeConversationMode } = useConversationStore()
+  const {
+    conversations,
+    isLoading,
+    listConversations,
+    subscribeToUpdates,
+    unsubscribeFromUpdates,
+    channel,
+    sendMessage: sendMessageStore,
+    sendMedia,
+    changeConversationMode,
+  } = useConversationStore()
   const [unread, setUnread] = useState<{ [key: number]: number }>({})
   const { organization } = useOrganizationStore()
   const organizationId = organization.id
   const userId = 1
 
-  
   const { fetchCrmColumns, crmColumns } = useCrmColumnStore()
   useEffect(() => {
     fetchCrmColumns()
@@ -73,8 +82,14 @@ const Conversations = () => {
     listConversations(organizationId).then((conversations) => {
       conversations.forEach((conversation) => {
         if (conversation.mode !== 'agent') {
-          const lastHumanMessage = [...conversation.messages].reverse().findIndex((message: ConversationMessage) => message.sender === 'human')
-          const lastMemberMessage = [...conversation.messages].reverse().findIndex((message: ConversationMessage) => ['member', 'agent'].includes(message.sender))
+          const lastHumanMessage = [...conversation.messages]
+            .reverse()
+            .findIndex((message: ConversationMessage) => message.sender === 'human')
+          const lastMemberMessage = [...conversation.messages]
+            .reverse()
+            .findIndex((message: ConversationMessage) =>
+              ['member', 'agent'].includes(message.sender),
+            )
           if (lastMemberMessage > lastHumanMessage) {
             setUnread((prev) => ({
               ...prev,
@@ -107,16 +122,16 @@ const Conversations = () => {
   // Effect para sincronizar a conversa selecionada com as atualizações do store
   useEffect(() => {
     if (selectedConversation) {
-      const updatedConversation = conversations.find(c => c.id === selectedConversation.id)
+      const updatedConversation = conversations.find((c) => c.id === selectedConversation.id)
       if (updatedConversation) {
         // Verificar se há novas mensagens comparando o número de mensagens primeiro (mais eficiente)
         if (updatedConversation.messages.length !== selectedConversation.messages.length) {
           setSelectedConversation(updatedConversation)
         } else {
           // Se o número é igual, verificar se há mensagens diferentes pelos IDs
-          const currentMessageIds = selectedConversation.messages.map(m => m.id).sort()
-          const updatedMessageIds = updatedConversation.messages.map(m => m.id).sort()
-          
+          const currentMessageIds = selectedConversation.messages.map((m) => m.id).sort()
+          const updatedMessageIds = updatedConversation.messages.map((m) => m.id).sort()
+
           if (JSON.stringify(currentMessageIds) !== JSON.stringify(updatedMessageIds)) {
             setSelectedConversation(updatedConversation)
           }
@@ -145,17 +160,25 @@ const Conversations = () => {
     const searchMatch =
       searchTerm === '' ||
       conv.lead.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      conv.messages[conv.messages.length - 1].content.toLowerCase().includes(searchTerm.toLowerCase())
+      conv.messages[conv.messages.length - 1].content
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase())
 
     return statusMatch && channelMatch && searchMatch
   })
 
   const sendMessage = () => {
     if (newMessage?.content.trim() && selectedConversation) {
-      sendMessageStore(selectedConversation.agent.id, userId, newMessage.content, selectedConversation.lead.phone, selectedConversation.id)
-        setNewMessage(null)
-      }
+      sendMessageStore(
+        selectedConversation.agent.id,
+        userId,
+        newMessage.content,
+        selectedConversation.lead.phone,
+        selectedConversation.id,
+      )
+      setNewMessage(null)
     }
+  }
 
   const handleFileUpload = async (file: File) => {
     if (!selectedConversation) return
@@ -166,7 +189,7 @@ const Conversations = () => {
       reader.onload = async () => {
         const base64 = reader.result as string
         const mediaData = base64.split(',')[1] // Remove o prefixo data:image/...;base64,
-        
+
         // Determinar o tipo de arquivo
         let fileType = 'document'
         if (file.type.startsWith('image/')) {
@@ -182,7 +205,7 @@ const Conversations = () => {
           mediaData,
           file.name,
           fileType,
-          selectedConversation.id
+          selectedConversation.id,
         )
       }
       reader.readAsDataURL(file)
@@ -201,7 +224,7 @@ const Conversations = () => {
       reader.onload = async () => {
         const base64 = reader.result as string
         const mediaData = base64.split(',')[1] // Remove o prefixo data:audio/...;base64,
-        
+
         // TODO: duration pode ser usado para metadata futura do áudio
         console.log('Duração do áudio:', duration, 'segundos')
         await sendMedia(
@@ -211,7 +234,7 @@ const Conversations = () => {
           mediaData,
           `audio_${Date.now()}.webm`,
           'audio',
-          selectedConversation.id
+          selectedConversation.id,
         )
       }
       reader.readAsDataURL(audioBlob)
@@ -232,7 +255,7 @@ const Conversations = () => {
     if (newMessage) {
       setNewMessage({
         ...newMessage,
-        content: newMessage.content + emoji
+        content: newMessage.content + emoji,
       })
     } else if (selectedConversation) {
       setNewMessage({
@@ -241,7 +264,7 @@ const Conversations = () => {
         sender: 'human' as const,
         content: emoji,
         timestamp: new Date(),
-        metadata: {}
+        metadata: {},
       })
     }
   }
@@ -316,7 +339,8 @@ const Conversations = () => {
   const getProfileImage = (conversation: Conversation) => {
     if (conversation.lead.source === 'whatsapp') {
       return (
-        [...conversation.messages].reverse().find((message) => message.sender === 'human')?.metadata?.chat?.imagePreview ?? ''
+        [...conversation.messages].reverse().find((message) => message.sender === 'human')?.metadata
+          ?.chat?.imagePreview ?? ''
       )
     }
     return ''
@@ -329,7 +353,8 @@ const Conversations = () => {
         messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight
       }
       if (mobileMessagesContainerRef.current) {
-        mobileMessagesContainerRef.current.scrollTop = mobileMessagesContainerRef.current.scrollHeight
+        mobileMessagesContainerRef.current.scrollTop =
+          mobileMessagesContainerRef.current.scrollHeight
       }
     }, 100)
   }
@@ -354,7 +379,9 @@ const Conversations = () => {
     const newMode = conversation.mode === 'agent' ? 'human' : 'agent'
     await changeConversationMode(conversation.id, newMode)
     if (selectedConversation) {
-      setSelectedConversation(prev => prev?.id === conversation.id ? { ...prev, mode: newMode } : prev)
+      setSelectedConversation((prev) =>
+        prev?.id === conversation.id ? { ...prev, mode: newMode } : prev,
+      )
     }
   }
 
@@ -582,7 +609,11 @@ const Conversations = () => {
                           </span>
                           <span
                             className={`badge badge-xs py-2`}
-                            style={{ backgroundColor: crmColumns.find((column) => column.id === conversation.lead.status)?.color }}
+                            style={{
+                              backgroundColor: crmColumns.find(
+                                (column) => column.id === conversation.lead.status,
+                              )?.color,
+                            }}
                           >
                             {getColumnName(conversation.lead.status)}
                           </span>
@@ -598,7 +629,7 @@ const Conversations = () => {
 
                         <div className="flex items-center space-x-1">
                           {unread[conversation.id] > 0 && (
-                            <span className="badge badge-xs badge-primary py-2 bg-primary text-primary-content">
+                            <span className="badge badge-xs badge-primary bg-primary text-primary-content py-2">
                               {unread[conversation.id]}
                             </span>
                           )}
@@ -629,7 +660,11 @@ const Conversations = () => {
                     <div className="relative">
                       <div className="mobile-avatar bg-primary text-primary-content flex items-center justify-center overflow-hidden rounded-full font-semibold">
                         {getProfileImage(selectedConversation) ? (
-                          <img src={getProfileImage(selectedConversation)} alt="Whatsapp" className="h-12 w-12 object-cover" />
+                          <img
+                            src={getProfileImage(selectedConversation)}
+                            alt="Whatsapp"
+                            className="h-12 w-12 object-cover"
+                          />
                         ) : (
                           selectedConversation.lead.name
                             .split(' ')
@@ -704,7 +739,7 @@ const Conversations = () => {
               </div>
 
               {/* Mensagens */}
-              <div 
+              <div
                 ref={messagesContainerRef}
                 className="bg-base-200 scrollbar-thin scrollbar-thumb-base-300 scrollbar-track-base-200 flex-1 overflow-y-auto p-4"
               >
@@ -721,47 +756,65 @@ const Conversations = () => {
                             : 'bg-primary text-primary-content'
                         }`}
                       >
-                        {
-                    message.metadata?.message?.messageType === 'AudioMessage' || message.metadata?.type === 'audio' || message.metadata?.messageType === 'AudioMessage' ? 
-                    <AudioMessage 
-                      messageId={message.id}
-                      waveform={message.metadata.message?.content?.waveform || message.metadata?.content?.waveform}
-                      durationSeconds={message.metadata.message?.content?.seconds || message.metadata?.content?.seconds}
-                      sender={message.sender}
-                      audioBase64={message.sender === 'agent' ? message.metadata?.output : undefined}
-                      userId={userId}
-                      agentId={selectedConversation.agent.id}
-                    />
-                          : 
-                      message.metadata?.message?.messageType === 'ImageMessage' || message.metadata?.messageType === 'ImageMessage' ?
-                      <ImageMessage 
-                        messageId={message.id}
-                        thumbnailBase64={message.metadata.message?.content?.JPEGThumbnail || message.metadata?.content?.JPEGThumbnail}
-                        textContent={message.content}
-                        userId={userId}
-                        agentId={selectedConversation.agent.id}
-                      />
-                      :
-                      message.metadata?.message?.messageType === 'VideoMessage' || message.metadata?.messageType === 'VideoMessage' ?
-                      <VideoMessage 
-                        messageId={message.id}
-                        thumbnailBase64={message.metadata.message?.content?.JPEGThumbnail || message.metadata?.content?.JPEGThumbnail}
-                        textContent={message.content}
-                        userId={userId}
-                        agentId={selectedConversation.agent.id}
-                      />
-                      :
-                      message.metadata?.message?.messageType === 'DocumentMessage' || message.metadata?.messageType === 'DocumentMessage' ?
-                      <DocumentMessage 
-                        messageId={message.id}
-                        documentTitle={message.metadata.message?.content?.title || message.metadata?.content?.fileName}
-                        textContent={message.content}
-                        userId={userId}
-                        agentId={selectedConversation.agent.id}
-                      />
-                      :
+                        {message.metadata?.message?.messageType === 'AudioMessage' ||
+                        message.metadata?.type === 'audio' ||
+                        message.metadata?.messageType === 'AudioMessage' ? (
+                          <AudioMessage
+                            messageId={message.id}
+                            waveform={
+                              message.metadata.message?.content?.waveform ||
+                              message.metadata?.content?.waveform
+                            }
+                            durationSeconds={
+                              message.metadata.message?.content?.seconds ||
+                              message.metadata?.content?.seconds
+                            }
+                            sender={message.sender}
+                            audioBase64={
+                              message.sender === 'agent' ? message.metadata?.output : undefined
+                            }
+                            userId={userId}
+                            agentId={selectedConversation.agent.id}
+                          />
+                        ) : message.metadata?.message?.messageType === 'ImageMessage' ||
+                          message.metadata?.messageType === 'ImageMessage' ? (
+                          <ImageMessage
+                            messageId={message.id}
+                            thumbnailBase64={
+                              message.metadata.message?.content?.JPEGThumbnail ||
+                              message.metadata?.content?.JPEGThumbnail
+                            }
+                            textContent={message.content}
+                            userId={userId}
+                            agentId={selectedConversation.agent.id}
+                          />
+                        ) : message.metadata?.message?.messageType === 'VideoMessage' ||
+                          message.metadata?.messageType === 'VideoMessage' ? (
+                          <VideoMessage
+                            messageId={message.id}
+                            thumbnailBase64={
+                              message.metadata.message?.content?.JPEGThumbnail ||
+                              message.metadata?.content?.JPEGThumbnail
+                            }
+                            textContent={message.content}
+                            userId={userId}
+                            agentId={selectedConversation.agent.id}
+                          />
+                        ) : message.metadata?.message?.messageType === 'DocumentMessage' ||
+                          message.metadata?.messageType === 'DocumentMessage' ? (
+                          <DocumentMessage
+                            messageId={message.id}
+                            documentTitle={
+                              message.metadata.message?.content?.title ||
+                              message.metadata?.content?.fileName
+                            }
+                            textContent={message.content}
+                            userId={userId}
+                            agentId={selectedConversation.agent.id}
+                          />
+                        ) : (
                           <p className="text-sm leading-relaxed">{message.content}</p>
-                        }
+                        )}
                         <div className="mt-2 flex items-center justify-end space-x-1">
                           <span className="text-xs opacity-70">
                             {formatRelative(new Date(message.timestamp), new Date(), {
@@ -826,7 +879,7 @@ const Conversations = () => {
                                 sender: 'human' as const,
                                 content: reply,
                                 timestamp: new Date(),
-                                metadata: {}
+                                metadata: {},
                               })
                               sendMessage()
                             }
@@ -845,14 +898,16 @@ const Conversations = () => {
                     <div className="relative flex-1">
                       <textarea
                         value={newMessage?.content || ''}
-                        onChange={(e) => setNewMessage({ 
-                          id: 0, 
-                          conversationId: selectedConversation?.id ?? 0, 
-                          sender: 'human' as const, 
-                          content: e.target.value, 
-                          timestamp: new Date(), 
-                          metadata: {} 
-                        })}
+                        onChange={(e) =>
+                          setNewMessage({
+                            id: 0,
+                            conversationId: selectedConversation?.id ?? 0,
+                            sender: 'human' as const,
+                            content: e.target.value,
+                            timestamp: new Date(),
+                            metadata: {},
+                          })
+                        }
                         onKeyPress={handleKeyPress}
                         placeholder={t.typeMessage}
                         className="textarea textarea-bordered min-h-[60px] w-full resize-none"
@@ -860,7 +915,7 @@ const Conversations = () => {
                       />
                       <div className="absolute right-2 bottom-2 flex items-center space-x-1">
                         <div className="emoji-picker-container relative">
-                          <button 
+                          <button
                             onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                             className="btn btn-ghost btn-xs"
                           >
@@ -872,13 +927,13 @@ const Conversations = () => {
                             onEmojiSelect={handleEmojiSelect}
                           />
                         </div>
-                        <button 
+                        <button
                           className="btn btn-ghost btn-xs"
                           onClick={() => setShowFileUpload(!showFileUpload)}
                         >
                           <Paperclip className="h-4 w-4" />
                         </button>
-                        <button 
+                        <button
                           className="btn btn-ghost btn-xs"
                           onClick={() => setShowAudioRecorder(true)}
                         >
@@ -899,7 +954,7 @@ const Conversations = () => {
                     onSendAudio={handleAudioSend}
                     disabled={!selectedConversation}
                     onClose={() => setShowAudioRecorder(false)}
-                    show = {showAudioRecorder}
+                    show={showAudioRecorder}
                   />
                 )}
 
@@ -929,9 +984,16 @@ const Conversations = () => {
                       {t.quickReplies}
                     </button>
                   </div>
-                  <button className="btn btn-outline btn-xs text-accent" onClick={() => handleSwitchConversationMode(selectedConversation as Conversation)}>
+                  <button
+                    className="btn btn-outline btn-xs text-accent"
+                    onClick={() =>
+                      handleSwitchConversationMode(selectedConversation as Conversation)
+                    }
+                  >
                     <AlertCircle className="mr-1 h-3 w-3" />
-                    {selectedConversation?.mode === 'agent' ? t.assumeConversation : t.switchToAgent}
+                    {selectedConversation?.mode === 'agent'
+                      ? t.assumeConversation
+                      : t.switchToAgent}
                   </button>
                 </div>
               </div>
@@ -971,7 +1033,11 @@ const Conversations = () => {
                 <div className="relative">
                   <div className="bg-primary text-primary-content flex h-10 w-10 items-center justify-center overflow-hidden rounded-full font-semibold">
                     {getProfileImage(selectedConversation) ? (
-                      <img src={getProfileImage(selectedConversation)} alt="Whatsapp" className="h-12 w-12 object-cover" />
+                      <img
+                        src={getProfileImage(selectedConversation)}
+                        alt="Whatsapp"
+                        className="h-12 w-12 object-cover"
+                      />
                     ) : (
                       selectedConversation.lead.name
                         .split(' ')
@@ -1015,10 +1081,7 @@ const Conversations = () => {
           </div>
 
           {/* Mensagens Mobile */}
-          <div 
-            ref={mobileMessagesContainerRef}
-            className="flex-1 space-y-4 overflow-y-auto p-4"
-          >
+          <div ref={mobileMessagesContainerRef} className="flex-1 space-y-4 overflow-y-auto p-4">
             {selectedConversation.messages?.map((message) => (
               <div
                 key={message.id}
@@ -1031,45 +1094,63 @@ const Conversations = () => {
                       : 'bg-primary text-primary-content'
                   }`}
                 >
-                  {
-                     message.metadata?.message?.messageType === 'AudioMessage' || message.metadata?.type === 'audio' || message.metadata?.messageType === 'AudioMessage' ? 
-                     <AudioMessage 
-                       messageId={message.id}
-                       waveform={message.metadata.message?.content?.waveform || message.metadata?.content?.waveform}
-                       durationSeconds={message.metadata.message?.content?.seconds || message.metadata?.content?.seconds}
-                       sender={message.sender}
-                       audioBase64={message.sender === 'agent' ? message.metadata?.output : undefined}
-                       userId={userId}
-                       agentId={selectedConversation.agent.id}
-                     />
-                    : 
-                    message.metadata?.message?.messageType === 'ImageMessage' || message.metadata?.messageType === 'ImageMessage' ?
-                    <ImageMessage 
+                  {message.metadata?.message?.messageType === 'AudioMessage' ||
+                  message.metadata?.type === 'audio' ||
+                  message.metadata?.messageType === 'AudioMessage' ? (
+                    <AudioMessage
                       messageId={message.id}
-                      thumbnailBase64={message.metadata.message?.content?.JPEGThumbnail || message.metadata?.content?.JPEGThumbnail}
+                      waveform={
+                        message.metadata.message?.content?.waveform ||
+                        message.metadata?.content?.waveform
+                      }
+                      durationSeconds={
+                        message.metadata.message?.content?.seconds ||
+                        message.metadata?.content?.seconds
+                      }
+                      sender={message.sender}
+                      audioBase64={
+                        message.sender === 'agent' ? message.metadata?.output : undefined
+                      }
+                      userId={userId}
+                      agentId={selectedConversation.agent.id}
+                    />
+                  ) : message.metadata?.message?.messageType === 'ImageMessage' ||
+                    message.metadata?.messageType === 'ImageMessage' ? (
+                    <ImageMessage
+                      messageId={message.id}
+                      thumbnailBase64={
+                        message.metadata.message?.content?.JPEGThumbnail ||
+                        message.metadata?.content?.JPEGThumbnail
+                      }
                       textContent={message.content}
                       userId={userId}
                       agentId={selectedConversation.agent.id}
                     />
-                    :
-                    message.metadata?.message?.messageType === 'VideoMessage' || message.metadata?.messageType === 'VideoMessage' ?
-                    <VideoMessage 
+                  ) : message.metadata?.message?.messageType === 'VideoMessage' ||
+                    message.metadata?.messageType === 'VideoMessage' ? (
+                    <VideoMessage
                       messageId={message.id}
-                      thumbnailBase64={message.metadata.message?.content?.JPEGThumbnail || message.metadata?.content?.JPEGThumbnail}
+                      thumbnailBase64={
+                        message.metadata.message?.content?.JPEGThumbnail ||
+                        message.metadata?.content?.JPEGThumbnail
+                      }
                       textContent={message.content}
                     />
-                    :
-                    message.metadata?.message?.messageType === 'DocumentMessage' || message.metadata?.messageType === 'DocumentMessage' ?
-                    <DocumentMessage 
+                  ) : message.metadata?.message?.messageType === 'DocumentMessage' ||
+                    message.metadata?.messageType === 'DocumentMessage' ? (
+                    <DocumentMessage
                       messageId={message.id}
-                      documentTitle={message.metadata.message?.content?.title || message.metadata?.content?.fileName}
+                      documentTitle={
+                        message.metadata.message?.content?.title ||
+                        message.metadata?.content?.fileName
+                      }
                       textContent={message.content}
                       userId={userId}
                       agentId={selectedConversation.agent.id}
                     />
-                    :
+                  ) : (
                     <p className="text-sm leading-relaxed">{message.content}</p>
-                  }
+                  )}
                   <p className="mt-1 text-xs opacity-70">
                     {formatRelative(new Date(message.timestamp), new Date(), {
                       locale: language.language === 'pt' ? ptBR : enUS,
@@ -1104,14 +1185,16 @@ const Conversations = () => {
                 <div className="relative flex-1">
                   <textarea
                     value={newMessage?.content || ''}
-                    onChange={(e) => setNewMessage({ 
-                      id: 0, 
-                      conversationId: selectedConversation?.id ?? 0, 
-                      sender: 'human' as const, 
-                      content: e.target.value, 
-                      timestamp: new Date(), 
-                      metadata: {} 
-                    })}
+                    onChange={(e) =>
+                      setNewMessage({
+                        id: 0,
+                        conversationId: selectedConversation?.id ?? 0,
+                        sender: 'human' as const,
+                        content: e.target.value,
+                        timestamp: new Date(),
+                        metadata: {},
+                      })
+                    }
                     onKeyPress={handleKeyPress}
                     placeholder={t.typeMessage}
                     className="textarea textarea-bordered min-h-[50px] w-full resize-none pr-12"
@@ -1119,7 +1202,7 @@ const Conversations = () => {
                   />
                   <div className="absolute right-2 bottom-2 flex items-center space-x-1">
                     <div className="emoji-picker-container relative">
-                      <button 
+                      <button
                         onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                         className="btn btn-ghost btn-xs"
                       >
@@ -1131,13 +1214,13 @@ const Conversations = () => {
                         onEmojiSelect={handleEmojiSelect}
                       />
                     </div>
-                    <button 
+                    <button
                       className="btn btn-ghost btn-xs"
                       onClick={() => setShowFileUpload(!showFileUpload)}
                     >
                       <Paperclip className="h-4 w-4" />
                     </button>
-                    <button 
+                    <button
                       className="btn btn-ghost btn-xs"
                       onClick={() => setShowAudioRecorder(true)}
                     >
