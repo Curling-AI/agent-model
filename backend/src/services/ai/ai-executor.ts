@@ -27,20 +27,17 @@ async function executeAgent(agentId: number, userId: number, userInput: string, 
 
     const agent = await getById('agents', agentId);
 
-    const tools = await getKnowledgeFromDatabase(agentId, userInput);
-
     const IMAGE_PROMPT = 'Describe the image in detail and provide relevant information.'
     const AUDIO_PROMPT = 'Transcribe the audio to text. The language spoken is portuguese. If there is background noise or multiple speakers, do your best to accurately capture the main content.'
-
-    let message;
-
+    
     const agentPromptTemplate = ChatPromptTemplate.fromMessages([
       ["system", generateAgentPrompt(agent)],
       new MessagesPlaceholder("chat_history"),
       ["human", "{input}"],
       new MessagesPlaceholder("agent_scratchpad"),
     ]);
-
+    
+    let message;
     if (type !== 'text' && process.env.LLM_PROVIDER === 'gemini') {
       if (type === 'image') {
         message = await processMediaFromBase64LangchainGemini(messageContent.base64Data, IMAGE_PROMPT, messageContent.mimetype);
@@ -49,18 +46,18 @@ async function executeAgent(agentId: number, userId: number, userInput: string, 
       }
     } else if (type !== 'text' && process.env.LLM_PROVIDER === 'openai') {
       if (type === 'image') {
-        message = await processMediaFromUrlLangchainOpenAI(messageContent.fileURL, 'image', IMAGE_PROMPT);
+        message = await processMediaFromUrlLangchainOpenAI(messageContent.base64Data, 'image', IMAGE_PROMPT);
       } else if (type === 'audio') {
-        message = await processMediaFromUrlLangchainOpenAI(messageContent.fileURL, 'audio', AUDIO_PROMPT);
+        message = await processMediaFromUrlLangchainOpenAI(messageContent.base64Data, 'audio', AUDIO_PROMPT);
       }
     } else {
       message = userInput;
     }
-
+    
+    const tools = await getKnowledgeFromDatabase(agentId, message);
     const agentExecutor = await getAgentExecutor(agentPromptTemplate, tools);
     const runnableWithHistory = await createRunnableWithMessageHistory(sessionId, agentExecutor);
     const response = await runnableWithHistory.invoke({ input: message }, { configurable: { sessionId } });
-
 
     if (agent['voice_configuration'] !== 'never' && type === 'audio') {
       let responseAudio = {
@@ -99,6 +96,7 @@ async function getKnowledgeFromDatabase(agentId: number, userInput: string) {
       openAIApiKey: process.env.LLM_API_KEY,
       modelName: process.env.LLM_EMBEDDING_MODEL || "text-embedding-3-small",
     });
+    
     embedding = await embeddings.embedDocuments([userInput]);
   } else if (process.env.LLM_PROVIDER === 'gemini') {
     functionName = 'match_knowledge_gemini';
@@ -108,7 +106,7 @@ async function getKnowledgeFromDatabase(agentId: number, userInput: string) {
     });
     embedding = await embeddings.embedDocuments([userInput]);
   }
-
+  
   const { data: ragData } = await supabase.rpc(functionName, {
     query_embedding: embedding,
     match_count: 3,
@@ -123,6 +121,7 @@ async function getAgentExecutor(agentPromptTemplate: ChatPromptTemplate, tools: 
   let agent;
   if (process.env.LLM_PROVIDER === 'openai') {
     const chatModel = new ChatOpenAI({
+      apiKey: process.env.LLM_API_KEY,
       model: process.env.LLM_CHAT_MODEL || 'gpt-4o',
       temperature: Number(process.env.LLM_CHAT_MODEL_TEMPERATURE) || 0,
     });

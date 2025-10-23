@@ -19,8 +19,7 @@ export const WebhookController = {
     const token = req.query['hub.verify_token'];
     const challenge = req.query['hub.challenge'];
 
-    // Verifique se o token de verificação corresponde ao esperado
-    const verifyToken = process.env.META_VERIFY_TOKEN; // Substitua pela variável de ambiente ou valor fixo
+    const verifyToken = process.env.FACEBOOK_WEBHOOK_VERIFY_TOKEN;
 
     if (mode && token) {
       if (mode === 'subscribe' && token === verifyToken) {
@@ -39,31 +38,22 @@ export const WebhookController = {
     try {
       const body = req.body;
 
-      // Verifica se o evento é do tipo mensagem
       if (body.object === 'whatsapp_business_account') {
         for (const entry of body.entry) {
-          const entryId = entry.id;
           for (const change of entry.changes) {
             const value = change.value;
             const field = change.field;
 
-            // Mapeamento dos campos principais do objeto recebido
-            const metadata = value.metadata; // Informações da conta
-            const contacts = value.contacts; // Contatos envolvidos
-            const messages = value.messages; // Mensagens recebidas
+            const metadata = value.metadata; 
+            const contacts = value.contacts;
+            const messages = value.messages;
 
             if (messages && Array.isArray(messages)) {
               for (const message of messages) {
-                const messageId = message.id;
                 const from = message.from;
                 const timestamp = message.timestamp;
                 const type = message.type;
                 const text = message.text?.body;
-                const interactive = message.interactive;
-                const image = message.image;
-                const audio = message.audio;
-                const video = message.video;
-                const document = message.document;
 
                 const integrations = await getByFilter('integrations', { 'metadata->>phoneNumberId': metadata.phone_number_id });
 
@@ -75,7 +65,7 @@ export const WebhookController = {
                 const phone = from.replace(/[^0-9]/g, '')
                 const agent = await getById('agents', integrations[0]['agent_id']);
 
-                if (!agent) {
+                if (!agent || agent['active'] === false) {
                   return res.status(404).json({ error: 'Agent not found' });
                 }
 
@@ -100,7 +90,7 @@ export const WebhookController = {
                     responseMessage.outputText = "Tipo de mídia não suportado no momento.";
                   } else if (type !== 'text') {
                     const mediaContent = await getMetaMediaContent(message, token);
-                    responseMessage = await AiExecutor.executeAgentMedia(agent['id'], conversation['lead_id'], mediaContent, process.env.LLM_PROVIDER === 'openai' ? 'image' : type);
+                    responseMessage = await AiExecutor.executeAgentMedia(agent['id'], conversation['lead_id'], mediaContent, type);
                   } else {
                     responseMessage = await AiExecutor.executeAgentText(agent['id'], conversation['lead_id'], text);
                   }
@@ -108,7 +98,7 @@ export const WebhookController = {
                   await upsert('conversation_messages', { conversation_id: conversation['id'], sender: 'agent', content: responseMessage.outputText, metadata: responseMessage, timestamp: new Date() });
 
                   if (responseMessage.type === 'audio') {
-                    await sendMetaMedia(wpNumberId, phone, responseMessage.output, 'audio/ogg', token);
+                    await sendMetaMedia(wpNumberId, phone, responseMessage.output, 'audio', 'audio/ogg', token);
                   } else {
                     await sendMetaMessage(wpNumberId, phone, responseMessage.outputText, token);
                   }
@@ -158,7 +148,7 @@ export const WebhookController = {
         const message = await AiExecutor.executeAgentText(agent['id'], conversation['lead_id'], webhookContent.text.message);
 
         await upsert('conversation_messages', { conversation_id: conversation['id'], sender: 'agent', content: message.output, metadata: message, timestamp: new Date() });
-        await sendMessageZapi('5521997363927', message.output);
+        await sendMessageZapi('', message.output);
       }
 
       res.status(200).json({ message: 'Webhook processed successfully', conversation });
