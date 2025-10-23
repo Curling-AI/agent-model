@@ -16,6 +16,7 @@ import {
   Filter as FilterIcon,
   X,
   BarChart3,
+  Mic,
 } from 'lucide-react'
 import { EmojiPicker } from '@/components/ui/emoji-picker'
 import { FileUpload } from '@/components/conversations/file-upload'
@@ -24,6 +25,7 @@ import { useTranslation } from '../translations'
 import ConversationStats from '@/components/conversations/ConversationStats'
 import ConversationSkeleton from '@/components/conversations/ConversationSkeleton'
 import { AudioMessage } from '@/components/conversations/audio-message'
+import { AudioRecorder } from '@/components/conversations/audio-recorder'
 import { ImageMessage } from '@/components/conversations/image-message'
 import { VideoMessage } from '@/components/conversations/video-message'
 import { DocumentMessage } from '@/components/conversations/document-message'
@@ -49,6 +51,7 @@ const Conversations = () => {
   const [showStats, setShowStats] = useState(false)
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   const [showFileUpload, setShowFileUpload] = useState(false)
+  const [showAudioRecorder, setShowAudioRecorder] = useState(false)
   
   // Refs para scroll automático
   const messagesContainerRef = useRef<HTMLDivElement>(null)
@@ -186,6 +189,35 @@ const Conversations = () => {
       setShowFileUpload(false)
     } catch (error) {
       console.error('Erro ao enviar arquivo:', error)
+    }
+  }
+
+  const handleAudioSend = async (audioBlob: Blob, duration: number) => {
+    if (!selectedConversation) return
+
+    try {
+      // Converter áudio para base64
+      const reader = new FileReader()
+      reader.onload = async () => {
+        const base64 = reader.result as string
+        const mediaData = base64.split(',')[1] // Remove o prefixo data:audio/...;base64,
+        
+        // TODO: duration pode ser usado para metadata futura do áudio
+        console.log('Duração do áudio:', duration, 'segundos')
+        await sendMedia(
+          selectedConversation.agent.id,
+          userId,
+          selectedConversation.lead.phone,
+          mediaData,
+          `audio_${Date.now()}.webm`,
+          'audio',
+          selectedConversation.id
+        )
+      }
+      reader.readAsDataURL(audioBlob)
+      setShowAudioRecorder(false)
+    } catch (error) {
+      console.error('Erro ao enviar áudio:', error)
     }
   }
 
@@ -693,10 +725,12 @@ const Conversations = () => {
                     message.metadata?.message?.messageType === 'AudioMessage' || message.metadata?.type === 'audio' || message.metadata?.messageType === 'AudioMessage' ? 
                     <AudioMessage 
                       messageId={message.id}
-                      waveform={message.metadata.message?.content?.waveform}
-                      durationSeconds={message.metadata.message?.content?.seconds}
-                      sender={message.sender as 'human' | 'agent'}
+                      waveform={message.metadata.message?.content?.waveform || message.metadata?.content?.waveform}
+                      durationSeconds={message.metadata.message?.content?.seconds || message.metadata?.content?.seconds}
+                      sender={message.sender}
                       audioBase64={message.sender === 'agent' ? message.metadata?.output : undefined}
+                      userId={userId}
+                      agentId={selectedConversation.agent.id}
                     />
                           : 
                       message.metadata?.message?.messageType === 'ImageMessage' || message.metadata?.messageType === 'ImageMessage' ?
@@ -806,53 +840,68 @@ const Conversations = () => {
                   </div>
                 )}
 
-                <div className="flex items-center space-x-2">
-                  <div className="relative flex-1">
-                    <textarea
-                      value={newMessage?.content || ''}
-                      onChange={(e) => setNewMessage({ 
-                        id: 0, 
-                        conversationId: selectedConversation?.id ?? 0, 
-                        sender: 'human' as const, 
-                        content: e.target.value, 
-                        timestamp: new Date(), 
-                        metadata: {} 
-                      })}
-                      onKeyPress={handleKeyPress}
-                      placeholder={t.typeMessage}
-                      className="textarea textarea-bordered min-h-[60px] w-full resize-none"
-                      rows={1}
-                    />
-                    <div className="absolute right-2 bottom-2 flex items-center space-x-1">
-                      <div className="emoji-picker-container relative">
+                {!showAudioRecorder ? (
+                  <div className="flex items-center space-x-2">
+                    <div className="relative flex-1">
+                      <textarea
+                        value={newMessage?.content || ''}
+                        onChange={(e) => setNewMessage({ 
+                          id: 0, 
+                          conversationId: selectedConversation?.id ?? 0, 
+                          sender: 'human' as const, 
+                          content: e.target.value, 
+                          timestamp: new Date(), 
+                          metadata: {} 
+                        })}
+                        onKeyPress={handleKeyPress}
+                        placeholder={t.typeMessage}
+                        className="textarea textarea-bordered min-h-[60px] w-full resize-none"
+                        rows={1}
+                      />
+                      <div className="absolute right-2 bottom-2 flex items-center space-x-1">
+                        <div className="emoji-picker-container relative">
+                          <button 
+                            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                            className="btn btn-ghost btn-xs"
+                          >
+                            <Smile className="h-4 w-4" />
+                          </button>
+                          <EmojiPicker
+                            isOpen={showEmojiPicker}
+                            onClose={() => setShowEmojiPicker(false)}
+                            onEmojiSelect={handleEmojiSelect}
+                          />
+                        </div>
                         <button 
-                          onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                           className="btn btn-ghost btn-xs"
+                          onClick={() => setShowFileUpload(!showFileUpload)}
                         >
-                          <Smile className="h-4 w-4" />
+                          <Paperclip className="h-4 w-4" />
                         </button>
-                        <EmojiPicker
-                          isOpen={showEmojiPicker}
-                          onClose={() => setShowEmojiPicker(false)}
-                          onEmojiSelect={handleEmojiSelect}
-                        />
+                        <button 
+                          className="btn btn-ghost btn-xs"
+                          onClick={() => setShowAudioRecorder(true)}
+                        >
+                          <Mic className="h-4 w-4" />
+                        </button>
                       </div>
-                      <button 
-                        className="btn btn-ghost btn-xs"
-                        onClick={() => setShowFileUpload(!showFileUpload)}
-                      >
-                        <Paperclip className="h-4 w-4" />
-                      </button>
                     </div>
+                    <button
+                      onClick={sendMessage}
+                      disabled={!newMessage?.content.trim()}
+                      className="btn btn-primary btn-circle"
+                    >
+                      <Send className="h-4 w-4" />
+                    </button>
                   </div>
-                  <button
-                    onClick={sendMessage}
-                    disabled={!newMessage?.content.trim()}
-                    className="btn btn-primary btn-circle"
-                  >
-                    <Send className="h-4 w-4" />
-                  </button>
-                </div>
+                ) : (
+                  <AudioRecorder
+                    onSendAudio={handleAudioSend}
+                    disabled={!selectedConversation}
+                    onClose={() => setShowAudioRecorder(false)}
+                    show = {showAudioRecorder}
+                  />
+                )}
 
                 {/* Componente de upload de arquivos */}
                 <div className="relative">
@@ -986,10 +1035,12 @@ const Conversations = () => {
                      message.metadata?.message?.messageType === 'AudioMessage' || message.metadata?.type === 'audio' || message.metadata?.messageType === 'AudioMessage' ? 
                      <AudioMessage 
                        messageId={message.id}
-                       waveform={message.metadata.message?.content?.waveform}
-                       durationSeconds={message.metadata.message?.content?.seconds}
-                       sender={message.sender as 'human' | 'agent'}
+                       waveform={message.metadata.message?.content?.waveform || message.metadata?.content?.waveform}
+                       durationSeconds={message.metadata.message?.content?.seconds || message.metadata?.content?.seconds}
+                       sender={message.sender}
                        audioBase64={message.sender === 'agent' ? message.metadata?.output : undefined}
+                       userId={userId}
+                       agentId={selectedConversation.agent.id}
                      />
                     : 
                     message.metadata?.message?.messageType === 'ImageMessage' || message.metadata?.messageType === 'ImageMessage' ?
@@ -1048,53 +1099,68 @@ const Conversations = () => {
 
           {/* Área de Digitação Mobile */}
           <div className="border-base-300 bg-base-100 border-t p-4">
-            <div className="flex items-center space-x-2">
-              <div className="relative flex-1">
-                <textarea
-                  value={newMessage?.content || ''}
-                  onChange={(e) => setNewMessage({ 
-                    id: 0, 
-                    conversationId: selectedConversation?.id ?? 0, 
-                    sender: 'human' as const, 
-                    content: e.target.value, 
-                    timestamp: new Date(), 
-                    metadata: {} 
-                  })}
-                  onKeyPress={handleKeyPress}
-                  placeholder={t.typeMessage}
-                  className="textarea textarea-bordered min-h-[50px] w-full resize-none pr-12"
-                  rows={1}
-                />
-                <div className="absolute right-2 bottom-2 flex items-center space-x-1">
-                  <div className="emoji-picker-container relative">
+            {!showAudioRecorder ? (
+              <div className="flex items-center space-x-2">
+                <div className="relative flex-1">
+                  <textarea
+                    value={newMessage?.content || ''}
+                    onChange={(e) => setNewMessage({ 
+                      id: 0, 
+                      conversationId: selectedConversation?.id ?? 0, 
+                      sender: 'human' as const, 
+                      content: e.target.value, 
+                      timestamp: new Date(), 
+                      metadata: {} 
+                    })}
+                    onKeyPress={handleKeyPress}
+                    placeholder={t.typeMessage}
+                    className="textarea textarea-bordered min-h-[50px] w-full resize-none pr-12"
+                    rows={1}
+                  />
+                  <div className="absolute right-2 bottom-2 flex items-center space-x-1">
+                    <div className="emoji-picker-container relative">
+                      <button 
+                        onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                        className="btn btn-ghost btn-xs"
+                      >
+                        <Smile className="h-4 w-4" />
+                      </button>
+                      <EmojiPicker
+                        isOpen={showEmojiPicker}
+                        onClose={() => setShowEmojiPicker(false)}
+                        onEmojiSelect={handleEmojiSelect}
+                      />
+                    </div>
                     <button 
-                      onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                       className="btn btn-ghost btn-xs"
+                      onClick={() => setShowFileUpload(!showFileUpload)}
                     >
-                      <Smile className="h-4 w-4" />
+                      <Paperclip className="h-4 w-4" />
                     </button>
-                    <EmojiPicker
-                      isOpen={showEmojiPicker}
-                      onClose={() => setShowEmojiPicker(false)}
-                      onEmojiSelect={handleEmojiSelect}
-                    />
+                    <button 
+                      className="btn btn-ghost btn-xs"
+                      onClick={() => setShowAudioRecorder(true)}
+                    >
+                      <Mic className="h-4 w-4" />
+                    </button>
                   </div>
-                  <button 
-                    className="btn btn-ghost btn-xs"
-                    onClick={() => setShowFileUpload(!showFileUpload)}
-                  >
-                    <Paperclip className="h-4 w-4" />
-                  </button>
                 </div>
+                <button
+                  onClick={sendMessage}
+                  disabled={!newMessage?.content.trim()}
+                  className="btn btn-primary btn-circle"
+                >
+                  <Send className="h-4 w-4" />
+                </button>
               </div>
-              <button
-                onClick={sendMessage}
-                disabled={!newMessage?.content.trim()}
-                className="btn btn-primary btn-circle"
-              >
-                <Send className="h-4 w-4" />
-              </button>
-            </div>
+            ) : (
+              <AudioRecorder
+                onSendAudio={handleAudioSend}
+                disabled={!selectedConversation}
+                onClose={() => setShowAudioRecorder(false)}
+                show={showAudioRecorder}
+              />
+            )}
 
             {/* Componente de upload de arquivos - Mobile */}
             <div className="relative">

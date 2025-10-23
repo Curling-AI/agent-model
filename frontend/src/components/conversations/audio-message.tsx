@@ -7,11 +7,13 @@ interface AudioMessageProps {
   className?: string
   messageId: number
   durationSeconds?: number
-  sender: 'human' | 'agent'
+  sender: 'human' | 'agent' | 'member'
   audioBase64?: string
+  userId: number
+  agentId: number
 }
 
-export function AudioMessage({ waveform, className, messageId, durationSeconds, sender, audioBase64 }: AudioMessageProps) {
+export function AudioMessage({ waveform, className, messageId, durationSeconds, sender, audioBase64, userId, agentId }: AudioMessageProps) {
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(durationSeconds || 0)
@@ -153,7 +155,7 @@ export function AudioMessage({ waveform, className, messageId, durationSeconds, 
         }
       } else {
         // Para mensagens human, busca do servidor
-        const data = await getMediaContent(messageId)
+        const data = await getMediaContent(messageId, userId, agentId)
         if (data.success) {
           setAudioUrl(data.data.fileURL)
           setHasLoaded(true)
@@ -252,8 +254,8 @@ export function AudioMessage({ waveform, className, messageId, durationSeconds, 
                 key={index}
                 className="w-0.5 bg-base-content/50 transition-colors"
                 style={{ 
-                  height: `${Math.max(height, 12)}%`, 
-                  backgroundColor: isActive ?  sender === 'agent' ? 'var(--color-base-300)' : 'var(--color-primary)' : 'var(--color-base-content/50)',
+                  height: `${ Math.min(Math.max(height, 12), 100) }%`, 
+                  backgroundColor: isActive ?  ['agent', 'member'].includes(sender) ? 'var(--color-base-300)' : 'var(--color-primary)' : 'var(--color-base-content/50)',
                 }}
               />
             )
