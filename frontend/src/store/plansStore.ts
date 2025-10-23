@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import { useAuthStore } from './auth';
 
-// Stripe Price type for prices[] returned by backend
 export interface StripePrice {
   id: string;
   unit_amount: number | null;
@@ -17,7 +16,6 @@ export interface StripeProduct {
   name: string;
   description?: string;
   active: boolean;
-  // Pode ser um ID (string) ou um objeto de preço expandido retornado pela API
   default_price?:
     | string
     | {
@@ -30,7 +28,7 @@ export interface StripeProduct {
         };
       };
   metadata?: Record<string, string>;
-  prices?: StripePrice[]; // new: all active prices for the product
+  prices?: StripePrice[];
 }
 
 export interface Invoice {
@@ -77,7 +75,6 @@ export interface UserUsageData {
 }
 
 interface PlansStore {
-  // Estado
   products: StripeProduct[];
   invoices: Invoice[];
   userPlan: UserPlan | null;
@@ -90,7 +87,6 @@ interface PlansStore {
   isCreatingCheckout: boolean;
   error: string | null;
 
-  // Ações
   fetchProducts: () => Promise<void>;
   fetchInvoices: (customerId?: string) => Promise<void>;
   fetchUserPlan: () => Promise<void>;
@@ -105,6 +101,11 @@ interface PlansStore {
     success_url?: string;
     cancel_url?: string;
   }) => Promise<{ checkout_url?: string; session_id?: string } | null>;
+  createBillingPortalSession: (params: {
+    customer_id?: string;
+    user_id?: number;
+    return_url: string;
+  }) => Promise<{ portal_url?: string } | null>;
   setUserPlan: (plan: UserPlan | null) => void;
   setCustomerId: (customerId: string | null) => void;
   clearError: () => void;
@@ -113,7 +114,6 @@ interface PlansStore {
 const API_BASE_URL = (import.meta as any).env.VITE_BASE_URL || 'http://localhost:3000/api/v1';
 
 export const usePlansStore = create<PlansStore>((set) => ({
-  // Estado inicial
   products: [],
   invoices: [],
   userPlan: null,
@@ -224,7 +224,6 @@ export const usePlansStore = create<PlansStore>((set) => ({
       const authState = useAuthStore.getState();
       let userId: number | undefined = undefined;
 
-      // Se já for numérico, usa direto
       if (typeof (authState.user as any)?.id === 'number') {
         userId = (authState.user as any).id as number;
       } else {
@@ -345,6 +344,44 @@ export const usePlansStore = create<PlansStore>((set) => ({
       }
     } catch (error) {
       set({ error: error instanceof Error ? error.message : 'Erro ao criar checkout' });
+      return null;
+    } finally {
+      set({ isCreatingCheckout: false });
+    }
+  },
+
+  createBillingPortalSession: async (params) => {
+    set({ isCreatingCheckout: true, error: null });
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/stripe/billing-portal/session`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          customer_id: params.customer_id,
+          user_id: params.user_id,
+          return_url: params.return_url,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Erro ao criar sessão do portal de cobrança: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      if (data.success) {
+        if (data.data.portal_url) {
+          window.location.href = data.data.portal_url;
+        }
+        return data.data;
+      } else {
+        throw new Error(data.error || 'Erro desconhecido ao criar sessão do portal de cobrança');
+      }
+    } catch (error) {
+      set({ error: error instanceof Error ? error.message : 'Erro ao criar sessão do portal de cobrança' });
       return null;
     } finally {
       set({ isCreatingCheckout: false });

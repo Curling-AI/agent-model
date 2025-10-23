@@ -44,6 +44,7 @@ const Plans = () => {
     fetchUserCredits,
     fetchUserUsage,
     createCheckoutSession,
+    createBillingPortalSession,
     clearError
   } = usePlansStore();
 
@@ -79,6 +80,24 @@ const Plans = () => {
       }
     } catch (error) {
       console.error('Erro ao criar sessão de checkout:', error);
+    }
+  };
+
+  const handleManageBilling = async () => {
+    try {
+      const authState = useAuthStore.getState();
+      const user = authState.user as any;
+      const numericUserId = typeof user?.id === 'number' ? (user.id as number) : undefined;
+      
+      const portalData = {
+        user_id: numericUserId,
+        customer_id: userPlan?.provider_data?.customer_id,
+        return_url: `${window.location.origin}/plans`
+      };
+
+      await createBillingPortalSession(portalData);
+    } catch (error) {
+      console.error('Erro ao abrir portal de cobrança:', error);
     }
   };
 
@@ -202,7 +221,6 @@ const Plans = () => {
     })
     .sort((a, b) => a.credits - b.credits);
 
-  // Use only dynamic products from Stripe for credits
   const creditOptions = creditProducts;
 
   const formatPrice = (price: number, currency: string = 'BRL') => {
@@ -319,7 +337,10 @@ const Plans = () => {
                     </span>
                   </div>
                 </div>
-                <button className="btn btn-outline btn-sm mt-4 w-full">
+                <button 
+                  className="btn btn-outline btn-sm mt-4 w-full"
+                  onClick={() => void handleManageBilling()}
+                >
                   {t.manageBilling}
                 </button>
               </>
