@@ -1,15 +1,14 @@
 import { ChatPromptTemplate, MessagesPlaceholder } from "@langchain/core/prompts";
 import { supabase } from '../../config/supabaseClient';
-import { AgentExecutor } from "langchain/agents";
 import { ChatOpenAI, OpenAIEmbeddings } from '@langchain/openai';
 import { ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings } from '@langchain/google-genai';
-import { createToolCallingAgent, createOpenAIToolsAgent } from "langchain/agents";
 import { getById } from '../storage';
 import { PostgresChatMessageHistory } from "@langchain/community/stores/message/postgres";
 import { Pool } from "pg";
 import { RunnableWithMessageHistory } from "@langchain/core/runnables";
 import { processMediaFromBase64LangchainGemini, textToSpeechGemini } from "./gemini";
 import { processMediaFromUrlLangchainOpenAI, textToSpeechOpenAI } from "./openai";
+import { createAgent, ReactAgent } from "langchain";
 
 export const AiExecutor = {
   executeAgentText: async (agentId: number, userId: number, userInput: string) => {
@@ -55,31 +54,35 @@ async function executeAgent(agentId: number, userId: number, userInput: string, 
     }
     
     const tools = await getKnowledgeFromDatabase(agentId, message);
-    const agentExecutor = await getAgentExecutor(agentPromptTemplate, tools);
-    const runnableWithHistory = await createRunnableWithMessageHistory(sessionId, agentExecutor);
-    const response = await runnableWithHistory.invoke({ input: message }, { configurable: { sessionId } });
+    const agentExecutor = await getAgent(agentPromptTemplate, tools);
+    // const runnableWithHistory = await createRunnableWithMessageHistory(sessionId, agentExecutor);
+    // const response = await agentExecutor.invoke({ input: message }, { configurable: { sessionId } });
+    const response = agentExecutor.invoke({
+      messages: [{ role: 'user', content: message }]
+    }, { configurable: { sessionId } }); 
 
-    if (agent['voice_configuration'] !== 'never' && type === 'audio') {
-      let responseAudio = {
-        output: message,
-        type: 'audio',
-        outputText: response.output
-      }
+    console.log(response);
+    // if (agent['voice_configuration'] !== 'never' && type === 'audio') {
+    //   let responseAudio = {
+    //     output: message,
+    //     type: 'audio',
+    //     outputText: response.output
+    //   }
 
-      if (process.env.LLM_PROVIDER === 'openai') {
-        responseAudio.output = await textToSpeechOpenAI(response.output);
-      } else if (type === 'audio' && process.env.LLM_PROVIDER === 'gemini') {
-        responseAudio.output = await textToSpeechGemini(sessionId, response.output);
-      }
+    //   if (process.env.LLM_PROVIDER === 'openai') {
+    //     responseAudio.output = await textToSpeechOpenAI(response.output);
+    //   } else if (type === 'audio' && process.env.LLM_PROVIDER === 'gemini') {
+    //     responseAudio.output = await textToSpeechGemini(sessionId, response.output);
+    //   }
 
-      return responseAudio;
-    }
+    //   return responseAudio;
+    // }
 
-    return {
-      outputText: response.output,
-      output: '',
-      type: 'text'
-    };
+    // return {
+    //   outputText: response.output,
+    //   output: '',
+    //   type: 'text'
+    // };
   } catch (error) {
     console.error('Error executing agent:', error);
     throw new Error(`Erro ao executar agente: ${error.message}`);
@@ -116,9 +119,8 @@ async function getKnowledgeFromDatabase(agentId: number, userInput: string) {
   return knowledge;
 }
 
-async function getAgentExecutor(agentPromptTemplate: ChatPromptTemplate, tools: any[]) {
-  let agentExecutor: AgentExecutor;
-  let agent;
+async function getAgent(agentPromptTemplate: ChatPromptTemplate, tools: any[]) {
+  let agent: ReactAgent;
   if (process.env.LLM_PROVIDER === 'openai') {
     const chatModel = new ChatOpenAI({
       apiKey: process.env.LLM_API_KEY,
@@ -126,10 +128,10 @@ async function getAgentExecutor(agentPromptTemplate: ChatPromptTemplate, tools: 
       temperature: Number(process.env.LLM_CHAT_MODEL_TEMPERATURE) || 0,
     });
 
-    agent = await createOpenAIToolsAgent({
-      llm: chatModel,
+    agent = await createAgent({
+      model: chatModel,
       tools: tools,
-      prompt: agentPromptTemplate,
+      systemPrompt:  generateAgentPrompt(agent),
     });
 
   } else if (process.env.LLM_PROVIDER === 'gemini') {
@@ -139,15 +141,14 @@ async function getAgentExecutor(agentPromptTemplate: ChatPromptTemplate, tools: 
       temperature: Number(process.env.LLM_CHAT_MODEL_TEMPERATURE) || 0,
     });
 
-    agent = await createToolCallingAgent({
-      llm: chatModel,
+    agent = await createAgent({
+      model: chatModel,
       tools: tools,
-      prompt: agentPromptTemplate,
+      systemPrompt:  generateAgentPrompt(agent),
     });
   }
-  agentExecutor = new AgentExecutor({ agent, tools, verbose: process.env.LLM_LOGGER_ENABLED === 'true' });
 
-  return agentExecutor;
+  return agent;
 }
 
 function generateAgentPrompt(agent: any) {
@@ -164,26 +165,26 @@ function generateAgentPrompt(agent: any) {
   return basePrompt;
 }
 
-async function createRunnableWithMessageHistory(sessionId: string, agentExecutor: AgentExecutor) {
-  const pool = new Pool({
-    connectionString: process.env.SUPABASE_POSTGRES_URL,
-  });
+// async function createRunnableWithMessageHistory(sessionId: string, agentExecutor: ReactAgent) {
+//   const pool = new Pool({
+//     connectionString: process.env.SUPABASE_POSTGRES_URL,
+//   });
 
-  const agentWithHistory = new RunnableWithMessageHistory({
-    runnable: agentExecutor,
-    getMessageHistory: (sessionId) => new PostgresChatMessageHistory({
-      pool,
-      sessionId,
-      tableName: "chat_messages",
-    }),
+//   const agentWithHistory = new RunnableWithMessageHistory({
+//     runnable: agentExecutor,
+//     getMessageHistory: (sessionId) => new PostgresChatMessageHistory({
+//       pool,
+//       sessionId,
+//       tableName: "chat_messages",
+//     }),
 
-    inputMessagesKey: "input",
-    historyMessagesKey: "chat_history",
-    config: { configurable: { sessionId: sessionId } },
-  });
+//     inputMessagesKey: "input",
+//     historyMessagesKey: "chat_history",
+//     config: { configurable: { sessionId: sessionId } },
+//   });
 
-  return agentWithHistory;
-}
+//   return agentWithHistory;
+// }
 
 
 

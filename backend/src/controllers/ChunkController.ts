@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { YoutubeLoader } from '@langchain/community/document_loaders/web/youtube';
 import { CheerioWebBaseLoader } from '@langchain/community/document_loaders/web/cheerio';
-import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
+import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import { PDFLoader } from '@langchain/community/document_loaders/fs/pdf';
 import { DocxLoader } from '@langchain/community/document_loaders/fs/docx';
 import multer from 'multer';

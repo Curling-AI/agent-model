@@ -1,12 +1,11 @@
-import { HumanMessage } from "@langchain/core/messages";
 import { OpenAIWhisperAudio } from "@langchain/community/document_loaders/fs/openai_whisper_audio";
 import fs from 'fs/promises';
 import os from 'os';
 import path from 'path';
 import OpenAI from "openai";
 import { ChatOpenAI } from '@langchain/openai';
-import { is } from "cheerio/dist/commonjs/api/traversing";
 import { isUrl } from "@/utils";
+import { HumanMessage } from 'langchain';
 
 export async function processMediaFromUrlLangchainOpenAI(
   url: string,
