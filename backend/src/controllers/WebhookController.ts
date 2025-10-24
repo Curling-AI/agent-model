@@ -204,15 +204,17 @@ export const WebhookController = {
 
         await upsert('conversation_messages', { conversation_id: conversation['id'], sender: 'agent', content: message.outputText, metadata: message, timestamp: new Date() });
 
-        res.status(200).json({ message: 'Webhook processed successfully', conversation });
-
         if (message.type === 'audio') {
           await sendMedia(phone, message.output, 'audio', webhookContent.token);
         } else {
+          console.log('Sending message:', message.outputText);
           await sendMessage(phone, message.outputText, webhookContent.token);
         }
 
-      }
+      } 
+
+      res.status(200).json({ message: 'Webhook processed successfully', conversation });
+
     } catch (err) {
       console.log(err);
       res.status(500).json({ error: 'Failed to upsert conversation', details: err });

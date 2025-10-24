@@ -6,9 +6,10 @@ import { getById } from '../storage';
 import { PostgresChatMessageHistory } from "@langchain/community/stores/message/postgres";
 import { Pool } from "pg";
 import { RunnableWithMessageHistory } from "@langchain/core/runnables";
+import { PostgresSaver } from "@langchain/langgraph-checkpoint-postgres";
 import { processMediaFromBase64LangchainGemini, textToSpeechGemini } from "./gemini";
 import { processMediaFromUrlLangchainOpenAI, textToSpeechOpenAI } from "./openai";
-import { createAgent, ReactAgent } from "langchain";
+import { createAgent, ReactAgent, tool } from "langchain";
 
 export const AiExecutor = {
   executeAgentText: async (agentId: number, userId: number, userInput: string) => {
@@ -52,37 +53,51 @@ async function executeAgent(agentId: number, userId: number, userInput: string, 
     } else {
       message = userInput;
     }
+
+    const knowledgeTool = tool(
+      async () => {
+        await getKnowledgeFromDatabase(agentId, message);
+      },
+      {
+        name: 'get_knowledge',
+        description: 'Useful for when you need to get relevant knowledge from the database to answer user questions.',
+        returnDirect: true,
+      }
+    );
+
+    const agentExecutor = await getAgent(generateAgentPrompt(agent), knowledgeTool ? [knowledgeTool] : []);
     
-    const tools = await getKnowledgeFromDatabase(agentId, message);
-    const agentExecutor = await getAgent(agentPromptTemplate, tools);
-    // const runnableWithHistory = await createRunnableWithMessageHistory(sessionId, agentExecutor);
-    // const response = await agentExecutor.invoke({ input: message }, { configurable: { sessionId } });
-    const response = agentExecutor.invoke({
+    const response = await agentExecutor.invoke({
       messages: [{ role: 'user', content: message }]
-    }, { configurable: { sessionId } }); 
+    }, { configurable: { thread_id: sessionId } });
 
-    console.log(response);
-    // if (agent['voice_configuration'] !== 'never' && type === 'audio') {
-    //   let responseAudio = {
-    //     output: message,
-    //     type: 'audio',
-    //     outputText: response.output
-    //   }
+    const aiMessage = response.messages.at(-1);
 
-    //   if (process.env.LLM_PROVIDER === 'openai') {
-    //     responseAudio.output = await textToSpeechOpenAI(response.output);
-    //   } else if (type === 'audio' && process.env.LLM_PROVIDER === 'gemini') {
-    //     responseAudio.output = await textToSpeechGemini(sessionId, response.output);
-    //   }
+    if (agent['voice_configuration'] !== 'never' && type === 'audio') {
+      let responseAudio = {
+        output: message,
+        type: 'audio',
+        outputText: aiMessage.content,
+        responseMetadata: aiMessage.response_metadata,
+        usageMetadata: aiMessage['usage_metadata'],
+      }
 
-    //   return responseAudio;
-    // }
+      if (process.env.LLM_PROVIDER === 'openai') {
+        responseAudio.output = await textToSpeechOpenAI(aiMessage.content.toString());
+      } else if (type === 'audio' && process.env.LLM_PROVIDER === 'gemini') {
+        responseAudio.output = await textToSpeechGemini(sessionId, aiMessage.content.toString());
+      }
 
-    // return {
-    //   outputText: response.output,
-    //   output: '',
-    //   type: 'text'
-    // };
+      return responseAudio;
+    }
+    
+    return {
+      outputText: aiMessage.content,
+      output: '',
+      type: 'text',
+      responseMetadata: aiMessage.response_metadata,
+      usageMetadata: aiMessage['usage_metadata'],
+    };
   } catch (error) {
     console.error('Error executing agent:', error);
     throw new Error(`Erro ao executar agente: ${error.message}`);
@@ -119,7 +134,11 @@ async function getKnowledgeFromDatabase(agentId: number, userInput: string) {
   return knowledge;
 }
 
-async function getAgent(agentPromptTemplate: ChatPromptTemplate, tools: any[]) {
+async function getAgent(agentPromptTemplate: string, tools: any[]) {
+  
+  const checkpointer = PostgresSaver.fromConnString(process.env.SUPABASE_POSTGRES_URL);
+  await checkpointer.setup();
+
   let agent: ReactAgent;
   if (process.env.LLM_PROVIDER === 'openai') {
     const chatModel = new ChatOpenAI({
@@ -131,7 +150,8 @@ async function getAgent(agentPromptTemplate: ChatPromptTemplate, tools: any[]) {
     agent = await createAgent({
       model: chatModel,
       tools: tools,
-      systemPrompt:  generateAgentPrompt(agent),
+      systemPrompt:  agentPromptTemplate,
+      checkpointer
     });
 
   } else if (process.env.LLM_PROVIDER === 'gemini') {
@@ -144,7 +164,8 @@ async function getAgent(agentPromptTemplate: ChatPromptTemplate, tools: any[]) {
     agent = await createAgent({
       model: chatModel,
       tools: tools,
-      systemPrompt:  generateAgentPrompt(agent),
+      systemPrompt:  agentPromptTemplate,
+      checkpointer
     });
   }
 
