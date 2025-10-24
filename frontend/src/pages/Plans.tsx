@@ -153,6 +153,13 @@ const Plans = () => {
         || nameLower === 'profissional' 
         || nameLower.includes('professional') 
         || nameLower.includes('profissional');
+      
+      const isEnterprise = ['enterprise', 'empresarial'].includes(planTypeMeta)
+        || nameLower === 'enterprise'
+        || nameLower === 'empresarial'
+        || nameLower.includes('enterprise')
+        || nameLower.includes('empresarial');
+        
       const defaultPriceObj = typeof product.default_price === 'object' ? product.default_price : undefined;
       const allPrices = Array.isArray((product as any).prices) ? (product as any).prices as any[] : [];
       const monthlyPrice = allPrices.find(p => p.recurring?.interval === 'month');
@@ -168,7 +175,7 @@ const Plans = () => {
       
       const finalFeatures = apiFeatures.length > 0 ? apiFeatures : fallbackFeatures;
 
-  const isPopular = isProfessional;
+      const isPopular = isEnterprise;
 
       return {
         id: product.id,
@@ -186,9 +193,11 @@ const Plans = () => {
     .sort((a, b) => {
       const toKey = (name: string): number => {
         const n = name?.toLowerCase?.() || '';
+        // 📊 Nova ordem: Starter (0) → Enterprise (1) → Professional (2)
         if (n.includes('starter') || n.includes('inicial') || n.includes('basic')) return 0;
-        if (n.includes('professional') || n.includes('profissional') || n === 'pro') return 1;
-        return 2;
+        if (n.includes('enterprise') || n.includes('empresarial')) return 1;
+        if (n.includes('professional') || n.includes('profissional') || n === 'pro') return 2;
+        return 3; // Outros planos por último
       };
       return toKey(a.name) - toKey(b.name);
     });
@@ -236,7 +245,69 @@ const Plans = () => {
   };
 
   const formatDate = (timestamp: number) => {
-    return new Date(timestamp * 1000).toLocaleDateString(language.language === 'pt' ? 'pt-BR' : 'en-US');
+    return new Date(timestamp * 1000).toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  };
+
+  const calculateNextBillingDate = () => {
+    if (!invoices || invoices.length === 0 || !userPlan) {
+      return null;
+    }
+
+    const lastPayment = invoices
+      .filter(invoice => invoice.status === 'paid')
+      .sort((a, b) => b.created - a.created)[0];
+
+    if (!lastPayment) {
+      return null;
+    }
+
+    console.log('📅 Último pagamento encontrado:', {
+      date: new Date(lastPayment.created * 1000),
+      timestamp: lastPayment.created,
+      id: lastPayment.id
+    });
+
+    // Data do último pagamento
+    const lastPaymentDate = new Date(lastPayment.created * 1000);
+    const currentDate = new Date();
+
+    // Determinar se é mensal ou anual baseado no plano atual
+    const currentPlan = getCurrentPlan();
+    const isYearly = currentPlan?.price?.recurring?.interval === 'year';
+    
+    console.log('📊 Informações do plano:', {
+      planName: currentPlan?.name,
+      interval: currentPlan?.price?.recurring?.interval,
+      isYearly
+    });
+
+    // Calcular próxima data de cobrança
+    const nextBillingDate = new Date(lastPaymentDate);
+    
+    if (isYearly) {
+      // Para planos anuais: adicionar 1 ano
+      nextBillingDate.setFullYear(lastPaymentDate.getFullYear() + 1);
+    } else {
+      // Para planos mensais: adicionar meses até encontrar a próxima data futura
+      while (nextBillingDate <= currentDate) {
+        nextBillingDate.setMonth(nextBillingDate.getMonth() + 1);
+      }
+    }
+
+    console.log('🎯 Próxima data de cobrança calculada:', {
+      nextBillingDate,
+      formatted: nextBillingDate.toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      })
+    });
+
+    return nextBillingDate;
   };
 
   const exportInvoicesToCSV = () => {
@@ -352,9 +423,41 @@ const Plans = () => {
                   <div className="flex justify-between text-sm">
                     <span>{t.nextBilling}</span>
                     <span className="font-medium">
-                      {userPlan?.provider_data?.current_period_end
-                        ? new Date(userPlan.provider_data.current_period_end).toLocaleDateString(language.language === 'pt' ? 'pt-BR' : 'en-US')
-                        : (userPlan?.updated_at ? new Date(userPlan.updated_at).toLocaleDateString() : 'N/A')}
+                      {(() => {
+                        // 🎯 Tentar usar current_period_end do backend primeiro
+                        if (userPlan?.provider_data?.current_period_end) {
+                          console.log('✅ Usando current_period_end do backend:', userPlan.provider_data.current_period_end);
+                          return new Date(userPlan.provider_data.current_period_end).toLocaleDateString('pt-BR', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric'
+                          });
+                        }
+                        
+                        // 📅 Calcular baseado no histórico de pagamentos
+                        const calculatedDate = calculateNextBillingDate();
+                        if (calculatedDate) {
+                          console.log('📊 Usando data calculada do histórico:', calculatedDate);
+                          return calculatedDate.toLocaleDateString('pt-BR', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric'
+                          });
+                        }
+                        
+                        // ⚠️ Fallback para updated_at
+                        if (userPlan?.updated_at) {
+                          console.log('⚠️ Usando updated_at como fallback:', userPlan.updated_at);
+                          return new Date(userPlan.updated_at).toLocaleDateString('pt-BR', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric'
+                          });
+                        }
+                        
+                        console.log('❌ Nenhuma data disponível para nextBilling');
+                        return 'N/A';
+                      })()}
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
@@ -576,7 +679,22 @@ const Plans = () => {
               {plans.map(plan => {
                 const Icon = plan.icon;
                 const isCurrentPlan = userPlan?.plan_id === plan.plan_id;
-                const hasAccess = !userPlan || userPlan.plan_id >= plan.plan_id;
+                const hasOtherPlan = userPlan && userPlan.plan_id !== plan.plan_id;
+                
+                // 🔄 Determinar se é upgrade ou downgrade baseado na hierarquia dos planos
+                const getPlanHierarchy = (planName: string) => {
+                  const n = planName?.toLowerCase?.() || '';
+                  if (n.includes('starter') || n.includes('inicial') || n.includes('basic')) return 1;
+                  if (n.includes('professional') || n.includes('profissional') || n === 'pro') return 2;
+                  if (n.includes('enterprise') || n.includes('empresarial')) return 3;
+                  return 0;
+                };
+                
+                const currentPlanHierarchy = userPlan ? getPlanHierarchy(plans.find(p => p.plan_id === userPlan.plan_id)?.name || '') : 0;
+                const targetPlanHierarchy = getPlanHierarchy(plan.name);
+                const isUpgrade = hasOtherPlan && targetPlanHierarchy > currentPlanHierarchy;
+                const isDowngrade = hasOtherPlan && targetPlanHierarchy < currentPlanHierarchy;
+                
                 const priceAmount = plan.price?.unit_amount ? plan.price.unit_amount / 100 : undefined;
                 const priceCurrency = plan.price?.currency?.toUpperCase?.() || 'BRL';
                 
@@ -627,7 +745,7 @@ const Plans = () => {
 
                       <div className="mt-auto flex justify-center">
                         <button 
-                          className={`btn ${isCurrentPlan ? 'btn-outline' : 'btn-success'}`}
+                          className={`btn ${isCurrentPlan ? 'btn-outline' : 'btn-success text-white'}`}
                           disabled={isCurrentPlan || isCreatingCheckout || !plan.price_id}
                           onClick={() => handlePlanPurchase({ price_id: plan.price_id, plan_id: plan.plan_id })}
                         >
@@ -636,9 +754,11 @@ const Plans = () => {
                           ) : null}
                           {isCurrentPlan 
                             ? t.currentPlan 
-                            : hasAccess 
-                              ? t.buyNow 
-                              : t.makeUpgrade
+                            : isUpgrade 
+                              ? t.makeUpgrade
+                              : isDowngrade
+                                ? (language.language === 'pt' ? 'Fazer Downgrade' : 'Make Downgrade')
+                                : t.buyNow
                           }
                         </button>
                       </div>
@@ -659,7 +779,7 @@ const Plans = () => {
               <h3 className="text-2xl font-bold">{t.individualCredits}</h3>
               <p className="text-neutral text-sm mt-1">{t.buyExtraCredits}</p>
             </div>
-            <div className="badge badge-info badge-lg hidden md:flex">
+            <div className="badge badge-info badge-lg hidden md:flex text-white">
               <Zap className="w-4 h-4 mr-1" />
               {t.noAutoRenewal}
             </div>
@@ -704,7 +824,7 @@ const Plans = () => {
 
                     {/* Action Button */}
                     <button 
-                      className="btn btn-primary w-full"
+                      className="btn btn-primary w-full text-white"
                       onClick={() => {
                         if (option.price_id) {
                           void handlePlanPurchase({ price_id: option.price_id, mode: 'payment' });
@@ -734,7 +854,7 @@ const Plans = () => {
             <div className="flex items-center justify-center space-x-6 text-sm text-neutral">
               <div className="flex items-center space-x-2">
                 <Check className="w-4 h-4 text-success" />
-                <span>{t.creditsDontExpire}</span>
+                <span>{language.language === 'pt' ? 'Créditos individuais não expiram' : 'Individual credits don\'t expire'}</span>
               </div>
               <div className="flex items-center space-x-2">
                 <Check className="w-4 h-4 text-success" />
@@ -742,7 +862,7 @@ const Plans = () => {
               </div>
               <div className="hidden md:flex items-center space-x-2">
                 <Check className="w-4 h-4 text-success" />
-                <span>{t.noAutoRenewalInfo}</span>
+                <span className="text-white">{t.noAutoRenewalInfo}</span>
               </div>
             </div>
           </div>
