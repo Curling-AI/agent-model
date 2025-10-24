@@ -64,14 +64,15 @@ CREATE TYPE public.subscription_status AS ENUM ('active', 'inactive', 'paused', 
 -- Enum para tipos de transação de crédito
 CREATE TYPE public.transaction_type AS ENUM ('usage', 'expiration', 'monthly_credits', 'individual_credits');
 
+-- Enum para tipos de plano
+CREATE TYPE public.plan_type AS ENUM ('subscription', 'transactional');
+
 -- Tabela Plan
 CREATE TABLE plans (
   id SERIAL PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
   description TEXT,
-  price_month NUMERIC NOT NULL,
-  price_year NUMERIC NOT NULL,
-  individual_price NUMERIC NULL,
+  type public.plan_type NOT NULL,
   metadata JSONB DEFAULT '{}'::jsonb,
   active BOOLEAN NOT NULL,
   created_at TIMESTAMPTZ DEFAULT now(),

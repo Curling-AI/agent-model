@@ -10,11 +10,6 @@ INSERT INTO service_providers (name, description_pt, description_en) VALUES ('Wh
 INSERT INTO service_providers (name, description_pt, description_en) VALUES ('Whatsapp Evolution', 'Conexão via Evolution API para WhatsApp', 'Connection via Evolution API for WhatsApp');
 INSERT INTO service_providers (name, description_pt, description_en) VALUES ('Google Calendar', 'Aplicação de integração com Google Calendar', 'Google Calendar integration application');
 
--- Criação de dados para a tabela plan
-INSERT INTO plans (name, description, price_month, price_year, active) VALUES ('Starter', 'Description for Basic Plan', 49.00, 490.00, TRUE);
-INSERT INTO plans (name, description, price_month, price_year, active) VALUES ('Professional', 'Description for Pro Plan', 149.00, 1490.00, TRUE);
-INSERT INTO plans (name, description, price_month, price_year, active) VALUES ('Enterprise', 'Description for Pro Plan', 499.00, 4990.00, TRUE);
-
 -- Criação de dados para a tabela conversation_tag
 INSERT INTO conversation_tags (name) VALUES ('Urgente');
 INSERT INTO conversation_tags (name) VALUES ('Importante');

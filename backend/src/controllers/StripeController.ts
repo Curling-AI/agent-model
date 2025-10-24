@@ -12,6 +12,15 @@ export const StripeController = {
     try {
       const { limit = 100 } = req.query;
       
+      const { data: localPlans, error: plansError } = await supabase
+        .from('plans')
+        .select('*')
+        .eq('active', true);
+      
+      if (plansError) {
+        throw plansError;
+      }
+      
       const products = await stripe.products.list({
         limit: Number(limit),
         active: true,
@@ -26,8 +35,14 @@ export const StripeController = {
             limit: 100,
             expand: ['data.tiers'],
           });
+          
+          const localPlan = localPlans?.find(plan => 
+            plan.metadata?.stripe_product_id === p.id
+          );
+          
           return {
             ...p,
+            type: localPlan?.type || 'subscription',
             prices: prices.data,
           } as any;
         })

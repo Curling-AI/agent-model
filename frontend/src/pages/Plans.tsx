@@ -142,10 +142,10 @@ const Plans = () => {
   };
 
   const plans = (products || [])
-    .filter((p) => p.active && p.metadata?.is_loose === "False")
+    .filter((p) => p.active && p.type === "subscription")
     .map((product, index) => {
       const iconMap = [Zap, Star, Crown];
-      const colorMap = ['text-accent', 'text-primary', 'text-primary'];
+      const colorMap = ['text-primary', 'text-primary', 'text-primary'];
       const planTypeMeta = (product.metadata?.plan_type as string | undefined)?.toLowerCase?.() || '';
       const nameLower = product.name?.toLowerCase?.() || '';
       const isProfessional = ['pro', 'professional', 'profissional'].includes(planTypeMeta) 
@@ -160,17 +160,13 @@ const Plans = () => {
       const chosenPrice = (billingPeriod === 'month' ? (monthlyPrice || defaultPriceObj) : (yearlyPrice || defaultPriceObj)) || allPrices[0];
       const priceId = chosenPrice?.id || (typeof product.default_price === 'string' ? product.default_price : '');
 
-      const baseFeatures = getPlanFeatures(product.metadata?.plan_type || product.name.toLowerCase());
-      const professionalFeatures = [
-        '5 Agentes de IA',
-        '5.000 mensagens/mês',
-        'Todos os canais',
-        'Dashboard avançado',
-        'CRM integrado',
-        'Follow-ups automáticos',
-        'Suporte prioritário'
-      ];
-      const finalFeatures = isProfessional ? professionalFeatures : baseFeatures;
+      const apiFeatures = product.description 
+        ? product.description.split('\n').filter(line => line.trim() !== '')
+        : [];
+      
+      const fallbackFeatures = getPlanFeatures(product.metadata?.plan_type || product.name.toLowerCase());
+      
+      const finalFeatures = apiFeatures.length > 0 ? apiFeatures : fallbackFeatures;
 
   const isPopular = isProfessional;
 
@@ -198,7 +194,7 @@ const Plans = () => {
     });
 
   const creditProducts = (products || [])
-    .filter((p) => p.active && p.metadata?.is_loose === "True")
+    .filter((p) => p.active && p.type === "transactional")
     .map((product) => {
       const defaultPriceObj = typeof product.default_price === 'object' ? product.default_price : undefined;
       const productPrices = (product as any).prices ?? [];
@@ -241,6 +237,37 @@ const Plans = () => {
 
   const formatDate = (timestamp: number) => {
     return new Date(timestamp * 1000).toLocaleDateString(language.language === 'pt' ? 'pt-BR' : 'en-US');
+  };
+
+  const exportInvoicesToCSV = () => {
+    if (!invoices || invoices.length === 0) {
+      return;
+    }
+
+    const headers = ['Data', 'Descrição', 'Valor', 'Status', 'Fatura ID'];
+    
+    const csvData = invoices.map(invoice => [
+      formatDate(invoice.created),
+      invoice.description ?? 'Cobrança via Stripe',
+      `"${formatPrice(invoice.amount_paid / 100)}"`,
+      invoice.status === 'paid' ? 'Pago' : invoice.status === 'open' ? 'Pendente' : invoice.status,
+      invoice.id
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...csvData.map(row => row.join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `historico-pagamentos-${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const getInvoiceStatusBadge = (status: string) => {
@@ -325,7 +352,9 @@ const Plans = () => {
                   <div className="flex justify-between text-sm">
                     <span>{t.nextBilling}</span>
                     <span className="font-medium">
-                      {userPlan?.updated_at ? new Date(userPlan.updated_at).toLocaleDateString() : 'N/A'}
+                      {userPlan?.provider_data?.current_period_end
+                        ? new Date(userPlan.provider_data.current_period_end).toLocaleDateString(language.language === 'pt' ? 'pt-BR' : 'en-US')
+                        : (userPlan?.updated_at ? new Date(userPlan.updated_at).toLocaleDateString() : 'N/A')}
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
@@ -561,15 +590,12 @@ const Plans = () => {
                       )}
                       
                       <div className="flex items-center space-x-3 mb-4">
-                        <div className={`w-12 h-12 bg-opacity-10 rounded-xl flex items-center justify-center ${plan.color.replace('text-', 'bg-')}`}>
+                        <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
                           <Icon className={`w-6 h-6 ${plan.color}`} />
                         </div>
                         <div>
                           <h4 className="font-bold text-xl">{plan.name}</h4>
                           {isCurrentPlan && <span className="badge badge-primary badge-sm">{t.current}</span>}
-                          {plan.description && (
-                            <p className="text-xs text-neutral mt-1 max-w-[280px]">{plan.description}</p>
-                          )}
                         </div>
                       </div>
 
@@ -728,7 +754,11 @@ const Plans = () => {
         <div className="card-body">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-2xl font-bold">{t.paymentHistory}</h3>
-            <button className="btn btn-outline btn-sm">
+            <button 
+              className="btn btn-outline btn-sm"
+              onClick={exportInvoicesToCSV}
+              disabled={!invoices || invoices.length === 0}
+            >
               <Download className="w-4 h-4 mr-2" />
               {t.export}
             </button>
@@ -764,7 +794,7 @@ const Plans = () => {
                           <span>{formatDate(invoice.created)}</span>
                         </div>
                       </td>
-                      <td>{invoice.description || 'Cobrança via Stripe'}</td>
+                      <td>{invoice.description ?? 'Cobrança via Stripe'}</td>
                       <td className="font-semibold">{formatPrice(invoice.amount_paid / 100)}</td>
                       <td>{getInvoiceStatusBadge(invoice.status)}</td>
                       <td>
@@ -780,16 +810,6 @@ const Plans = () => {
                           >
                             <Download className="w-3 h-3 mr-1" />
                             PDF
-                          </a>
-                        )}
-                        {invoice.hosted_invoice_url && (
-                          <a 
-                            href={invoice.hosted_invoice_url} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="btn btn-ghost btn-xs ml-1"
-                          >
-                            Ver
                           </a>
                         )}
                       </td>

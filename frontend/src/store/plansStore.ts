@@ -16,6 +16,7 @@ export interface StripeProduct {
   name: string;
   description?: string;
   active: boolean;
+  type: 'subscription' | 'transactional';
   default_price?:
     | string
     | {
