@@ -123,7 +123,7 @@ export const getTokenFromInstance = async (instance: string): Promise<string> =>
   throw new Error('Instance not found');
 }
 
-export const getMediaContent = async (messageId: string, token: string): Promise<string> => {
+export const getMediaContent = async (messageId: string, token: string): Promise<any> => {
   
   let payload = {
     id: messageId,

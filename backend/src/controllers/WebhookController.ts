@@ -53,7 +53,7 @@ export const WebhookController = {
                 const from = message.from;
                 const timestamp = message.timestamp;
                 const type = message.type;
-                const text = message.text?.body;
+                const text = type === 'image' ? message.image?.caption : type === 'video' ? message.video?.caption : type === 'document' ? message.document?.caption : message.text?.body;
 
                 const integrations = await getByFilter('integrations', { 'metadata->>phoneNumberId': metadata.phone_number_id });
 
@@ -76,13 +76,13 @@ export const WebhookController = {
                   conversation = newConversation && newConversation.length > 0 ? newConversation[0] : null;
                 } else {
                   const newLead = await upsert('leads', { phone: phone, name: contacts[0].profile.name || 'Desconhecido', organization_id: agent['organization_id'], value: 0, source: 'whatsapp' });
-                  conversation = await upsert('conversations', { lead_id: newLead['id'], agent_id: agent['id'], organization_id: agent['organization_id'] });
+                  conversation = await upsert('conversations', { lead_id: newLead['id'], agent_id: agent['id'], organization_id: agent['organization_id'], integration: 'meta' });
                 }
                 
-                await upsert('conversation_messages', { conversation_id: conversation['id'], sender: 'human', content: text || '', metadata: message, timestamp: new Date(timestamp * 1000) });
+                await upsert('conversation_messages', { conversation_id: conversation['id'], sender: 'human', content: text || '', metadata: {message, contacts, metadata}, timestamp: new Date(timestamp * 1000) });
 
                 if (conversation['mode'] === 'agent') {
-                  let responseMessage;
+                  let responseMessage: any = {};
                   const token = integrations[0]['metadata']['accessToken'];
                   const wpNumberId = integrations[0]['metadata']['phoneNumberId'];
 
@@ -139,7 +139,7 @@ export const WebhookController = {
         conversation = newConversation && newConversation.length > 0 ? newConversation[0] : null;
       } else {
         const newLead = await upsert('leads', { phone: webhookContent.phone, name: webhookContent.senderName || 'Desconhecido', organization_id: agent['organization_id'], value: 0 });
-        conversation = await upsert('conversations', { lead_id: newLead['id'], agent_id: agent['id'], organization_id: agent['organization_id'] });
+        conversation = await upsert('conversations', { lead_id: newLead['id'], agent_id: agent['id'], organization_id: agent['organization_id'], integration: 'zapi' });
       }
 
       await upsert('conversation_messages', { conversation_id: conversation['id'], sender: 'human', content: webhookContent.text.message, metadata: webhookContent, timestamp: new Date(webhookContent.momment) });
@@ -187,7 +187,7 @@ export const WebhookController = {
         conversation = newConversation && newConversation.length > 0 ? newConversation[0] : null;
       } else {
         const newLead = await upsert('leads', { phone: phone, name: webhookContent.message.senderName || 'Desconhecido', organization_id: agent['organization_id'], value: 0, source: 'whatsapp' });
-        conversation = await upsert('conversations', { lead_id: newLead['id'], agent_id: agent['id'], organization_id: agent['organization_id'] });
+        conversation = await upsert('conversations', { lead_id: newLead['id'], agent_id: agent['id'], organization_id: agent['organization_id'], integration: 'uazapi' });
       }
 
       await upsert('conversation_messages', { conversation_id: conversation['id'], sender: 'human', content: webhookContent.message.text, metadata: webhookContent, timestamp: new Date(webhookContent.message.messageTimestamp) });

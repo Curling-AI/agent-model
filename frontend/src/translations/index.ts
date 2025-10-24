@@ -398,6 +398,9 @@ export const translations = {
     selectedFiles: 'Arquivos selecionados',
     sending: 'Enviando...',
     clear: 'Limpar',
+    clickToLoad: 'Clique para carregar',
+    imageMessage: 'Imagem',
+    videoMessage: 'Vídeo',
 
     // Quick Replies
     quickReply1: 'Olá! Como posso ajudá-lo hoje?',
@@ -1384,6 +1387,9 @@ export const translations = {
     selectedFiles: 'Selected files',
     sending: 'Sending...',
     clear: 'Clear',
+    clickToLoad: 'Click to load',
+    imageMessage: 'Image',
+    videoMessage: 'Video',
 
     // Quick Replies
     quickReply1: 'Hello! How can I help you today?',
@@ -1617,8 +1623,8 @@ export const translations = {
     invalidCurrentPassword: 'Invalid current password',
     passwordTooShort: 'New password must be at least 8 characters long',
     fillAllFields: 'Please fill in all fields',
-  }
-};
+  },
+}
 
 export const useTranslation = (context: LanguageContextType) => {
   return translations[context.language] || translations.pt

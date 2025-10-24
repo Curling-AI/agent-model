@@ -11,6 +11,7 @@ interface AudioMessageProps {
   audioBase64?: string
   userId: number
   agentId: number
+  integration?: 'uazapi' | 'meta'
 }
 
 export function AudioMessage({
@@ -22,6 +23,7 @@ export function AudioMessage({
   audioBase64,
   userId,
   agentId,
+  integration,
 }: AudioMessageProps) {
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
@@ -166,9 +168,20 @@ export function AudioMessage({
         }
       } else {
         // Para mensagens human, busca do servidor
-        const data = await getMediaContent(messageId, userId, agentId)
+        const data = await getMediaContent(messageId, userId, agentId, integration)
         if (data.success) {
-          setAudioUrl(data.data.fileURL)
+          if (integration === 'meta') {
+            setAudioUrl(`data:${data.data.mimetype};base64,${data.data.base64Data}`)
+            // Calcula o waveform se não tiver um waveform pré-definido
+            if (!waveform) {
+              const calculatedWaveform = await calculateWaveform(
+                `data:${data.data.mimetype};base64,${data.data.base64Data}`,
+              )
+              setWaveformData(calculatedWaveform)
+            }
+          } else {
+            setAudioUrl(data.data.fileURL)
+          }
           setHasLoaded(true)
         }
       }

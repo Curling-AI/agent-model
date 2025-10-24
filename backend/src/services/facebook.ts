@@ -5,6 +5,7 @@ import FormDataLib from "form-data";
 import * as fs from 'fs';
 import * as path from 'path';
 import axios, { AxiosRequestConfig } from 'axios';
+import { getByFilter } from "./storage";
 
 export const sendMetaMessage = async (wpNumberId: string, to: string, message: string, token: string) => {
   try {
@@ -43,7 +44,7 @@ export const sendMetaMessage = async (wpNumberId: string, to: string, message: s
   }
 };
 
-export const sendMetaMedia = async (wpNumberId: string, to: string, media: string, type: string, mimeType: string, token: string) => {
+export const sendMetaMedia = async (wpNumberId: string, to: string, media: string, type: string, mimeType: string, token: string, name?: string) => {
   try {
     const filePath = await base64ToFile(media, `./uploads/${Date.now()}`, mimeType);
 
@@ -51,7 +52,7 @@ export const sendMetaMedia = async (wpNumberId: string, to: string, media: strin
       throw new Error(`Arquivo não encontrado no caminho: ${filePath}`);
     }
     
-    const mediaFileName = path.basename(filePath);
+    const mediaFileName = name || path.basename(filePath);
     
     const formData = new FormDataLib();
     formData.append('messaging_product', 'whatsapp');
@@ -119,8 +120,10 @@ export const sendMetaMedia = async (wpNumberId: string, to: string, media: strin
       method: 'POST',
       body: JSON.stringify(payload)
     });
+    const data = await messageResponse.json();
 
-    console.log('Message response status:', await messageResponse.json());
+    console.log('Message response status:', data);
+    return data;
   } catch (error) {
     console.error('Error sending media:', error);
     throw error;
@@ -128,7 +131,8 @@ export const sendMetaMedia = async (wpNumberId: string, to: string, media: strin
 };
 
 export const getMetaMediaContent = async (mediaBodyContent: any, token: string): Promise<any> => {
-  const mediaId = mediaBodyContent.type === 'image' ? mediaBodyContent.image.id : mediaBodyContent.audio.id;
+  const media = mediaBodyContent.type === 'image' ? mediaBodyContent.image : mediaBodyContent.type === 'video' ? mediaBodyContent.video : mediaBodyContent.type === 'document' ? mediaBodyContent.document : mediaBodyContent.audio;
+  const mediaId = media.id;
 
   const response = await fetch(`${process.env.FACEBOOK_URL}/${process.env.FACEBOOK_GRAPH_API_VERSION}/${mediaId}`, {
     headers: {
@@ -145,7 +149,7 @@ export const getMetaMediaContent = async (mediaBodyContent: any, token: string):
   const filePath = await saveRemoteFile(
     data.url,
     './uploads', `media_${mediaId}.${getExtensionFromMimeType(
-      mediaBodyContent.type === 'image' ? mediaBodyContent.image.mime_type : mediaBodyContent.audio.mime_type
+      media.mime_type
     )}`,
     token
   );
@@ -163,4 +167,13 @@ export const getMetaMediaContent = async (mediaBodyContent: any, token: string):
     base64Data: base64Data,
     mimetype: data.mime_type,
   };
+
+}
+
+export const getTokenFromPhoneNumberId = async (phoneNumberId: string): Promise<string> => {
+  const integrations = await getByFilter('integrations', { 'metadata->>phoneNumberId': phoneNumberId });
+  if (integrations.length > 0) {
+    return integrations[0]['metadata']['accessToken'];
+  }
+  throw new Error('Integration not found');
 }

@@ -12,6 +12,7 @@ interface ImageMessageProps {
   className?: string
   userId?: number
   agentId?: number
+  integration?: 'uazapi' | 'meta'
 }
 
 export function ImageMessage({
@@ -21,11 +22,13 @@ export function ImageMessage({
   className = '',
   userId,
   agentId,
+  integration,
 }: ImageMessageProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [hasLoadedHighQuality, setHasLoadedHighQuality] = useState(false)
   const [highQualityImageUrl, setHighQualityImageUrl] = useState<string>('')
   const [error, setError] = useState(false)
+  const [imageBase64, setImageBase64] = useState<string>('')
   const language = useLanguage()
   const t = useTranslation(language)
 
@@ -38,9 +41,15 @@ export function ImageMessage({
     setError(false)
 
     try {
-      const data = await getMediaContent(messageId, userId, agentId)
-      if (data.success && data.data.fileURL) {
-        setHighQualityImageUrl(data.data.fileURL)
+      const data = await getMediaContent(messageId, userId, agentId, integration)
+      if (data.success) {
+        if (integration === 'meta') {
+          setHighQualityImageUrl(`data:${data.data.mimetype};base64,${data.data.base64Data}`)
+          setImageBase64(data.data.base64Data)
+        } else {
+          setHighQualityImageUrl(data.data.fileURL)
+          setImageBase64(data.data.base64Data)
+        }
         setHasLoadedHighQuality(true)
       } else {
         setError(true)
@@ -61,10 +70,7 @@ export function ImageMessage({
 
       if (hasLoadedHighQuality) {
         // Se já está carregada, buscar o base64Data diretamente
-        const data = await getMediaContent(messageId, userId, agentId)
-        if (data.success && data.data.base64Data) {
-          base64 = data.data.base64Data
-        }
+        base64 = imageBase64
       } else {
         // Se não está carregada, usar handleImageClick
         base64 = await handleImageClick()
@@ -101,15 +107,24 @@ export function ImageMessage({
           onClick={handleImageClick}
         >
           {/* Imagem */}
-          <img
-            src={imageUrl}
-            alt="Image message"
-            className={`h-3xl w-3xl object-contain ${
-              !hasLoadedHighQuality ? 'brightness-90 filter' : ''
-            }`}
-            onError={() => setError(true)}
-          />
-
+          {hasLoadedHighQuality || thumbnailBase64 ? (
+            <img
+              src={imageUrl}
+              alt="Image message"
+              className={`h-3xl w-3xl object-contain ${
+                !hasLoadedHighQuality ? 'brightness-90 filter' : ''
+              }`}
+              onError={() => setError(true)}
+            />
+          ) : (
+            <div className="flex size-64 items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-100 dark:border-gray-600 dark:bg-gray-800">
+              <div className="text-center text-gray-500 dark:text-gray-400">
+                <ImageIcon className="mx-auto mb-2 h-12 w-12" />
+                <p className="text-sm font-medium">{t.imageMessage || 'Imagem'}</p>
+                <p className="text-xs opacity-75">{t.clickToLoad || 'Clique para carregar'}</p>
+              </div>
+            </div>
+          )}
           {/* Overlay de loading */}
           {isLoading && (
             <div className="bg-opacity-50 absolute inset-0 flex items-center justify-center bg-black">
@@ -128,7 +143,7 @@ export function ImageMessage({
           )}
 
           {/* Indicador de qualidade baixa */}
-          {!hasLoadedHighQuality && !isLoading && !error && (
+          {!hasLoadedHighQuality && !isLoading && !error && thumbnailBase64 && (
             <div className="bg-opacity-60 absolute top-2 right-2 rounded bg-black px-2 py-1 text-xs text-white">
               {t.lowQuality}
             </div>

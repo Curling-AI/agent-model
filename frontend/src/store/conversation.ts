@@ -25,6 +25,7 @@ interface ConversationState {
     message: string,
     to: string,
     conversationId: number,
+    integration?: 'uazapi' | 'meta',
   ) => Promise<string | undefined>
   sendMedia: (
     agentId: number,
@@ -34,12 +35,15 @@ interface ConversationState {
     name: string,
     type: string,
     conversationId: number,
+    mimeType?: string,
+    integration?: 'uazapi' | 'meta',
   ) => Promise<string | undefined>
   changeConversationMode: (conversationId: number, mode: 'agent' | 'human') => Promise<void>
   getMediaContent: (
     messageId: number,
     userId?: number,
     agentId?: number,
+    integration?: 'uazapi' | 'meta',
   ) => Promise<{ data: any; success: boolean }>
 }
 
@@ -160,12 +164,19 @@ export const useConversationStore = create<ConversationState>((set) => ({
     message: string,
     to: string,
     conversationId: number,
+    integration?: 'uazapi' | 'meta',
   ) => {
     const instance = `agent-${agentId}-user-${userId}`
-    const res = await fetch(`${BASE_URL}/messages/send-message`, {
+    let url: URL
+    if (integration === 'meta') {
+      url = new URL(`${BASE_URL}/messages/send-message/meta`)
+    } else {
+      url = new URL(`${BASE_URL}/messages/send-message`)
+    }
+    const res = await fetch(url.toString(), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message, to, instanceName: instance, conversationId: conversationId }),
+      body: JSON.stringify({ message, to, instanceName: instance, conversationId }),
     })
     if (!res.ok) return
     const msg = await res.json()
@@ -180,12 +191,28 @@ export const useConversationStore = create<ConversationState>((set) => ({
     name: string,
     type: string,
     conversationId: number,
+    mimeType?: string,
+    integration?: 'uazapi' | 'meta',
   ) => {
     const instance = `agent-${agentId}-user-${userId}`
-    const res = await fetch(`${BASE_URL}/messages/send-media`, {
+    let url: URL
+    if (integration === 'meta') {
+      url = new URL(`${BASE_URL}/messages/send-media/meta`)
+    } else {
+      url = new URL(`${BASE_URL}/messages/send-media`)
+    }
+    const res = await fetch(url.toString(), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ to, media, name, type, instanceName: instance, conversationId }),
+      body: JSON.stringify({
+        to,
+        media,
+        name,
+        type,
+        mimeType,
+        instanceName: instance,
+        conversationId,
+      }),
     })
     if (!res.ok) return
     const data = await res.json()
@@ -206,13 +233,23 @@ export const useConversationStore = create<ConversationState>((set) => ({
     return data
   },
 
-  getMediaContent: async (messageId: number, userId?: number, agentId?: number) => {
-    const url = new URL(`${BASE_URL}/messages/media-content`)
-    url.searchParams.set('id', messageId.toString())
-    if (userId && agentId) {
-      const instance = `agent-${agentId}-user-${userId}`
-      url.searchParams.set('instanceName', instance)
+  getMediaContent: async (
+    messageId: number,
+    userId?: number,
+    agentId?: number,
+    integration?: 'uazapi' | 'meta',
+  ) => {
+    let url: URL
+    if (integration === 'meta') {
+      url = new URL(`${BASE_URL}/messages/media-content/meta`)
+    } else {
+      url = new URL(`${BASE_URL}/messages/media-content`)
+      if (userId && agentId) {
+        const instance = `agent-${agentId}-user-${userId}`
+        url.searchParams.set('instanceName', instance)
+      }
     }
+    url.searchParams.set('id', messageId.toString())
     const res = await fetch(url.toString(), {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },

@@ -9,6 +9,7 @@ export interface Conversation extends BaseInterface {
   tags: ConversationTag[]
   messages: ConversationMessage[]
   mode: 'agent' | 'human'
+  integration?: 'uazapi' | 'meta'
 }
 
 export interface ConversationMessage {

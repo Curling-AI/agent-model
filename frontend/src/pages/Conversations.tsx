@@ -175,6 +175,7 @@ const Conversations = () => {
         newMessage.content,
         selectedConversation.lead.phone,
         selectedConversation.id,
+        selectedConversation.integration ?? 'uazapi',
       )
       setNewMessage(null)
     }
@@ -206,6 +207,8 @@ const Conversations = () => {
           file.name,
           fileType,
           selectedConversation.id,
+          file.type,
+          selectedConversation.integration ?? 'uazapi',
         )
       }
       reader.readAsDataURL(file)
@@ -422,6 +425,92 @@ const Conversations = () => {
       document.removeEventListener('mousedown', handleClickOutside)
     }
   }, [showEmojiPicker])
+
+  const getMessageComponent = (
+    message: ConversationMessage,
+    selectedConversation: Conversation,
+  ) => {
+    if (
+      message.metadata?.message?.messageType === 'ImageMessage' ||
+      message.metadata?.messageType === 'ImageMessage' ||
+      message.metadata?.message?.type === 'image'
+    ) {
+      return (
+        <ImageMessage
+          messageId={message.id}
+          thumbnailBase64={
+            message.metadata.message?.content?.JPEGThumbnail ||
+            message.metadata?.content?.JPEGThumbnail
+          }
+          textContent={message.content}
+          userId={userId}
+          agentId={selectedConversation.agent.id}
+          integration={selectedConversation.integration ?? 'uazapi'}
+        />
+      )
+    }
+    if (
+      message.metadata?.message?.messageType === 'VideoMessage' ||
+      message.metadata?.messageType === 'VideoMessage' ||
+      message.metadata?.message?.type === 'video'
+    ) {
+      return (
+        <VideoMessage
+          messageId={message.id}
+          thumbnailBase64={
+            message.metadata.message?.content?.JPEGThumbnail ||
+            message.metadata?.content?.JPEGThumbnail
+          }
+          textContent={message.content}
+          userId={userId}
+          agentId={selectedConversation.agent.id}
+          integration={selectedConversation.integration ?? 'uazapi'}
+        />
+      )
+    }
+    if (
+      message.metadata?.message?.messageType === 'DocumentMessage' ||
+      message.metadata?.messageType === 'DocumentMessage' ||
+      message.metadata?.message?.type === 'document'
+    ) {
+      return (
+        <DocumentMessage
+          messageId={message.id}
+          documentTitle={
+            message.metadata.message?.content?.title || message.metadata?.content?.fileName
+          }
+          textContent={message.content}
+          userId={userId}
+          agentId={selectedConversation.agent.id}
+          integration={selectedConversation.integration ?? 'uazapi'}
+        />
+      )
+    }
+    if (
+      message.metadata?.message?.messageType === 'AudioMessage' ||
+      message.metadata?.type === 'audio' ||
+      message.metadata?.messageType === 'AudioMessage' ||
+      message.metadata?.message?.type === 'audio'
+    ) {
+      return (
+        <AudioMessage
+          messageId={message.id}
+          waveform={
+            message.metadata.message?.content?.waveform || message.metadata?.content?.waveform
+          }
+          durationSeconds={
+            message.metadata.message?.content?.seconds || message.metadata?.content?.seconds
+          }
+          sender={message.sender}
+          audioBase64={message.sender === 'agent' ? message.metadata?.output : undefined}
+          userId={userId}
+          agentId={selectedConversation.agent.id}
+          integration={selectedConversation.integration ?? 'uazapi'}
+        />
+      )
+    }
+    return <p className="text-sm leading-relaxed">{message.content}</p>
+  }
 
   return (
     <div className="bg-base-100 flex h-[calc(100vh-8rem)] flex-col">
@@ -756,65 +845,7 @@ const Conversations = () => {
                             : 'bg-primary text-primary-content'
                         }`}
                       >
-                        {message.metadata?.message?.messageType === 'AudioMessage' ||
-                        message.metadata?.type === 'audio' ||
-                        message.metadata?.messageType === 'AudioMessage' ? (
-                          <AudioMessage
-                            messageId={message.id}
-                            waveform={
-                              message.metadata.message?.content?.waveform ||
-                              message.metadata?.content?.waveform
-                            }
-                            durationSeconds={
-                              message.metadata.message?.content?.seconds ||
-                              message.metadata?.content?.seconds
-                            }
-                            sender={message.sender}
-                            audioBase64={
-                              message.sender === 'agent' ? message.metadata?.output : undefined
-                            }
-                            userId={userId}
-                            agentId={selectedConversation.agent.id}
-                          />
-                        ) : message.metadata?.message?.messageType === 'ImageMessage' ||
-                          message.metadata?.messageType === 'ImageMessage' ? (
-                          <ImageMessage
-                            messageId={message.id}
-                            thumbnailBase64={
-                              message.metadata.message?.content?.JPEGThumbnail ||
-                              message.metadata?.content?.JPEGThumbnail
-                            }
-                            textContent={message.content}
-                            userId={userId}
-                            agentId={selectedConversation.agent.id}
-                          />
-                        ) : message.metadata?.message?.messageType === 'VideoMessage' ||
-                          message.metadata?.messageType === 'VideoMessage' ? (
-                          <VideoMessage
-                            messageId={message.id}
-                            thumbnailBase64={
-                              message.metadata.message?.content?.JPEGThumbnail ||
-                              message.metadata?.content?.JPEGThumbnail
-                            }
-                            textContent={message.content}
-                            userId={userId}
-                            agentId={selectedConversation.agent.id}
-                          />
-                        ) : message.metadata?.message?.messageType === 'DocumentMessage' ||
-                          message.metadata?.messageType === 'DocumentMessage' ? (
-                          <DocumentMessage
-                            messageId={message.id}
-                            documentTitle={
-                              message.metadata.message?.content?.title ||
-                              message.metadata?.content?.fileName
-                            }
-                            textContent={message.content}
-                            userId={userId}
-                            agentId={selectedConversation.agent.id}
-                          />
-                        ) : (
-                          <p className="text-sm leading-relaxed">{message.content}</p>
-                        )}
+                        {getMessageComponent(message, selectedConversation)}
                         <div className="mt-2 flex items-center justify-end space-x-1">
                           <span className="text-xs opacity-70">
                             {formatRelative(new Date(message.timestamp), new Date(), {
@@ -1096,7 +1127,8 @@ const Conversations = () => {
                 >
                   {message.metadata?.message?.messageType === 'AudioMessage' ||
                   message.metadata?.type === 'audio' ||
-                  message.metadata?.messageType === 'AudioMessage' ? (
+                  message.metadata?.messageType === 'AudioMessage' ||
+                  message.metadata?.message?.type === 'audio' ? (
                     <AudioMessage
                       messageId={message.id}
                       waveform={
@@ -1113,9 +1145,11 @@ const Conversations = () => {
                       }
                       userId={userId}
                       agentId={selectedConversation.agent.id}
+                      integration={selectedConversation.integration ?? 'uazapi'}
                     />
                   ) : message.metadata?.message?.messageType === 'ImageMessage' ||
-                    message.metadata?.messageType === 'ImageMessage' ? (
+                    message.metadata?.messageType === 'ImageMessage' ||
+                    message.metadata?.message?.type === 'image' ? (
                     <ImageMessage
                       messageId={message.id}
                       thumbnailBase64={
@@ -1125,9 +1159,11 @@ const Conversations = () => {
                       textContent={message.content}
                       userId={userId}
                       agentId={selectedConversation.agent.id}
+                      integration={selectedConversation.integration ?? 'uazapi'}
                     />
                   ) : message.metadata?.message?.messageType === 'VideoMessage' ||
-                    message.metadata?.messageType === 'VideoMessage' ? (
+                    message.metadata?.messageType === 'VideoMessage' ||
+                    message.metadata?.message?.type === 'video' ? (
                     <VideoMessage
                       messageId={message.id}
                       thumbnailBase64={
@@ -1135,9 +1171,13 @@ const Conversations = () => {
                         message.metadata?.content?.JPEGThumbnail
                       }
                       textContent={message.content}
+                      userId={userId}
+                      agentId={selectedConversation.agent.id}
+                      integration={selectedConversation.integration ?? 'uazapi'}
                     />
                   ) : message.metadata?.message?.messageType === 'DocumentMessage' ||
-                    message.metadata?.messageType === 'DocumentMessage' ? (
+                    message.metadata?.messageType === 'DocumentMessage' ||
+                    message.metadata?.message?.type === 'document' ? (
                     <DocumentMessage
                       messageId={message.id}
                       documentTitle={
@@ -1147,6 +1187,7 @@ const Conversations = () => {
                       textContent={message.content}
                       userId={userId}
                       agentId={selectedConversation.agent.id}
+                      integration={selectedConversation.integration ?? 'uazapi'}
                     />
                   ) : (
                     <p className="text-sm leading-relaxed">{message.content}</p>

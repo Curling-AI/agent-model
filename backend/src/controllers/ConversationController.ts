@@ -17,20 +17,25 @@ interface Conversation {
 export const ConversationController = {
 
   listConversations: async (req: Request, res: Response) => {
-    const organizationId = Number(req.query.organizationId);
-    const conversations = await getByFilter<Conversation>('conversations', { 'organization_id': organizationId });
-    const conversationsWithData = await Promise.all(conversations.map(async (conversation) => {
-      const agent = await getById('agents', conversation.agent_id);
-      const lead = await getById('leads', conversation.lead_id);
-      const {data: tags, error} = await supabase.from('conversation_tag_associations').select('*, conversation_tags(*)').eq('conversation_id', conversation.id);
-      if (error) {
-        console.log(error);
-        return res.status(500).json({ error: 'Error getting conversation tags' });
-      }
-      const messages = await getByFilter('conversation_messages', { 'conversation_id': conversation.id });
-      return { ...conversation, agent, lead, tags: tags.map((tag) => tag.conversation_tags), messages };
-    }));
-    return res.status(200).json(conversationsWithData);
+    try {
+      const organizationId = Number(req.query.organizationId);
+      const conversations = await getByFilter<Conversation>('conversations', { 'organization_id': organizationId });
+      const conversationsWithData = await Promise.all(conversations.map(async (conversation) => {
+        const agent = await getById('agents', conversation.agent_id);
+        const lead = await getById('leads', conversation.lead_id);
+        const {data: tags, error} = await supabase.from('conversation_tag_associations').select('*, conversation_tags(*)').eq('conversation_id', conversation.id);
+        if (error) {
+          console.log(error);
+          return res.status(500).json({ error: 'Error getting conversation tags' });
+        }
+        const messages = await getByFilter('conversation_messages', { 'conversation_id': conversation.id });
+        return { ...conversation, agent, lead, tags: tags.map((tag) => tag.conversation_tags), messages };
+      }));
+      return res.status(200).json(conversationsWithData);
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json({ error: 'Error listing conversations' });
+    }
   },
 
   upsertConversation: async (req: Request, res: Response) => {

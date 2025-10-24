@@ -12,6 +12,7 @@ interface VideoMessageProps {
   className?: string
   userId?: number
   agentId?: number
+  integration?: 'uazapi' | 'meta'
 }
 
 export function VideoMessage({
@@ -21,6 +22,7 @@ export function VideoMessage({
   className = '',
   userId,
   agentId,
+  integration,
 }: VideoMessageProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [hasLoadedHighQuality, setHasLoadedHighQuality] = useState(false)
@@ -49,15 +51,16 @@ export function VideoMessage({
     setError(false)
 
     try {
-      const data = await getMediaContent(messageId, userId, agentId)
-      if (data.success && data.data.fileURL) {
-        setHighQualityVideoUrl(data.data.fileURL)
-        setHasLoadedHighQuality(true)
+      const data = await getMediaContent(messageId, userId, agentId, integration)
+      if (data.success) {
+        if (integration === 'meta') {
+          setHighQualityVideoUrl(`data:${data.data.mimetype};base64,${data.data.base64Data}`)
+        } else {
+          setHighQualityVideoUrl(data.data.fileURL)
+        }
         setVideoBase64(data.data.base64Data)
-      } else {
-        setError(true)
+        setHasLoadedHighQuality(true)
       }
-      return data.data.base64Data
     } catch (err) {
       console.error('Erro ao carregar vídeo em alta qualidade:', err)
       setError(true)
@@ -268,7 +271,7 @@ export function VideoMessage({
               onTouchStart={handleVideoTouch}
               onClick={handleVideoTouch}
             />
-          ) : (
+          ) : thumbnailBase64 ? (
             <img
               src={`data:image/jpeg;base64,${thumbnailBase64}`}
               alt="Video thumbnail"
@@ -277,6 +280,14 @@ export function VideoMessage({
               }`}
               onError={() => setError(true)}
             />
+          ) : (
+            <div className="flex size-64 items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-100 dark:border-gray-600 dark:bg-gray-800">
+              <div className="text-center text-gray-500 dark:text-gray-400">
+                <VideoIcon className="mx-auto mb-2 h-12 w-12" />
+                <p className="text-sm font-medium">{t.videoMessage || 'Vídeo'}</p>
+                <p className="text-xs opacity-75">{t.clickToLoad || 'Clique para carregar'}</p>
+              </div>
+            </div>
           )}
 
           {/* Overlay de loading */}
