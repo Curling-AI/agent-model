@@ -69,14 +69,20 @@ export const WebhookController = {
                   return res.status(404).json({ error: 'Agent not found' });
                 }
 
-                let lead = await getByFilter('leads', { phone });
-                
-                if (lead && lead.length > 0) {
-                  const newConversation = await getByFilter('conversations', { lead_id: lead[0]['id'], agent_id: agent['id'] });
+                const leads = await getByFilter('leads', { phone });
+                if (leads && leads.length > 0) {
+                  const newConversation = await getByFilter('conversations', { lead_id: leads[0]['id'], agent_id: agent['id'] });
                   conversation = newConversation && newConversation.length > 0 ? newConversation[0] : null;
-                } else {
-                  const newLead = await upsert('leads', { phone: phone, name: contacts[0].profile.name || 'Desconhecido', organization_id: agent['organization_id'], value: 0, source: 'whatsapp' });
-                  conversation = await upsert('conversations', { lead_id: newLead['id'], agent_id: agent['id'], organization_id: agent['organization_id'] });
+                }
+
+                if (!conversation) {
+                  let lead;
+                  if (!leads || leads.length === 0) {
+                    lead = await upsert('leads', { phone: phone, name: contacts[0].profile.name || 'Desconhecido', organization_id: agent['organization_id'], value: 0, source: 'whatsapp' });
+                  } else {
+                    lead = leads[0];
+                  }
+                  conversation = await upsert('conversations', { lead_id: lead['id'], agent_id: agent['id'], organization_id: agent['organization_id'] });
                 }
                 
                 await upsert('conversation_messages', { conversation_id: conversation['id'], sender: 'human', content: text || '', metadata: message, timestamp: new Date(timestamp * 1000) });
@@ -162,9 +168,9 @@ export const WebhookController = {
     try {
       const webhookContent = req.body;
 
-      if (webhookContent.message.fromMe) {
-        return res.status(200).json({ message: 'Message from self, ignoring.' });
-      }
+      // if (webhookContent.message.fromMe) {
+      //   return res.status(200).json({ message: 'Message from self, ignoring.' });
+      // }
 
       const integrations = await getByFilter('integrations', { 'metadata->instance->>token': webhookContent.token });
 

@@ -3,13 +3,11 @@ import { supabase } from '../../config/supabaseClient';
 import { ChatOpenAI, OpenAIEmbeddings } from '@langchain/openai';
 import { ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings } from '@langchain/google-genai';
 import { getById } from '../storage';
-import { PostgresChatMessageHistory } from "@langchain/community/stores/message/postgres";
-import { Pool } from "pg";
-import { RunnableWithMessageHistory } from "@langchain/core/runnables";
 import { PostgresSaver } from "@langchain/langgraph-checkpoint-postgres";
 import { processMediaFromBase64LangchainGemini, textToSpeechGemini } from "./gemini";
 import { processMediaFromUrlLangchainOpenAI, textToSpeechOpenAI } from "./openai";
-import { createAgent, ReactAgent, tool } from "langchain";
+import { createAgent, ReactAgent, summarizationMiddleware, tool } from "langchain";
+import { BaseChatModel } from "@langchain/core/language_models/chat_models";
 
 export const AiExecutor = {
   executeAgentText: async (agentId: number, userId: number, userInput: string) => {
@@ -29,14 +27,14 @@ async function executeAgent(agentId: number, userId: number, userInput: string, 
 
     const IMAGE_PROMPT = 'Describe the image in detail and provide relevant information.'
     const AUDIO_PROMPT = 'Transcribe the audio to text. The language spoken is portuguese. If there is background noise or multiple speakers, do your best to accurately capture the main content.'
-    
+
     const agentPromptTemplate = ChatPromptTemplate.fromMessages([
       ["system", generateAgentPrompt(agent)],
       new MessagesPlaceholder("chat_history"),
       ["human", "{input}"],
       new MessagesPlaceholder("agent_scratchpad"),
     ]);
-    
+
     let message;
     if (type !== 'text' && process.env.LLM_PROVIDER === 'gemini') {
       if (type === 'image') {
@@ -66,7 +64,7 @@ async function executeAgent(agentId: number, userId: number, userInput: string, 
     );
 
     const agentExecutor = await getAgent(generateAgentPrompt(agent), knowledgeTool ? [knowledgeTool] : []);
-    
+
     const response = await agentExecutor.invoke({
       messages: [{ role: 'user', content: message }]
     }, { configurable: { thread_id: sessionId } });
@@ -90,7 +88,7 @@ async function executeAgent(agentId: number, userId: number, userInput: string, 
 
       return responseAudio;
     }
-    
+
     return {
       outputText: aiMessage.content,
       output: '',
@@ -114,7 +112,7 @@ async function getKnowledgeFromDatabase(agentId: number, userInput: string) {
       openAIApiKey: process.env.LLM_API_KEY,
       modelName: process.env.LLM_EMBEDDING_MODEL || "text-embedding-3-small",
     });
-    
+
     embedding = await embeddings.embedDocuments([userInput]);
   } else if (process.env.LLM_PROVIDER === 'gemini') {
     functionName = 'match_knowledge_gemini';
@@ -124,7 +122,7 @@ async function getKnowledgeFromDatabase(agentId: number, userInput: string) {
     });
     embedding = await embeddings.embedDocuments([userInput]);
   }
-  
+
   const { data: ragData } = await supabase.rpc(functionName, {
     query_embedding: embedding,
     match_count: 3,
@@ -135,39 +133,40 @@ async function getKnowledgeFromDatabase(agentId: number, userInput: string) {
 }
 
 async function getAgent(agentPromptTemplate: string, tools: any[]) {
-  
+
   const checkpointer = PostgresSaver.fromConnString(process.env.SUPABASE_POSTGRES_URL);
   await checkpointer.setup();
 
   let agent: ReactAgent;
+  let chatModel: BaseChatModel;
   if (process.env.LLM_PROVIDER === 'openai') {
-    const chatModel = new ChatOpenAI({
+    chatModel = new ChatOpenAI({
       apiKey: process.env.LLM_API_KEY,
       model: process.env.LLM_CHAT_MODEL || 'gpt-4o',
       temperature: Number(process.env.LLM_CHAT_MODEL_TEMPERATURE) || 0,
     });
 
-    agent = await createAgent({
-      model: chatModel,
-      tools: tools,
-      systemPrompt:  agentPromptTemplate,
-      checkpointer
-    });
-
   } else if (process.env.LLM_PROVIDER === 'gemini') {
-    const chatModel = new ChatGoogleGenerativeAI({
+    chatModel = new ChatGoogleGenerativeAI({
       model: process.env.LLM_CHAT_MODEL || 'gemini-2.5-pro',
       apiKey: process.env.LLM_API_KEY,
       temperature: Number(process.env.LLM_CHAT_MODEL_TEMPERATURE) || 0,
     });
+  }
 
-    agent = await createAgent({
+  agent = createAgent({
       model: chatModel,
       tools: tools,
-      systemPrompt:  agentPromptTemplate,
-      checkpointer
+      systemPrompt: agentPromptTemplate,
+      checkpointer,
+      middleware: [
+        summarizationMiddleware({
+          model: chatModel,
+          maxTokensBeforeSummary: 4000,
+          messagesToKeep: 10,
+        }),
+      ],
     });
-  }
 
   return agent;
 }
@@ -185,27 +184,6 @@ function generateAgentPrompt(agent: any) {
     `;
   return basePrompt;
 }
-
-// async function createRunnableWithMessageHistory(sessionId: string, agentExecutor: ReactAgent) {
-//   const pool = new Pool({
-//     connectionString: process.env.SUPABASE_POSTGRES_URL,
-//   });
-
-//   const agentWithHistory = new RunnableWithMessageHistory({
-//     runnable: agentExecutor,
-//     getMessageHistory: (sessionId) => new PostgresChatMessageHistory({
-//       pool,
-//       sessionId,
-//       tableName: "chat_messages",
-//     }),
-
-//     inputMessagesKey: "input",
-//     historyMessagesKey: "chat_history",
-//     config: { configurable: { sessionId: sessionId } },
-//   });
-
-//   return agentWithHistory;
-// }
 
 
 

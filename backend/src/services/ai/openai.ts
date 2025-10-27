@@ -121,11 +121,11 @@ export async function textToSpeechOpenAI(
     model: model,
     voice: voice,
     input: text,
-    response_format: "mp3",
+    response_format: "opus",
   });
 
   const arrayBuffer = await response.arrayBuffer();
   const audioBuffer = Buffer.from(arrayBuffer);
 
-  return `data:audio/mp3;base64,${audioBuffer.toString('base64')}`;
+  return `data:audio/ogg;base64,${audioBuffer.toString('base64')}`;
 }
