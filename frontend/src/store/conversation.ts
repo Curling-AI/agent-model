@@ -1,4 +1,4 @@
-import { Conversation } from '@/types/conversation'
+import { Conversation, ConversationMessage } from '@/types/conversation'
 import { create } from 'zustand'
 import { BASE_URL } from '@/utils/constants'
 import { supabase } from '@/config/supabaseClient'
@@ -10,6 +10,11 @@ interface ConversationState {
   channel: RealtimeChannel | null
   isLoading: boolean
   listConversations: (organizationId: number) => Promise<Conversation[]>
+  getConversationMessages: (
+    conversationId: number,
+    page: number,
+    limit: number,
+  ) => Promise<ConversationMessage[]>
   createConversation: (name: string) => Promise<Conversation | null>
   deleteConversation: (id: number) => Promise<void>
   sendTestMessage: (agentId: number, userId: number, message: string) => Promise<string | undefined>
@@ -47,7 +52,7 @@ interface ConversationState {
   ) => Promise<{ data: any; success: boolean }>
 }
 
-export const useConversationStore = create<ConversationState>((set) => ({
+export const useConversationStore = create<ConversationState>((set, get) => ({
   conversations: [],
   currentConversationId: null,
   channel: null,
@@ -60,12 +65,35 @@ export const useConversationStore = create<ConversationState>((set) => ({
       const res = await fetch(url.toString())
       const data = await res.json()
       if (!res.ok) return []
-      set({ conversations: data, isLoading: false })
-      return data
+      const conversationsWithMessages = await Promise.all(
+        data.map(async (conversation: Conversation) => {
+          const messages = await get().getConversationMessages(conversation.id, 1, 5)
+          return { ...conversation, messages }
+        }),
+      )
+      set({ conversations: conversationsWithMessages, isLoading: false })
+      return conversationsWithMessages
     } catch (error) {
       set({ isLoading: false })
       return []
     }
+  },
+
+  getConversationMessages: async (conversationId: number, page: number, limit: number) => {
+    const res = await fetch(
+      `${BASE_URL}/conversations/${conversationId}?page=${page}&limit=${limit}`,
+    )
+    const data = await res.json()
+    // Convert timestamp strings to Date objects
+    set((state) => ({
+      conversations: state.conversations.map((c) =>
+        c.id === conversationId ? { ...c, messages: [...data, ...c.messages] } : c,
+      ),
+    }))
+    return data.map((message: any) => ({
+      ...message,
+      timestamp: new Date(message.timestamp),
+    }))
   },
 
   createConversation: async (name: string) => {

@@ -53,6 +53,11 @@ const Conversations = () => {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   const [showFileUpload, setShowFileUpload] = useState(false)
   const [showAudioRecorder, setShowAudioRecorder] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [hasMoreMessages, setHasMoreMessages] = useState(false)
+  const [isLoadingMoreMessages, setIsLoadingMoreMessages] = useState(false)
+  const [isManualLoad, setIsManualLoad] = useState(false)
+  const messagesPerPage = 50
 
   // Refs para scroll automático
   const messagesContainerRef = useRef<HTMLDivElement>(null)
@@ -69,6 +74,7 @@ const Conversations = () => {
     sendMedia,
     changeConversationMode,
     deleteConversation,
+    getConversationMessages,
   } = useConversationStore()
   const [unread, setUnread] = useState<{ [key: number]: number }>({})
   const { organization } = useOrganizationStore()
@@ -124,7 +130,7 @@ const Conversations = () => {
 
   // Effect para sincronizar a conversa selecionada com as atualizações do store
   useEffect(() => {
-    if (selectedConversation) {
+    if (selectedConversation && !isManualLoad && !isLoadingMoreMessages) {
       const updatedConversation = conversations.find((c) => c.id === selectedConversation.id)
       if (updatedConversation) {
         // Verificar se há novas mensagens comparando o número de mensagens primeiro (mais eficiente)
@@ -141,7 +147,7 @@ const Conversations = () => {
         }
       }
     }
-  }, [conversations, selectedConversation])
+  }, [conversations, selectedConversation, isManualLoad, isLoadingMoreMessages])
 
   // Respostas rápidas
   const quickReplyOptions = [
@@ -379,6 +385,9 @@ const Conversations = () => {
       }))
     }
     setSelectedConversation(conversation)
+    setCurrentPage(1)
+    setHasMoreMessages(conversation.messages.length >= messagesPerPage)
+    scrollToBottom()
   }
 
   const handleSwitchConversationMode = async (conversation: Conversation) => {
@@ -391,26 +400,14 @@ const Conversations = () => {
     }
   }
 
-  // Effect para scroll automático quando uma conversa é selecionada
+  // Effect para verificar se há mais mensagens disponíveis
   useEffect(() => {
-    if (selectedConversation) {
-      scrollToBottom()
+    if (selectedConversation && selectedConversation.messages.length > 0 && currentPage === 1) {
+      // Check if there might be more messages by checking if we have a full page
+      // Since we initially load 5 messages, if we have exactly 5, there might be more
+      setHasMoreMessages(selectedConversation.messages.length >= messagesPerPage)
     }
-  }, [selectedConversation])
-
-  // Effect para scroll automático quando novas mensagens chegam
-  useEffect(() => {
-    if (selectedConversation && !isTyping) {
-      scrollToBottom()
-    }
-  }, [selectedConversation?.messages, isTyping])
-
-  // Effect adicional para scroll quando a conversa selecionada é atualizada
-  useEffect(() => {
-    if (selectedConversation) {
-      scrollToBottom()
-    }
-  }, [selectedConversation])
+  }, [selectedConversation?.messages.length, currentPage])
 
   // Effect para fechar o emoji picker quando clicar fora
   useEffect(() => {
@@ -521,6 +518,70 @@ const Conversations = () => {
     await deleteConversation(conversation.id)
   }
 
+  const handleLoadMoreMessages = async () => {
+    if (!selectedConversation || isLoadingMoreMessages) return
+
+    setIsLoadingMoreMessages(true)
+    setIsManualLoad(true)
+
+    // Save current scroll position
+    const container = messagesContainerRef.current || mobileMessagesContainerRef.current
+    if (!container) {
+      setIsLoadingMoreMessages(false)
+      setIsManualLoad(false)
+      return
+    }
+
+    const scrollTop = container.scrollTop
+    const scrollHeight = container.scrollHeight
+
+    try {
+      const nextPage = currentPage + 1
+      const messages = await getConversationMessages(
+        selectedConversation.id,
+        nextPage,
+        messagesPerPage,
+      )
+
+      if (messages && messages.length > 0) {
+        // Prepend new messages to existing ones (older messages first)
+        const updatedMessages = [...messages, ...selectedConversation.messages]
+
+        // Update selectedConversation
+        setSelectedConversation({
+          ...selectedConversation,
+          messages: updatedMessages,
+        })
+
+        setCurrentPage(nextPage)
+        setHasMoreMessages(messages.length >= messagesPerPage)
+
+        // Restore scroll position after DOM updates
+        setTimeout(() => {
+          if (container) {
+            const newScrollHeight = container.scrollHeight
+            const heightDifference = newScrollHeight - scrollHeight
+
+            if (heightDifference > 0) {
+              container.scrollTop = scrollTop + heightDifference
+            }
+
+            // Clear the flag after scroll is restored
+            setTimeout(() => setIsManualLoad(false), 200)
+          }
+        }, 10)
+      } else {
+        setHasMoreMessages(false)
+        setIsManualLoad(false)
+      }
+    } catch (error) {
+      console.error('Error loading more messages:', error)
+      setIsManualLoad(false)
+    } finally {
+      setIsLoadingMoreMessages(false)
+    }
+  }
+
   return (
     <div className="bg-base-100 flex h-[calc(100vh-8rem)] flex-col">
       {/* Estatísticas */}
@@ -560,7 +621,10 @@ const Conversations = () => {
                 >
                   <FilterIcon className="h-4 w-4" />
                 </button>
-                <button className="btn btn-ghost btn-sm">
+                <button
+                  className="btn btn-ghost btn-sm"
+                  onClick={() => listConversations(organizationId)}
+                >
                   <RefreshCw className="h-4 w-4" />
                 </button>
               </div>
@@ -832,6 +896,29 @@ const Conversations = () => {
                 className="bg-base-200 scrollbar-thin scrollbar-thumb-base-300 scrollbar-track-base-200 flex-1 overflow-y-auto p-4"
               >
                 <div className="space-y-4">
+                  {/* Load more messages button */}
+                  {hasMoreMessages && (
+                    <div className="flex justify-center py-2">
+                      <button
+                        onClick={handleLoadMoreMessages}
+                        disabled={isLoadingMoreMessages}
+                        className="btn btn-outline btn-sm"
+                      >
+                        {isLoadingMoreMessages ? (
+                          <>
+                            <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                            {t.loading}
+                          </>
+                        ) : (
+                          <>
+                            <RefreshCw className="mr-2 h-4 w-4" />
+                            {t.loadMoreMessages}
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
+
                   {selectedConversation.messages?.map((message) => (
                     <div
                       key={message.id}
@@ -1112,6 +1199,29 @@ const Conversations = () => {
 
           {/* Mensagens Mobile */}
           <div ref={mobileMessagesContainerRef} className="flex-1 space-y-4 overflow-y-auto p-4">
+            {/* Load more messages button */}
+            {hasMoreMessages && (
+              <div className="flex justify-center py-2">
+                <button
+                  onClick={handleLoadMoreMessages}
+                  disabled={isLoadingMoreMessages}
+                  className="btn btn-outline btn-sm"
+                >
+                  {isLoadingMoreMessages ? (
+                    <>
+                      <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                      {t.loading}
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="mr-2 h-4 w-4" />
+                      {t.loadMoreMessages}
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
+
             {selectedConversation.messages?.map((message) => (
               <div
                 key={message.id}

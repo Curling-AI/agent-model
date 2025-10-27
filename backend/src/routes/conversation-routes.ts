@@ -7,6 +7,7 @@ const router = Router();
 
 router.get('/', ConversationController.listConversations);
 router.post('/process-message', ConversationController.processMessages);
+router.get('/:id', ConversationController.getConversationMessages);
 router.post('/', ConversationController.upsertConversation);
 router.delete('/:id', ConversationController.deleteConversation);
 router.put('/:id/mode', ConversationController.changeConversationMode);

@@ -33,9 +33,7 @@ export const ConversationController = {
             console.log(error);
             throw new Error("Error getting conversation tags");
           }
-          const messages = await getByFilter("conversation_messages", {
-            conversation_id: conversation.id,
-          });
+          const messages = [];
           return {
             ...conversation,
             agent,
@@ -53,6 +51,28 @@ export const ConversationController = {
     } catch (error) {
       console.log(error);
       return res.status(500).json({ error: "Error listing conversations" });
+    }
+  },
+
+  getConversationMessages: async (req: Request, res: Response) => {
+    const conversationId = Number(req.params.id);
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 100;
+    try {
+      const messages = await supabase
+        .from("conversation_messages")
+        .select("*")
+        .eq("conversation_id", conversationId)
+        .order("id", { ascending: false })
+        .range((page - 1) * limit, page * limit - 1);
+      if (messages.error) {
+        console.log(messages.error);
+        throw new Error("Error getting conversation messages");
+      }
+      return res.status(200).json(messages.data.reverse());
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json({ error: "Error getting conversation messages" });
     }
   },
 
