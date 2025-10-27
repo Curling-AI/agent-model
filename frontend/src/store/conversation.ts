@@ -4,6 +4,8 @@ import { BASE_URL } from '@/utils/constants'
 import { supabase } from '@/config/supabaseClient'
 import { RealtimeChannel } from '@supabase/supabase-js'
 
+export const CONVERSATION_PAGE_SIZE = 50
+
 interface ConversationState {
   conversations: Conversation[]
   currentConversationId: number | null
@@ -67,7 +69,11 @@ export const useConversationStore = create<ConversationState>((set, get) => ({
       if (!res.ok) return []
       const conversationsWithMessages = await Promise.all(
         data.map(async (conversation: Conversation) => {
-          const messages = await get().getConversationMessages(conversation.id, 1, 5)
+          const messages = await get().getConversationMessages(
+            conversation.id,
+            1,
+            CONVERSATION_PAGE_SIZE,
+          )
           return { ...conversation, messages }
         }),
       )

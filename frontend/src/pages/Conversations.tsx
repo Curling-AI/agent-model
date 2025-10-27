@@ -30,7 +30,7 @@ import { ImageMessage } from '@/components/conversations/image-message'
 import { VideoMessage } from '@/components/conversations/video-message'
 import { DocumentMessage } from '@/components/conversations/document-message'
 import { Conversation, ConversationMessage } from '@/types/conversation'
-import { useConversationStore } from '@/store/conversation'
+import { CONVERSATION_PAGE_SIZE, useConversationStore } from '@/store/conversation'
 import { useOrganizationStore } from '@/store/organization'
 import { formatDistanceStrict, formatRelative } from 'date-fns'
 import { ptBR, enUS } from 'date-fns/locale'
@@ -57,7 +57,7 @@ const Conversations = () => {
   const [hasMoreMessages, setHasMoreMessages] = useState(false)
   const [isLoadingMoreMessages, setIsLoadingMoreMessages] = useState(false)
   const [isManualLoad, setIsManualLoad] = useState(false)
-  const messagesPerPage = 50
+  const messagesPerPage = CONVERSATION_PAGE_SIZE
 
   // Refs para scroll automático
   const messagesContainerRef = useRef<HTMLDivElement>(null)
@@ -77,6 +77,7 @@ const Conversations = () => {
     getConversationMessages,
   } = useConversationStore()
   const [unread, setUnread] = useState<{ [key: number]: number }>({})
+  const [conversationPage, setConversationPage] = useState<{ [key: number]: number }>({})
   const { organization } = useOrganizationStore()
   const organizationId = organization.id
   const userId = 1
@@ -385,7 +386,15 @@ const Conversations = () => {
       }))
     }
     setSelectedConversation(conversation)
-    setCurrentPage(1)
+    if (!conversationPage[conversation.id]) {
+      setConversationPage((prev) => ({
+        ...prev,
+        [conversation.id]: 1,
+      }))
+      setCurrentPage(1)
+    } else {
+      setCurrentPage(conversationPage[conversation.id])
+    }
     setHasMoreMessages(conversation.messages.length >= messagesPerPage)
     scrollToBottom()
   }
@@ -554,6 +563,10 @@ const Conversations = () => {
         })
 
         setCurrentPage(nextPage)
+        setConversationPage((prev) => ({
+          ...prev,
+          [selectedConversation.id]: nextPage,
+        }))
         setHasMoreMessages(messages.length >= messagesPerPage)
 
         // Restore scroll position after DOM updates
