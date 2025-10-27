@@ -35,6 +35,7 @@ import { useOrganizationStore } from '@/store/organization'
 import { formatDistanceStrict, formatRelative } from 'date-fns'
 import { ptBR, enUS } from 'date-fns/locale'
 import { useCrmColumnStore } from '@/store/crm-column'
+import { useLeadStore } from '@/store/lead'
 
 const Conversations = () => {
   const language = useLanguage()
@@ -67,11 +68,13 @@ const Conversations = () => {
     sendMessage: sendMessageStore,
     sendMedia,
     changeConversationMode,
+    deleteConversation,
   } = useConversationStore()
   const [unread, setUnread] = useState<{ [key: number]: number }>({})
   const { organization } = useOrganizationStore()
   const organizationId = organization.id
   const userId = 1
+  const { deleteLead } = useLeadStore()
 
   const { fetchCrmColumns, crmColumns } = useCrmColumnStore()
   useEffect(() => {
@@ -512,6 +515,12 @@ const Conversations = () => {
     return <p className="text-sm leading-relaxed">{message.content}</p>
   }
 
+  const handleArchiveConversation = async (conversation: Conversation) => {
+    await deleteLead(conversation.lead.id)
+    setSelectedConversation(null)
+    await deleteConversation(conversation.id)
+  }
+
   return (
     <div className="bg-base-100 flex h-[calc(100vh-8rem)] flex-col">
       {/* Estatísticas */}
@@ -802,23 +811,13 @@ const Conversations = () => {
                         className="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow-lg"
                       >
                         <li>
-                          <a href="#view-archive">
-                            <Eye className="h-4 w-4" />
-                            Ver Arquivo
-                          </a>
-                        </li>
-                        <li>
-                          <a href="#archive">
+                          <a
+                            href="#archive"
+                            className="text-error"
+                            onClick={() => handleArchiveConversation(selectedConversation)}
+                          >
                             <Archive className="h-4 w-4" />
-                            Arquivar
-                          </a>
-                        </li>
-                        <li>
-                          <hr className="my-1" />
-                        </li>
-                        <li>
-                          <a href="#finish" className="text-error">
-                            Finalizar Conversa
+                            {t.archive}
                           </a>
                         </li>
                       </ul>

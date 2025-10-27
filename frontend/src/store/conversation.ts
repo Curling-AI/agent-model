@@ -84,7 +84,6 @@ export const useConversationStore = create<ConversationState>((set) => ({
   },
 
   deleteConversation: async (id: number) => {
-    await fetch(`${BASE_URL}/conversations/${id}`, { method: 'DELETE' })
     set((state) => ({
       conversations: state.conversations.filter((c) => c.id !== id),
       currentConversationId:
