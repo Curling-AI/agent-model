@@ -230,13 +230,58 @@ async function createOrUpdateSubscriptionPrice(productId: string, plan: Plan, in
   }
 }
 
-if (import.meta.url.startsWith('file:') && process.argv[1]?.includes('stripe.ts')) {
-  syncPlansToStripe();
-}
-
 async function syncPricesFromStripe() {
   try {
     console.log('🔄 Iniciando sincronização de preços do Stripe...');
+
+    const products = await stripe.products.list({
+      active: true,
+      expand: ['data.default_price'],
+    });
+
+    for (const product of products.data) {
+      if (product.metadata?.plan_id) {
+        const planId = parseInt(product.metadata.plan_id);
+        const planType = product.metadata?.plan_type;
+        
+        const prices = await stripe.prices.list({
+          product: product.id,
+          active: true,
+        });
+
+        const metadataUpdates: any = {
+          stripe_product_id: product.id,
+        };
+
+        if (planType === 'subscription') {
+          const monthPrice = prices.data.find(p => p.recurring?.interval === 'month');
+          const yearPrice = prices.data.find(p => p.recurring?.interval === 'year');
+          
+          if (monthPrice) {
+            metadataUpdates.stripe_price_id_monthly = monthPrice.id;
+          }
+          
+          if (yearPrice) {
+            metadataUpdates.stripe_price_id_yearly = yearPrice.id;
+          }
+        } else if (planType === 'transactional') {
+          const oneTimePrice = prices.data.find(p => !p.recurring);
+          
+          if (oneTimePrice) {
+            metadataUpdates.stripe_price_id = oneTimePrice.id;
+          }
+        }
+
+        await updatePlanMetadata(planId, metadataUpdates);
+        console.log(`� Preços sincronizados do Stripe para plano ${planId} (tipo: ${planType})`);
+      }
+    }
+
+    console.log('✅ Sincronização de preços concluída!');
+  } catch (error) {
+    console.error('❌ Erro na sincronização de preços:', error);
+  }
+}
 
 async function verifyAndSyncPlans() {
   try {
@@ -381,55 +426,10 @@ async function verifyAndSyncPlans() {
 if (import.meta.url.startsWith('file:') && (process.argv.includes('verify') || process.argv.includes('--verify'))) {
   verifyAndSyncPlans();
 }
-    const products = await stripe.products.list({
-      active: true,
-      expand: ['data.default_price'],
-    });
 
-    for (const product of products.data) {
-      if (product.metadata?.plan_id) {
-        const planId = parseInt(product.metadata.plan_id);
-        const planType = product.metadata?.plan_type;
-        
-        const prices = await stripe.prices.list({
-          product: product.id,
-          active: true,
-        });
-
-        const metadataUpdates: any = {
-          stripe_product_id: product.id,
-        };
-
-        if (planType === 'subscription') {
-          // Para planos de assinatura, buscar preços mensais e anuais
-          const monthPrice = prices.data.find(p => p.recurring?.interval === 'month');
-          const yearPrice = prices.data.find(p => p.recurring?.interval === 'year');
-          
-          if (monthPrice) {
-            metadataUpdates.stripe_price_id_monthly = monthPrice.id;
-          }
-          
-          if (yearPrice) {
-            metadataUpdates.stripe_price_id_yearly = yearPrice.id;
-          }
-        } else if (planType === 'transactional') {
-          // Para planos transacionais, pegar o primeiro preço ativo (one-time)
-          const oneTimePrice = prices.data.find(p => !p.recurring);
-          
-          if (oneTimePrice) {
-            metadataUpdates.stripe_price_id = oneTimePrice.id;
-          }
-        }
-
-        await updatePlanMetadata(planId, metadataUpdates);
-        console.log(`📝 Preços sincronizados do Stripe para plano ${planId} (tipo: ${planType})`);
-      }
-    }
-
-    console.log('✅ Sincronização de preços concluída!');
-  } catch (error) {
-    console.error('❌ Erro na sincronização de preços:', error);
-  }
+// permitir executar via linha de comando padrão: node stripe.ts
+if (import.meta.url.startsWith('file:') && process.argv[1]?.includes('stripe.ts') && !process.argv.includes('verify') && !process.argv.includes('--verify')) {
+  syncPlansToStripe();
 }
 
-export { syncPlansToStripe, syncPricesFromStripe };
+export { syncPlansToStripe, syncPricesFromStripe, verifyAndSyncPlans };

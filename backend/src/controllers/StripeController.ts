@@ -245,6 +245,15 @@ export const StripeController = {
         metadata,
       };
 
+      if (mode === 'subscription') {
+        (sessionParams as any).subscription_data = {
+          metadata: {
+            ...(user_id ? { user_id: user_id.toString() } : {}),
+            ...(plan_id ? { plan_id: plan_id.toString() } : {}),
+          },
+        };
+      }
+
       if (customer_id) {
         sessionParams.customer = customer_id;
       }

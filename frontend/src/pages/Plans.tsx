@@ -16,9 +16,10 @@ import {
 import { useLanguage } from '../context/LanguageContext';
 import { useTranslation } from '../translations';
 import { usePlansStore } from '../store/plansStore';
+import { StripeProduct, StripePrice } from '../types/plans';
 import { useAuthStore } from '../store/auth';
 
-type PlanForCheckout = { price_id: string; plan_id?: number; mode?: 'subscription' | 'payment' };
+interface PlanForCheckout { price_id: string; plan_id?: number; mode?: 'subscription' | 'payment' }
 
 const Plans = () => {
   const language  = useLanguage();
@@ -49,23 +50,22 @@ const Plans = () => {
   } = usePlansStore();
 
   useEffect(() => {
-    fetchProducts();
-    fetchUserPlan();
-    fetchUserCredits();
-    fetchUserUsage();
-    
-    fetchInvoices(userPlan?.provider_data?.customer_id);
+    void fetchProducts();
+    void fetchUserPlan();
+    void fetchUserCredits();
+    void fetchUserUsage();
+    void fetchInvoices(userPlan?.provider_data?.customer_id);
   }, [fetchProducts, fetchInvoices, fetchUserPlan, fetchUserCredits, fetchUserUsage, userPlan?.provider_data?.customer_id]);
 
   const handlePlanPurchase = async (plan: PlanForCheckout) => {
     try {
       const authState = useAuthStore.getState();
-      const user = authState.user as any;
-      const numericUserId = typeof user?.id === 'number' ? (user.id as number) : undefined;
-      const email = user?.email as string | undefined;
+      const user = authState.user;
+      const numericUserId = typeof user?.id === 'number' ? user.id : undefined;
+      const email = user?.email;
       const checkoutData = {
         price_id: plan.price_id,
-        mode: plan.mode || 'subscription',
+        mode: plan.mode ?? 'subscription',
         user_id: numericUserId,
         plan_id: plan.plan_id,
         customer_email: email,
@@ -85,9 +85,9 @@ const Plans = () => {
 
   const handleManageBilling = async () => {
     try {
-      const authState = useAuthStore.getState();
-      const user = authState.user as any;
-      const numericUserId = typeof user?.id === 'number' ? (user.id as number) : undefined;
+  const authState = useAuthStore.getState();
+  const user = authState.user;
+  const numericUserId = typeof user?.id === 'number' ? user.id : undefined;
       
       const portalData = {
         user_id: numericUserId,
@@ -141,18 +141,13 @@ const Plans = () => {
     creditsRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const plans = (products || [])
+  const plans = (products ?? [])
     .filter((p) => p.active && p.type === "subscription")
-    .map((product, index) => {
+    .map((product: StripeProduct, index) => {
       const iconMap = [Zap, Star, Crown];
       const colorMap = ['text-primary', 'text-primary', 'text-primary'];
-      const planTypeMeta = (product.metadata?.plan_type as string | undefined)?.toLowerCase?.() || '';
-      const nameLower = product.name?.toLowerCase?.() || '';
-      const isProfessional = ['pro', 'professional', 'profissional'].includes(planTypeMeta) 
-        || nameLower === 'professional' 
-        || nameLower === 'profissional' 
-        || nameLower.includes('professional') 
-        || nameLower.includes('profissional');
+      const planTypeMeta = String(product.metadata?.plan_type ?? '').toLowerCase();
+      const nameLower = String(product.name ?? '').toLowerCase();
       
       const isEnterprise = ['enterprise', 'empresarial'].includes(planTypeMeta)
         || nameLower === 'enterprise'
@@ -160,18 +155,18 @@ const Plans = () => {
         || nameLower.includes('enterprise')
         || nameLower.includes('empresarial');
         
-      const defaultPriceObj = typeof product.default_price === 'object' ? product.default_price : undefined;
-      const allPrices = Array.isArray((product as any).prices) ? (product as any).prices as any[] : [];
-      const monthlyPrice = allPrices.find(p => p.recurring?.interval === 'month');
-      const yearlyPrice = allPrices.find(p => p.recurring?.interval === 'year');
-      const chosenPrice = (billingPeriod === 'month' ? (monthlyPrice || defaultPriceObj) : (yearlyPrice || defaultPriceObj)) || allPrices[0];
-      const priceId = chosenPrice?.id || (typeof product.default_price === 'string' ? product.default_price : '');
+  const defaultPriceObj = (typeof product.default_price === 'object' ? product.default_price : undefined) as (StripePrice | undefined);
+  const allPrices: StripePrice[] = Array.isArray(product.prices) ? product.prices : [];
+  const monthlyPrice = allPrices.find(p => p.recurring?.interval === 'month');
+  const yearlyPrice = allPrices.find(p => p.recurring?.interval === 'year');
+  const chosenPrice: StripePrice | undefined = (billingPeriod === 'month' ? (monthlyPrice ?? defaultPriceObj) : (yearlyPrice ?? defaultPriceObj)) ?? allPrices[0];
+  const priceId = chosenPrice?.id ?? (typeof product.default_price === 'string' ? product.default_price : '');
 
       const apiFeatures = product.description 
         ? product.description.split('\n').filter(line => line.trim() !== '')
         : [];
       
-      const fallbackFeatures = getPlanFeatures(product.metadata?.plan_type || product.name.toLowerCase());
+  const fallbackFeatures = getPlanFeatures((product.metadata?.plan_type ?? product.name).toLowerCase());
       
       const finalFeatures = apiFeatures.length > 0 ? apiFeatures : fallbackFeatures;
 
@@ -193,26 +188,25 @@ const Plans = () => {
     .sort((a, b) => {
       const toKey = (name: string): number => {
         const n = name?.toLowerCase?.() || '';
-        // 📊 Nova ordem: Starter (0) → Enterprise (1) → Professional (2)
         if (n.includes('starter') || n.includes('inicial') || n.includes('basic')) return 0;
         if (n.includes('enterprise') || n.includes('empresarial')) return 1;
         if (n.includes('professional') || n.includes('profissional') || n === 'pro') return 2;
-        return 3; // Outros planos por último
+        return 3; 
       };
       return toKey(a.name) - toKey(b.name);
     });
 
-  const creditProducts = (products || [])
+  const creditProducts = (products ?? [])
     .filter((p) => p.active && p.type === "transactional")
-    .map((product) => {
-      const defaultPriceObj = typeof product.default_price === 'object' ? product.default_price : undefined;
-      const productPrices = (product as any).prices ?? [];
-      const allPrices = Array.isArray(productPrices) ? productPrices : [];
-      const chosenPrice = defaultPriceObj ?? (allPrices.length > 0 ? allPrices[0] : null);
-      const unitAmount = chosenPrice && typeof chosenPrice.unit_amount === 'number' ? chosenPrice.unit_amount : 0;
+    .map((product: StripeProduct) => {
+      const defaultPriceObj = (typeof product.default_price === 'object' ? product.default_price : undefined) as (StripePrice | undefined);
+      const productPrices = product.prices ?? [];
+      const allPrices: StripePrice[] = Array.isArray(productPrices) ? productPrices : [];
+      const chosenPrice: StripePrice | null | undefined = defaultPriceObj ?? (allPrices.length > 0 ? allPrices[0] : null);
+      const unitAmount = (chosenPrice && typeof chosenPrice.unit_amount === 'number') ? chosenPrice.unit_amount : 0;
       const priceAmount = unitAmount / 100;
-      const priceId = chosenPrice && chosenPrice.id ? String(chosenPrice.id) : 
-                     (typeof product.default_price === 'string' ? product.default_price : '');
+      const priceId = (chosenPrice?.id ? String(chosenPrice.id) : 
+                     (typeof product.default_price === 'string' ? product.default_price : ''));
       
       return {
         id: product.id,
@@ -228,7 +222,7 @@ const Plans = () => {
 
   const creditOptions = creditProducts;
 
-  const formatPrice = (price: number, currency: string = 'BRL') => {
+  const formatPrice = (price: number, currency = 'BRL') => {
     return new Intl.NumberFormat(language.language === 'pt' ? 'pt-BR' : 'en-US', {
       style: 'currency',
       currency
@@ -265,47 +259,21 @@ const Plans = () => {
       return null;
     }
 
-    console.log('📅 Último pagamento encontrado:', {
-      date: new Date(lastPayment.created * 1000),
-      timestamp: lastPayment.created,
-      id: lastPayment.id
-    });
-
-    // Data do último pagamento
     const lastPaymentDate = new Date(lastPayment.created * 1000);
     const currentDate = new Date();
 
-    // Determinar se é mensal ou anual baseado no plano atual
     const currentPlan = getCurrentPlan();
     const isYearly = currentPlan?.price?.recurring?.interval === 'year';
-    
-    console.log('📊 Informações do plano:', {
-      planName: currentPlan?.name,
-      interval: currentPlan?.price?.recurring?.interval,
-      isYearly
-    });
 
-    // Calcular próxima data de cobrança
     const nextBillingDate = new Date(lastPaymentDate);
     
     if (isYearly) {
-      // Para planos anuais: adicionar 1 ano
       nextBillingDate.setFullYear(lastPaymentDate.getFullYear() + 1);
     } else {
-      // Para planos mensais: adicionar meses até encontrar a próxima data futura
       while (nextBillingDate <= currentDate) {
         nextBillingDate.setMonth(nextBillingDate.getMonth() + 1);
       }
     }
-
-    console.log('🎯 Próxima data de cobrança calculada:', {
-      nextBillingDate,
-      formatted: nextBillingDate.toLocaleDateString('pt-BR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-      })
-    });
 
     return nextBillingDate;
   };
@@ -400,7 +368,7 @@ const Plans = () => {
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold">{t.currentPlan}</h3>
               <div className={`badge ${userPlan?.status === 'active' ? 'badge-primary' : 'badge-ghost'}`}>
-                {userPlan?.status === 'active' ? t.active : userPlan?.status || 'N/A'}
+                {userPlan?.status === 'active' ? t.active : (userPlan?.status ?? 'N/A')}
               </div>
             </div>
             {isLoadingUserData ? (
@@ -424,20 +392,16 @@ const Plans = () => {
                     <span>{t.nextBilling}</span>
                     <span className="font-medium">
                       {(() => {
-                        // 🎯 Tentar usar current_period_end do backend primeiro
                         if (userPlan?.provider_data?.current_period_end) {
-                          console.log('✅ Usando current_period_end do backend:', userPlan.provider_data.current_period_end);
-                          return new Date(userPlan.provider_data.current_period_end).toLocaleDateString('pt-BR', {
+                          return new Date(String(userPlan.provider_data.current_period_end)).toLocaleDateString('pt-BR', {
                             day: '2-digit',
                             month: '2-digit',
                             year: 'numeric'
                           });
                         }
                         
-                        // 📅 Calcular baseado no histórico de pagamentos
                         const calculatedDate = calculateNextBillingDate();
                         if (calculatedDate) {
-                          console.log('📊 Usando data calculada do histórico:', calculatedDate);
                           return calculatedDate.toLocaleDateString('pt-BR', {
                             day: '2-digit',
                             month: '2-digit',
@@ -445,9 +409,7 @@ const Plans = () => {
                           });
                         }
                         
-                        // ⚠️ Fallback para updated_at
                         if (userPlan?.updated_at) {
-                          console.log('⚠️ Usando updated_at como fallback:', userPlan.updated_at);
                           return new Date(userPlan.updated_at).toLocaleDateString('pt-BR', {
                             day: '2-digit',
                             month: '2-digit',
@@ -455,7 +417,6 @@ const Plans = () => {
                           });
                         }
                         
-                        console.log('❌ Nenhuma data disponível para nextBilling');
                         return 'N/A';
                       })()}
                     </span>
@@ -463,9 +424,12 @@ const Plans = () => {
                   <div className="flex justify-between text-sm">
                     <span>{t.value}</span>
                     <span className="font-medium">
-                      {getCurrentPlan()?.price?.unit_amount
-                        ? formatPrice((getCurrentPlan()!.price!.unit_amount as number) / 100, getCurrentPlan()?.price?.currency?.toUpperCase?.() || 'BRL')
-                        : '—'}
+                      {(() => {
+                        const plan = getCurrentPlan();
+                        const unit = typeof plan?.price?.unit_amount === 'number' ? plan.price.unit_amount : undefined;
+                        const curr = plan?.price?.currency?.toUpperCase?.() ?? 'BRL';
+                        return typeof unit === 'number' ? formatPrice(unit / 100, curr) : '—';
+                      })()}
                     </span>
                   </div>
                 </div>
@@ -633,7 +597,7 @@ const Plans = () => {
                 <p className="text-neutral mb-6">Não foi possível carregar os planos do servidor</p>
                 <div className="space-x-4">
                   <button 
-                    onClick={() => fetchProducts()} 
+                    onClick={() => void fetchProducts()} 
                     className="btn btn-primary"
                   >
                     <Loader className="w-4 h-4 mr-2" />
@@ -658,7 +622,7 @@ const Plans = () => {
                   <button 
                     onClick={() => {
                       clearError();
-                      fetchProducts();
+                      void fetchProducts();
                     }} 
                     className="btn btn-primary"
                   >
@@ -680,8 +644,8 @@ const Plans = () => {
                 const Icon = plan.icon;
                 const isCurrentPlan = userPlan?.plan_id === plan.plan_id;
                 const hasOtherPlan = userPlan && userPlan.plan_id !== plan.plan_id;
-                
-                // 🔄 Determinar se é upgrade ou downgrade baseado na hierarquia dos planos
+
+                // Determinar se é upgrade ou downgrade baseado na hierarquia dos planos
                 const getPlanHierarchy = (planName: string) => {
                   const n = planName?.toLowerCase?.() || '';
                   if (n.includes('starter') || n.includes('inicial') || n.includes('basic')) return 1;
@@ -690,7 +654,7 @@ const Plans = () => {
                   return 0;
                 };
                 
-                const currentPlanHierarchy = userPlan ? getPlanHierarchy(plans.find(p => p.plan_id === userPlan.plan_id)?.name || '') : 0;
+                const currentPlanHierarchy = userPlan ? getPlanHierarchy(plans.find(p => p.plan_id === userPlan.plan_id)?.name ?? '') : 0;
                 const targetPlanHierarchy = getPlanHierarchy(plan.name);
                 const isUpgrade = hasOtherPlan && targetPlanHierarchy > currentPlanHierarchy;
                 const isDowngrade = hasOtherPlan && targetPlanHierarchy < currentPlanHierarchy;
@@ -747,7 +711,7 @@ const Plans = () => {
                         <button 
                           className={`btn ${isCurrentPlan ? 'btn-outline' : 'btn-success text-white'}`}
                           disabled={isCurrentPlan || isCreatingCheckout || !plan.price_id}
-                          onClick={() => handlePlanPurchase({ price_id: plan.price_id, plan_id: plan.plan_id })}
+                          onClick={() => void handlePlanPurchase({ price_id: plan.price_id, plan_id: plan.plan_id })}
                         >
                           {isCreatingCheckout ? (
                             <Loader className="w-4 h-4 animate-spin mr-2" />
@@ -788,7 +752,7 @@ const Plans = () => {
           <div className="grid md:grid-cols-4 gap-6">
             {creditOptions.length === 0 ? (
               <div className="col-span-4 text-center py-8">
-                <p className="text-neutral">{t.noCreditsAvailable || 'No credit packages available at the moment.'}</p>
+                <p className="text-neutral">{language.language === 'pt' ? 'Nenhum pacote de créditos disponível no momento.' : 'No credit packages available at the moment.'}</p>
               </div>
             ) : (
               creditOptions.map((option, index) => {
