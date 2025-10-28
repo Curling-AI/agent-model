@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import Stripe from 'stripe';
 import { supabase } from '../config/supabaseClient';
+import { getByFilter, getById } from '../services/storage';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-09-30.clover',
@@ -9,16 +10,48 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 export const StripeController = {
   getAllProducts: async (req: Request, res: Response) => {
     try {
-      const { limit = 10 } = req.query;
+      const { limit = 100 } = req.query;
+      
+      const { data: localPlans, error: plansError } = await supabase
+        .from('plans')
+        .select('*')
+        .eq('active', true);
+      
+      if (plansError) {
+        throw plansError;
+      }
       
       const products = await stripe.products.list({
         limit: Number(limit),
         active: true,
+        expand: ['data.default_price'],
       });
+      
+      const productsWithPrices = await Promise.all(
+        products.data.map(async (p) => {
+          const prices = await stripe.prices.list({
+            product: p.id,
+            active: true,
+            limit: 100,
+            expand: ['data.tiers'],
+          });
+          
+          const localPlan = localPlans?.find(plan => 
+            plan.metadata?.stripe_product_id === p.id
+          );
+          
+          return {
+            ...p,
+            type: localPlan?.type || 'subscription',
+            prices: prices.data,
+          } as any;
+        })
+      );
+      
       
       res.json({
         success: true,
-        data: products.data,
+        data: productsWithPrices,
         has_more: products.has_more,
         total_count: products.data.length,
       });
@@ -31,21 +64,94 @@ export const StripeController = {
       });
     }
   },
+  
+  getUserSubscription: async (req: Request, res: Response) => {
+    try {
+      const userIdParam = req.query.user_id;
+
+      let userId: number | null = null;
+      if (userIdParam) {
+        userId = Number(userIdParam);
+      } else {
+        const { data, error } = await supabase.auth.getUser();
+        if (!error && data?.user?.id) {
+          const { data: usersByAuth, error: usersErr } = await supabase
+            .from('users')
+            .select('id')
+            .eq('auth_id', data.user.id)
+            .limit(1);
+          const userRows = usersByAuth || [];
+          if (userRows && userRows.length > 0) {
+            userId = userRows[0].id;
+          }
+        }
+      }
+
+      if (!userId) {
+        return res.status(400).json({ success: false, error: 'user_id não informado e usuário não autenticado' });
+      }
+
+      const { data: subscriptions, error: subError } = await supabase
+        .from('user_subscriptions')
+        .select('*')
+        .eq('user_id', userId)
+        .order('updated_at', { ascending: false })
+        .limit(1);
+
+      if (subError) {
+        throw subError;
+      }
+
+      const subscription = subscriptions && subscriptions.length > 0 ? subscriptions[0] : null;
+
+      return res.json({ success: true, data: subscription });
+    } catch (error) {
+      console.error('Erro ao buscar assinatura do usuário:', error);
+      res.status(500).json({ success: false, error: 'Erro ao buscar assinatura do usuário' });
+    }
+  },
 
   getCustomerInvoices: async (req: Request, res: Response) => {
     try {
-      const { limit = 10, customer_id } = req.query;
+      const { limit = 10, customer_id, user_id } = req.query as { limit?: any; customer_id?: string; user_id?: string };
       
-      if (!customer_id) {
-        return res.status(400).json({
-          success: false,
-          error: 'customer_id é obrigatório',
-          message: 'Informe o ID do cliente no Stripe via query parameter',
-        });
+      let resolvedCustomerId = customer_id;
+      if (!resolvedCustomerId && user_id) {
+        const { data: subs } = await supabase
+          .from('user_subscriptions')
+          .select('provider_data')
+          .eq('user_id', Number(user_id))
+          .order('updated_at', { ascending: false })
+          .limit(1);
+        resolvedCustomerId = subs && subs.length > 0 ? (subs[0].provider_data?.customer_id as string | undefined) : undefined;
+      }
+      if (!resolvedCustomerId) {
+        const { data, error } = await supabase.auth.getUser();
+        if (!error && data?.user?.id) {
+          const { data: usersByAuth } = await supabase
+            .from('users')
+            .select('id')
+            .eq('auth_id', data.user.id)
+            .limit(1);
+          const dbUserId = usersByAuth && usersByAuth.length > 0 ? usersByAuth[0].id : undefined;
+          if (dbUserId) {
+            const { data: subs2 } = await supabase
+              .from('user_subscriptions')
+              .select('provider_data')
+              .eq('user_id', dbUserId)
+              .order('updated_at', { ascending: false })
+              .limit(1);
+            resolvedCustomerId = subs2 && subs2.length > 0 ? (subs2[0].provider_data?.customer_id as string | undefined) : undefined;
+          }
+        }
+      }
+      
+      if (!resolvedCustomerId) {
+        return res.status(404).json({ success: false, error: 'Cliente não encontrado para o usuário informado' });
       }
       
       const invoices = await stripe.invoices.list({
-        customer: customer_id as string,
+        customer: resolvedCustomerId as string,
         limit: Number(limit),
       });
       
@@ -54,7 +160,7 @@ export const StripeController = {
         data: invoices.data,
         has_more: invoices.has_more,
         total_count: invoices.data.length,
-        customer_id: customer_id,
+        customer_id: resolvedCustomerId,
       });
     } catch (error) {
       console.error('Erro ao listar histórico de compras:', error);
@@ -139,6 +245,15 @@ export const StripeController = {
         metadata,
       };
 
+      if (mode === 'subscription') {
+        (sessionParams as any).subscription_data = {
+          metadata: {
+            ...(user_id ? { user_id: user_id.toString() } : {}),
+            ...(plan_id ? { plan_id: plan_id.toString() } : {}),
+          },
+        };
+      }
+
       if (customer_id) {
         sessionParams.customer = customer_id;
       }
@@ -165,5 +280,112 @@ export const StripeController = {
     }
   },
 
+  createBillingPortalSession: async (req: Request, res: Response) => {
+    try {
+      const { customer_id, return_url, user_id } = req.body;
+
+      let resolvedCustomerId = customer_id;
+
+      if (!resolvedCustomerId && user_id) {
+        const { data: subscriptions, error: subError } = await supabase
+          .from('user_subscriptions')
+          .select('provider_data')
+          .eq('user_id', Number(user_id))
+          .order('updated_at', { ascending: false })
+          .limit(1);
+        
+        if (subError) {
+          console.error('Erro ao buscar subscriptions:', subError);
+        }
+        
+        resolvedCustomerId = subscriptions && subscriptions.length > 0 
+          ? subscriptions[0].provider_data?.customer_id 
+          : undefined;
+      }
+
+      if (!resolvedCustomerId) {
+        const { data, error } = await supabase.auth.getUser();
+        if (!error && data?.user?.id) {
+          const { data: usersByAuth } = await supabase
+            .from('users')
+            .select('id')
+            .eq('auth_id', data.user.id)
+            .limit(1);
+          
+          const dbUserId = usersByAuth && usersByAuth.length > 0 ? usersByAuth[0].id : undefined;
+          
+          if (dbUserId) {
+            const { data: subscriptions } = await supabase
+              .from('user_subscriptions')
+              .select('provider_data')
+              .eq('user_id', dbUserId)
+              .order('updated_at', { ascending: false })
+              .limit(1);
+            
+            resolvedCustomerId = subscriptions && subscriptions.length > 0 
+              ? subscriptions[0].provider_data?.customer_id 
+              : undefined;
+          }
+        }
+      }
+
+      if (!resolvedCustomerId) {
+        return res.status(400).json({
+          success: false,
+          error: 'customer_id é obrigatório',
+          message: 'Informe o customer_id ou certifique-se de que o usuário possui uma assinatura ativa',
+        });
+      }
+
+      if (!return_url) {
+        return res.status(400).json({
+          success: false,
+          error: 'return_url é obrigatório',
+          message: 'Informe a URL de retorno para o portal de cobrança',
+        });
+      }
+
+      const session = await stripe.billingPortal.sessions.create({
+        customer: resolvedCustomerId as string,
+        return_url: return_url,
+      });
+
+      res.json({
+        success: true,
+        data: {
+          portal_url: session.url,
+          customer_id: resolvedCustomerId,
+        },
+        message: 'Sessão do portal de cobrança criada com sucesso',
+      });
+
+    } catch (error) {
+      console.error('Erro ao criar sessão do portal de cobrança:', error);
+      
+      if (error instanceof Stripe.errors.StripeError) {
+        if (error.code === 'resource_missing') {
+          return res.status(404).json({
+            success: false,
+            error: 'Cliente não encontrado no Stripe',
+            message: 'O customer_id informado não existe no Stripe',
+          });
+        }
+        
+        if (error.code === 'billing_portal_configuration_inactive') {
+          return res.status(400).json({
+            success: false,
+            error: 'Portal de cobrança não configurado',
+            message: 'O portal de cobrança da Stripe precisa ser configurado na conta. Acesse o dashboard da Stripe para ativá-lo.',
+          });
+        }
+      }
+      
+      res.status(500).json({
+        success: false,
+        error: 'Erro ao criar sessão do portal de cobrança',
+        message: error instanceof Error ? error.message : 'Erro desconhecido'
+      });
+    }
+  },
 
 };
