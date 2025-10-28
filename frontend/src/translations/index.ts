@@ -1,4 +1,4 @@
-import { LanguageContextType } from "@/types";
+import { LanguageContextType } from '@/types'
 
 export const translations = {
   pt: {
@@ -13,7 +13,7 @@ export const translations = {
     profile: 'Perfil',
     plans: 'Planos',
     logout: 'Sair',
-    
+
     // Navigation
     dashboard: 'Dashboard',
     agents: 'Seus Agentes',
@@ -23,7 +23,7 @@ export const translations = {
     principal: 'Principal',
     support: 'Atendimento',
     account: 'Conta',
-    
+
     // Common
     create: 'Criar',
     edit: 'Editar',
@@ -33,12 +33,12 @@ export const translations = {
     loading: 'Carregando...',
     error: 'Erro',
     success: 'Sucesso',
-    
+
     // Sidebar
     availableCredits: 'Créditos Disponíveis',
     used: 'usado',
     remaining: 'restantes',
-    
+
     // Dashboard
     dashboardTitle: 'Dashboard',
     dashboardSubtitle: 'Visão geral dos seus agentes e performance',
@@ -59,7 +59,7 @@ export const translations = {
     qualifiedLeads: 'Leads Qualificados',
     conversionRate: 'Taxa de Conversão',
     activeConversations: 'Conversas Ativas',
-    
+
     // Charts
     conversationsPerMonth: 'Conversas por Mês',
     totalConversations: 'Total de Conversas',
@@ -72,7 +72,7 @@ export const translations = {
     users: 'usuários',
     usersTitle: 'Usuários',
     conversion: 'conv.',
-    
+
     // Agent Performance
     agentPerformance: 'Performance dos Agentes',
     agent1: 'Agente 1',
@@ -80,7 +80,7 @@ export const translations = {
     agent3: 'Agente 3',
     agent4: 'Agente 4',
     attendances: 'Atendimentos',
-    
+
     // Activity
     whatsappActivity: 'Atividade WhatsApp',
     all: 'Todas',
@@ -92,7 +92,7 @@ export const translations = {
     showing: 'Mostrando',
     of: 'de',
     activities: 'atividades WhatsApp',
-    
+
     // Activity Types
     whatsappMessageSent: 'Mensagem WhatsApp enviada',
     whatsappConversationEnded: 'Conversa WhatsApp finalizada',
@@ -100,7 +100,7 @@ export const translations = {
     whatsappFollowUpScheduled: 'Follow-up WhatsApp agendado',
     whatsappMediaSent: 'Mídia enviada via WhatsApp',
     whatsappStatusUpdated: 'Status WhatsApp atualizado',
-    
+
     // Activity Descriptions
     proposalSent: 'Proposta enviada para',
     saleCompleted: 'Venda de R$ 2.500 via WhatsApp Business',
@@ -108,11 +108,11 @@ export const translations = {
     sendProposalTomorrow: 'Enviar proposta amanhã às 10h',
     productCatalogSent: 'Catálogo de produtos enviado',
     statusChangedToAvailable: 'Status alterado para "Disponível"',
-    
+
     // Actions
     respond: 'Responder',
     viewConversation: 'Ver conversa',
-    
+
     // Agents Page
     yourAgents: 'Seus Agentes',
     manageAgents: 'Gerencie e monitore seus agentes de IA',
@@ -149,12 +149,13 @@ export const translations = {
     settings: 'Configurações',
     activeStatus: 'Ativo',
     pausedStatus: 'Pausado',
-    
+
     // Landing Page
     accessPlatform: 'Acessar Plataforma',
     createAIAgents: 'Crie Agentes de IA',
     intelligent: 'Inteligentes',
-    transformService: 'Transforme seu atendimento com agentes de inteligência artificial personalizados.',
+    transformService:
+      'Transforme seu atendimento com agentes de inteligência artificial personalizados.',
     automateConversations: 'Automatize conversas, qualifique leads e aumente suas vendas.',
     startNow: 'Começar Agora',
     seeDemo: 'Ver Demo',
@@ -166,7 +167,7 @@ export const translations = {
     secureReliableDesc: 'Dados protegidos com criptografia de ponta a ponta',
     advancedAnalytics: 'Analytics Avançado',
     advancedAnalyticsDesc: 'Métricas detalhadas para otimizar performance',
-    
+
     // Test Agent Page
     testAgent: 'Testar Agente',
     testAgentSubtitle: 'Selecione e teste seus agentes de IA',
@@ -182,7 +183,7 @@ export const translations = {
     testSuggestion3: 'Qual é o preço dos seus serviços?',
     testSuggestion4: 'Tenho um problema técnico',
     typeYourMessage: 'Digite sua mensagem...',
-    
+
     // Agent Capabilities
     leadQualification: 'Qualificação de leads',
     productPresentation: 'Apresentação de produtos',
@@ -196,13 +197,13 @@ export const translations = {
     financialManagement: 'Gestão financeira',
     billing: 'Cobranças',
     reports: 'Relatórios',
-    
+
     // Agent Personalities
     professionalPersuasive: 'Profissional e persuasivo',
     patientDetailed: 'Paciente e detalhista',
     creativeStrategic: 'Criativo e estratégico',
     preciseOrganized: 'Preciso e organizado',
-    
+
     // CRM Page
     crmTitle: 'CRM',
     crmSubtitle: 'Gerencie seus leads e oportunidades',
@@ -242,7 +243,7 @@ export const translations = {
     dayAgo: 'dia atrás',
     daysAgo: 'dias atrás',
     weekAgo: 'semana atrás',
-    
+
     // CRM Form Fields
     name: 'Nome',
     company: 'Empresa',
@@ -266,7 +267,7 @@ export const translations = {
     notesPlaceholder: 'Adicione observações sobre o lead...',
     now: 'Agora',
     invalidEmail: 'Por favor, insira um email válido.',
-    
+
     // CRM Column Management
     columns: 'Colunas',
     configureColumns: 'Configurar Colunas do CRM',
@@ -277,14 +278,16 @@ export const translations = {
     columnNamePlaceholder: 'Nome da coluna',
     borderColor: 'Cor da Borda',
     columnNameRequired: 'Nome da coluna é obrigatório',
-    cannotDeleteColumnWithLeads: 'Não é possível deletar uma coluna que contém leads. Mova os leads para outra coluna primeiro.',
-    confirmDeleteColumn: 'Esta coluna contém {count} lead(s). Deseja realmente excluí-la? Os leads serão movidos para a primeira coluna disponível.',
+    cannotDeleteColumnWithLeads:
+      'Não é possível deletar uma coluna que contém leads. Mova os leads para outra coluna primeiro.',
+    confirmDeleteColumn:
+      'Esta coluna contém {count} lead(s). Deseja realmente excluí-la? Os leads serão movidos para a primeira coluna disponível.',
     newColumn: 'Nova Coluna',
     close: 'Fechar',
     dragToReorder: 'Arraste para reordenar',
     suggestedComplementaryColors: 'Cores sugeridas:',
     color: 'Cor',
-    
+
     // Plans Page
     plansTitle: 'Planos',
     currentPlan: 'Plano Atual',
@@ -328,7 +331,7 @@ export const translations = {
     monthlyValue: 'Valor mensal:',
     firstBilling: 'Primeira cobrança:',
     confirmUpgradeButton: 'Confirmar Upgrade',
-    
+
     // Conversations Page
     conversationsTitle: 'Conversas',
     conversationsSubtitle: 'Gerencie todas as suas conversas com leads',
@@ -345,15 +348,20 @@ export const translations = {
     thanksForHelp: 'Obrigada pela ajuda!',
     deliveryTime: 'Qual o prazo de entrega?',
     helloInterested: 'Olá! Tenho interesse no seu produto',
-    helloMaria: 'Olá Maria! Fico feliz em ajudá-la. Qual produto específico desperta seu interesse?',
+    helloMaria:
+      'Olá Maria! Fico feliz em ajudá-la. Qual produto específico desperta seu interesse?',
     wantToKnowPlans: 'Quero saber sobre os planos de IA para empresas',
-    perfectPlans: 'Perfeito! Temos planos específicos para empresas. Posso te mostrar as opções disponíveis.',
+    perfectPlans:
+      'Perfeito! Temos planos específicos para empresas. Posso te mostrar as opções disponíveis.',
     wouldLikeToKnowMore: 'Gostaria de saber mais sobre os planos',
-    helpWithIntegration: 'Olá João! Vou te ajudar com a integração. Qual erro específico você está enfrentando?',
+    helpWithIntegration:
+      'Olá João! Vou te ajudar com a integração. Qual erro específico você está enfrentando?',
     cannotConnectAPI: 'Não consigo conectar a API',
     sawYouOnInstagram: 'Vi vocês no Instagram, que legal!',
     helloAna: 'Olá Ana! Obrigado pelo interesse. Como podemos ajudá-la?',
     agent: 'Agente',
+    human: 'Humano',
+    unknown: 'Indefinido',
     channel: 'Canal',
     responseTime: 'Tempo de resposta',
     lastMessage: 'Última mensagem',
@@ -363,6 +371,7 @@ export const translations = {
     markAsRead: 'Marcar como lida',
     markAsUnread: 'Marcar como não lida',
     typeMessage: 'Digite sua mensagem...',
+    loadMoreMessages: 'Carregar mais mensagens',
     send: 'Enviar',
     quickReplies: 'Respostas Rápidas',
     attach: 'Anexar',
@@ -372,7 +381,28 @@ export const translations = {
     yesterday: 'Ontem',
     minutes: 'min',
     agentSales: 'Agente Vendas',
-    
+    errorLoadingImage: 'Erro ao carregar imagem',
+    lowQuality: 'Baixa qualidade',
+    downloadImage: 'Baixar imagem',
+    downloadVideo: 'Baixar vídeo',
+    unmute: 'Ativar som',
+    mute: 'Silenciar',
+    downloading: 'Baixando...',
+    errorDownloadingDocument: 'Erro ao baixar documento',
+    downloadDocument: 'Clique para baixar',
+    fileUploadedSuccessfully: 'Arquivo enviado com sucesso!',
+    errorUploadingFile: 'Erro ao enviar arquivo',
+    sendFile: 'Enviar Arquivo',
+    clickToSelect: 'Clique para selecionar',
+    orDragFilesHere: 'ou arraste arquivos aqui',
+    supportsImagesVideosDocumentsMax2MB: 'Suporta imagens, vídeos e documentos (máx. 2MB)',
+    selectedFiles: 'Arquivos selecionados',
+    sending: 'Enviando...',
+    clear: 'Limpar',
+    clickToLoad: 'Clique para carregar',
+    imageMessage: 'Imagem',
+    videoMessage: 'Vídeo',
+
     // Quick Replies
     quickReply1: 'Olá! Como posso ajudá-lo hoje?',
     quickReply2: 'Obrigado pelo contato! Em breve retornaremos.',
@@ -382,22 +412,23 @@ export const translations = {
     noConversationsFound: 'Nenhuma conversa encontrada',
     agentActive: 'Agente automático ativo',
     assumeConversation: 'Assumir Conversa',
+    switchToAgent: 'Voltar para Agente',
     selectConversation: 'Selecione uma conversa',
     chooseConversationToStart: 'Escolha uma conversa da lista para começar',
     allStatus: 'Todos os Status',
-    
+
     // Conversation Stats
     waitingResponse: 'Aguardando Resposta',
     qualifiedConversations: 'Conversas Qualificadas',
     unreadMessages: 'Mensagens Não Lidas',
     vsYesterday: 'vs. ontem',
-    
+
     // Plans Page
     plansAndBilling: 'Planos e Cobrança',
     managePlanCredits: 'Gerencie seu plano, créditos e histórico de pagamentos',
     autoRenewal: 'Renovação automática',
     nextBilling: 'Próxima cobrança:',
-    
+
     // Plan Features
     agentIA: 'Agente de IA',
     agentsIA: 'Agentes de IA',
@@ -415,14 +446,14 @@ export const translations = {
     dedicatedSupport: 'Suporte dedicado',
     customTraining: 'Treinamento customizado',
     bonus: 'bônus',
-    
+
     // Payment History Descriptions
     professionalPlanMonthly: 'Plano Professional - Mensal',
     individualCredits2500: 'Créditos Avulsos - 2.500',
-    
+
     // Profile Page
     managePersonalInfo: 'Gerencie suas informações pessoais e configurações',
-    
+
     // Admin Page
 
     adminSubtitle: 'Gerencie usuários, departamentos e permissões',
@@ -566,20 +597,20 @@ export const translations = {
     enterNewPassword: 'Digite sua nova senha',
     confirmNewPasswordPlaceholder: 'Confirme sua nova senha',
     changePasswordButton: 'Alterar Senha',
-    
+
     // Create Agent Page
     configureCustomAgent: 'Configure seu agente de IA personalizado',
     step: 'Etapa',
     previous: 'Anterior',
     next: 'Próximo',
-    
+
     // Agent Creation Steps
     personality: 'Personalidade',
     behavior: 'Comportamento',
     knowledgeBase: 'Base de Conhecimento',
     followUps: 'Follow-ups',
     channels: 'Canais',
-    
+
     // Personality Step
     agentPersonality: 'Personalidade do Agente',
     agentName: 'Nome do Agente',
@@ -589,7 +620,7 @@ export const translations = {
     voiceSettings: 'Configurações de Voz',
     greetingMessage: 'Mensagem de Saudação',
     greetingMessagePlaceholder: 'Olá! Como posso ajudá-lo hoje?',
-    
+
     // Voice Tone Options
     professional: 'Profissional',
     professionalDesc: 'Tom formal e respeitoso',
@@ -599,7 +630,7 @@ export const translations = {
     casualDesc: 'Tom descontraído e informal',
     formal: 'Formal',
     formalDesc: 'Tom muito formal e estruturado',
-    
+
     // Voice Settings Options
     always: 'Sempre',
     alwaysDesc: 'Usar voz em todas as mensagens',
@@ -609,7 +640,7 @@ export const translations = {
     whenRequestedDesc: 'Usar voz apenas quando o lead solicitar explicitamente',
     never: 'Nunca',
     neverDesc: 'Não usar voz em nenhuma mensagem',
-    
+
     // Behavior Step
     agentBehavior: 'Comportamento do Agente',
     systemPrompt: 'System Prompt',
@@ -617,15 +648,18 @@ export const translations = {
     useTemplate: 'Usar Template',
     advancedMode: 'Modo Avançado',
     systemPromptEditable: 'System Prompt (Editável)',
-    systemPromptEditablePlaceholder: 'O prompt do template será carregado aqui. Você pode editá-lo conforme necessário...',
-    systemPromptEditableHelp: 'Você pode personalizar o prompt do template selecionado conforme suas necessidades',
+    systemPromptEditablePlaceholder:
+      'O prompt do template será carregado aqui. Você pode editá-lo conforme necessário...',
+    systemPromptEditableHelp:
+      'Você pode personalizar o prompt do template selecionado conforme suas necessidades',
     advancedTemplatePlaceholder: 'Digite o system prompt personalizado para o agente...',
     workingHours: 'Horário de Funcionamento',
     setWorkingHours: 'Definir horário de funcionamento',
     start: 'Início',
     end: 'Fim',
-    agentBehaviorPlaceholder: 'Defina como o agente deve se comportar, suas responsabilidades e estilo de comunicação',
-    
+    agentBehaviorPlaceholder:
+      'Defina como o agente deve se comportar, suas responsabilidades e estilo de comunicação',
+
     // System Prompt Templates
     attendance: 'Atendimento',
     attendanceDesc: 'Focado em resolver dúvidas e fornecer informações gerais',
@@ -633,7 +667,7 @@ export const translations = {
     commercial: 'Comercial (SDR)',
     commercialDesc: 'Focado em qualificação de leads e vendas',
     supportDesc: 'Especializado em resolução de problemas técnicos',
-    
+
     // Knowledge Base Step
     knowledgeBaseTitle: 'Base de Conhecimento',
     websiteUrl: 'URL do Site',
@@ -642,7 +676,8 @@ export const translations = {
     analyzing: 'Analisando...',
     analyzeSiteHelp: 'O agente irá analisar o conteúdo do seu site e sugerir FAQs automaticamente',
     analyzingSite: 'Analisando site...',
-    siteAnalysisComplete: 'Análise do site concluída! Foram adicionadas FAQs baseadas no conteúdo encontrado.',
+    siteAnalysisComplete:
+      'Análise do site concluída! Foram adicionadas FAQs baseadas no conteúdo encontrado.',
     documents: 'Documentos',
     dragFilesHere: 'Arraste arquivos aqui ou clique para selecionar',
     selectFiles: 'Selecionar Arquivos',
@@ -658,19 +693,21 @@ export const translations = {
     update: 'Atualizar',
     editFaq: 'Editar FAQ',
     removeFaq: 'Remover FAQ',
-    
+
     // YouTube Videos
     youtubeVideos: 'Vídeos do YouTube',
-    youtubeVideosDesc: 'Adicione vídeos do YouTube para que o agente possa usar o conteúdo como base de conhecimento',
+    youtubeVideosDesc:
+      'Adicione vídeos do YouTube para que o agente possa usar o conteúdo como base de conhecimento',
     youtubeUrlPlaceholder: 'https://www.youtube.com/watch?v=...',
     analyzeVideo: 'Analisar Vídeo',
     analyzingVideo: 'Analisando vídeo do YouTube...',
-    videoAnalysisComplete: 'Análise do vídeo concluída! O conteúdo foi adicionado à base de conhecimento.',
+    videoAnalysisComplete:
+      'Análise do vídeo concluída! O conteúdo foi adicionado à base de conhecimento.',
     addedVideos: 'Vídeos Adicionados',
     openVideo: 'Abrir vídeo',
     removeVideo: 'Remover vídeo',
     addedOn: 'Adicionado em:',
-    
+
     // Follow-ups Step
     enableFollowUps: 'Ativar follow-ups automáticos',
     followUpsDesc: 'Configure mensagens automáticas para nutrir seus leads',
@@ -686,7 +723,7 @@ export const translations = {
     message: 'Mensagem',
     messagePlaceholder: 'Digite a mensagem...',
     addMessage: 'Adicionar Mensagem',
-    
+
     // Channels Step
     serviceChannels: 'Canais de Atendimento',
     connected: 'Conectado',
@@ -695,15 +732,15 @@ export const translations = {
     disconnect: 'Desconectar',
     channelConnected: 'conectado com sucesso!',
     channelDisconnected: 'desconectado com sucesso!',
-    
+
     // Follow-up Modal
     editSequence: 'Editar Sequência',
     configureAutoMessages: 'Configure mensagens automáticas para nutrir seus leads',
     messageNumber: 'Mensagem',
-    
+
     // CRM Columns
     crmColumns: 'Colunas CRM',
-    
+
     // Triggers
     triggers: 'Gatilhos',
     newLeadTrigger: 'Novo Lead',
@@ -713,14 +750,14 @@ export const translations = {
     followUpReminderTrigger: 'Lembrete de Follow-up',
     birthdayTrigger: 'Aniversário do Cliente',
     customTrigger: 'Gatilho Personalizado',
-    
+
     // Message Attachments
     attachments: 'Anexos',
     addDocument: 'Adicionar Documento',
     addVideo: 'Adicionar Vídeo',
     addAudio: 'Adicionar Áudio',
     removeAttachment: 'Remover Anexo',
-    
+
     // Delay
     immediate: 'Imediato',
     customDelay: 'Tempo Personalizado',
@@ -740,7 +777,7 @@ export const translations = {
     reminderTemplate: 'Template de Lembrete',
     offerTemplate: 'Template de Oferta',
     customMessage: 'Mensagem Personalizada',
-    
+
     // Delay Options
     thirtyMinutes: '30 minutos',
     oneHour: '1 hora',
@@ -749,21 +786,26 @@ export const translations = {
     oneDay: '1 dia',
     threeDays: '3 dias',
     oneWeek: '1 semana',
-    
+
     // Channel Descriptions
     whatsappBusinessOfficial: 'WhatsApp Business Oficial',
     whatsappBusinessDescription: 'Conexão direta com WhatsApp Business API oficial',
     whatsappEvolutionAPI: 'WhatsApp Evolution API',
     whatsappEvolutionDescription: 'Conexão via Evolution API para WhatsApp',
     hubsoft: 'Hubsoft',
-    hubsoftDescription: 'Integração com sistema Hubsoft para gestão de boletos e promessas de pagamento',
-  
+    hubsoftDescription:
+      'Integração com sistema Hubsoft para gestão de boletos e promessas de pagamento',
+
     // Prompt Template Translations
-    attendancePromptTemplate: 'Você é um assistente de atendimento ao cliente. Sua função é ajudar os clientes com dúvidas, fornecer informações sobre produtos e serviços, e resolver problemas de forma eficiente e cordial. Sempre seja paciente, prestativo e mantenha um tom profissional e amigável.',
-    billingPromptTemplate: 'Você é um especialista em cobrança. Sua função é negociar pagamentos em atraso de forma respeitosa e eficaz. Você deve ser firme mas cordial, oferecer opções de pagamento flexíveis, e buscar acordos que sejam benéficos para ambas as partes. Sempre mantenha um tom profissional e empático.',
-    commercialPromptTemplate: 'Você é um representante de vendas (SDR). Sua função é qualificar leads, identificar oportunidades de negócio, e agendar reuniões com prospects qualificados. Você deve ser proativo, fazer perguntas estratégicas, e demonstrar valor da solução. Mantenha um tom entusiasta e profissional.',
-    supportPromptTemplate: 'Você é um especialista em suporte técnico. Sua função é ajudar os clientes a resolver problemas técnicos, fornecer orientações sobre o uso de produtos e serviços, e garantir uma experiência positiva. Sempre mantenha um tom paciente e prestativo.',
-  
+    attendancePromptTemplate:
+      'Você é um assistente de atendimento ao cliente. Sua função é ajudar os clientes com dúvidas, fornecer informações sobre produtos e serviços, e resolver problemas de forma eficiente e cordial. Sempre seja paciente, prestativo e mantenha um tom profissional e amigável.',
+    billingPromptTemplate:
+      'Você é um especialista em cobrança. Sua função é negociar pagamentos em atraso de forma respeitosa e eficaz. Você deve ser firme mas cordial, oferecer opções de pagamento flexíveis, e buscar acordos que sejam benéficos para ambas as partes. Sempre mantenha um tom profissional e empático.',
+    commercialPromptTemplate:
+      'Você é um representante de vendas (SDR). Sua função é qualificar leads, identificar oportunidades de negócio, e agendar reuniões com prospects qualificados. Você deve ser proativo, fazer perguntas estratégicas, e demonstrar valor da solução. Mantenha um tom entusiasta e profissional.',
+    supportPromptTemplate:
+      'Você é um especialista em suporte técnico. Sua função é ajudar os clientes a resolver problemas técnicos, fornecer orientações sobre o uso de produtos e serviços, e garantir uma experiência positiva. Sempre mantenha um tom paciente e prestativo.',
+
     // WHATSAPP
     connectWhatsApp: 'Conecte ao WhatsApp',
     scanQrCodeToConnect: 'Escaneie o QR Code com seu WhatsApp para conectar',
@@ -785,7 +827,7 @@ export const translations = {
     profile: 'Profile',
     plans: 'Plans',
     logout: 'Logout',
-    
+
     // Navigation
     dashboard: 'Dashboard',
     agents: 'Your Agents',
@@ -795,7 +837,7 @@ export const translations = {
     principal: 'Main',
     support: 'Support',
     account: 'Account',
-    
+
     // Common
     create: 'Create',
     edit: 'Edit',
@@ -805,12 +847,12 @@ export const translations = {
     loading: 'Loading...',
     error: 'Error',
     success: 'Success',
-    
+
     // Sidebar
     availableCredits: 'Available Credits',
     used: 'used',
     remaining: 'remaining',
-    
+
     // Dashboard
     dashboardTitle: 'Dashboard',
     dashboardSubtitle: 'Overview of your agents and performance',
@@ -831,7 +873,7 @@ export const translations = {
     qualifiedLeads: 'Qualified Leads',
     conversionRate: 'Conversion Rate',
     activeConversations: 'Active Conversations',
-    
+
     // Charts
     conversationsPerMonth: 'Conversations per Month',
     totalConversations: 'Total Conversations',
@@ -844,7 +886,7 @@ export const translations = {
     users: 'users',
     usersTitle: 'Users',
     conversion: 'conv.',
-    
+
     // Agent Performance
     agentPerformance: 'Agent Performance',
     agent1: 'Agent 1',
@@ -852,7 +894,7 @@ export const translations = {
     agent3: 'Agent 3',
     agent4: 'Agent 4',
     attendances: 'Attendances',
-    
+
     // Activity
     whatsappActivity: 'WhatsApp Activity',
     all: 'All',
@@ -864,7 +906,7 @@ export const translations = {
     showing: 'Showing',
     of: 'of',
     activities: 'WhatsApp activities',
-    
+
     // Activity Types
     whatsappMessageSent: 'WhatsApp message sent',
     whatsappConversationEnded: 'WhatsApp conversation ended',
@@ -872,7 +914,7 @@ export const translations = {
     whatsappFollowUpScheduled: 'WhatsApp follow-up scheduled',
     whatsappMediaSent: 'Media sent via WhatsApp',
     whatsappStatusUpdated: 'WhatsApp status updated',
-    
+
     // Activity Descriptions
     proposalSent: 'Proposal sent to',
     saleCompleted: 'Sale of $2,500 via WhatsApp Business',
@@ -880,11 +922,11 @@ export const translations = {
     sendProposalTomorrow: 'Send proposal tomorrow at 10am',
     productCatalogSent: 'Product catalog sent',
     statusChangedToAvailable: 'Status changed to "Available"',
-    
+
     // Actions
     respond: 'Respond',
     viewConversation: 'View conversation',
-    
+
     // Agents Page
     yourAgents: 'Your Agents',
     manageAgents: 'Manage and monitor your AI agents',
@@ -921,7 +963,7 @@ export const translations = {
     settings: 'Settings',
     activeStatus: 'Active',
     pausedStatus: 'Paused',
-    
+
     // Landing Page
     accessPlatform: 'Access Platform',
     createAIAgents: 'Create AI Agents',
@@ -938,7 +980,7 @@ export const translations = {
     secureReliableDesc: 'Data protected with end-to-end encryption',
     advancedAnalytics: 'Advanced Analytics',
     advancedAnalyticsDesc: 'Detailed metrics to optimize performance',
-    
+
     // Test Agent Page
     testAgent: 'Test Agent',
     testAgentSubtitle: 'Select and test your AI agents',
@@ -954,7 +996,7 @@ export const translations = {
     testSuggestion3: 'What is the price of your services?',
     testSuggestion4: 'I have a technical problem',
     typeYourMessage: 'Type your message...',
-    
+
     // Agent Capabilities
     leadQualification: 'Lead qualification',
     productPresentation: 'Product presentation',
@@ -968,13 +1010,13 @@ export const translations = {
     financialManagement: 'Financial management',
     billing: 'Billing',
     reports: 'Reports',
-    
+
     // Agent Personalities
     professionalPersuasive: 'Professional and persuasive',
     patientDetailed: 'Patient and detailed',
     creativeStrategic: 'Creative and strategic',
     preciseOrganized: 'Precise and organized',
-    
+
     // CRM Page
     crmTitle: 'CRM',
     crmSubtitle: 'Manage your leads and opportunities',
@@ -1014,7 +1056,7 @@ export const translations = {
     dayAgo: 'day ago',
     daysAgo: 'days ago',
     weekAgo: 'week ago',
-    
+
     // CRM Form Fields
     name: 'Name',
     company: 'Company',
@@ -1037,7 +1079,7 @@ export const translations = {
     valuePlaceholder: '0.00',
     notesPlaceholder: 'Add notes about the lead...',
     now: 'Now',
-    
+
     // CRM Column Management
     columns: 'Columns',
     configureColumns: 'Configure CRM Columns',
@@ -1048,15 +1090,17 @@ export const translations = {
     columnNamePlaceholder: 'Column name',
     borderColor: 'Border Color',
     columnNameRequired: 'Column name is required',
-    cannotDeleteColumnWithLeads: 'Cannot delete a column that contains leads. Move the leads to another column first.',
-    confirmDeleteColumn: 'This column contains {count} lead(s). Do you really want to delete it? The leads will be moved to the first available column.',
+    cannotDeleteColumnWithLeads:
+      'Cannot delete a column that contains leads. Move the leads to another column first.',
+    confirmDeleteColumn:
+      'This column contains {count} lead(s). Do you really want to delete it? The leads will be moved to the first available column.',
     newColumn: 'New Column',
     close: 'Close',
     dragToReorder: 'Drag to reorder',
     suggestedComplementaryColors: 'Suggested colors:',
     color: 'Color',
     invalidEmail: 'Please enter a valid email address',
-    
+
     // Plans Page
     plansTitle: 'Plans',
     currentPlan: 'Current Plan',
@@ -1084,7 +1128,7 @@ export const translations = {
     creditsLabel: 'credits',
     buyNow: 'Buy Now',
     bestSeller: 'Best Seller',
-    creditsDontExpire: 'Credits don\'t expire',
+    creditsDontExpire: "Credits don't expire",
     immediateActivation: 'Immediate activation',
     noAutoRenewalInfo: 'No auto-renewal',
     paymentHistory: 'Payment History',
@@ -1095,12 +1139,13 @@ export const translations = {
     invoice: 'Invoice',
     paid: 'Paid',
     confirmUpgrade: 'Confirm Upgrade',
-    currentPlanCancelled: 'Your current plan will be cancelled and the new plan will start immediately.',
+    currentPlanCancelled:
+      'Your current plan will be cancelled and the new plan will start immediately.',
     newPlan: 'New plan:',
     monthlyValue: 'Monthly value:',
     firstBilling: 'First billing:',
     confirmUpgradeButton: 'Confirm Upgrade',
-    
+
     // Plan Features
     agentIA: 'AI Agent',
     agentsIA: 'AI Agents',
@@ -1119,14 +1164,14 @@ export const translations = {
     dedicatedSupport: 'Dedicated support',
     customTraining: 'Custom training',
     bonus: 'bonus',
-    
+
     // Payment History Descriptions
     professionalPlanMonthly: 'Professional Plan - Monthly',
     individualCredits2500: 'Individual Credits - 2,500',
-    
+
     // Profile Page
     managePersonalInfo: 'Manage your personal information and settings',
-    
+
     // Admin Page
     adminSubtitle: 'Manage users, departments and permissions',
     departments: 'Departments',
@@ -1199,6 +1244,7 @@ export const translations = {
     deleteLead: 'Delete Lead',
     viewLead: 'View Lead',
     assumeConversation: 'Take Over Conversation',
+    switchToAgent: 'Switch to Agent',
     finishConversation: 'Finish Conversation',
     archiveConversation: 'Archive Conversation',
     viewBilling: 'View Billing',
@@ -1271,13 +1317,13 @@ export const translations = {
     enterNewPassword: 'Enter your new password',
     confirmNewPasswordPlaceholder: 'Confirm your new password',
     changePasswordButton: 'Change Password',
-    
+
     // Plans Page
     plansAndBilling: 'Plans & Billing',
     managePlanCredits: 'Manage your plan, credits and payment history',
     autoRenewal: 'Auto renewal',
     nextBilling: 'Next billing:',
-    
+
     // Conversations Page
     conversationsTitle: 'Conversations',
     conversationsSubtitle: 'Manage all your conversations with leads',
@@ -1292,16 +1338,20 @@ export const translations = {
     needHelpWithIntegration: 'Need help with integration',
     thanksForHelp: 'Thanks for the help!',
     deliveryTime: 'What is the delivery time?',
-    helloInterested: 'Hello! I\'m interested in your product',
-    helloMaria: 'Hello Maria! I\'m happy to help you. Which specific product interests you?',
+    helloInterested: "Hello! I'm interested in your product",
+    helloMaria: "Hello Maria! I'm happy to help you. Which specific product interests you?",
     wantToKnowPlans: 'I want to know about AI plans for companies',
-    perfectPlans: 'Perfect! We have specific plans for companies. I can show you the available options.',
+    perfectPlans:
+      'Perfect! We have specific plans for companies. I can show you the available options.',
     wouldLikeToKnowMore: 'Would like to know more about the plans',
-    helpWithIntegration: 'Hello João! I\'ll help you with the integration. What specific error are you facing?',
+    helpWithIntegration:
+      "Hello João! I'll help you with the integration. What specific error are you facing?",
     cannotConnectAPI: 'I cannot connect to the API',
     sawYouOnInstagram: 'I saw you on Instagram, how cool!',
     helloAna: 'Hello Ana! Thank you for your interest. How can we help you?',
     agent: 'Agent',
+    human: 'Human',
+    unknown: 'Unknown',
     channel: 'Channel',
     responseTime: 'Response time',
     lastMessage: 'Last message',
@@ -1311,6 +1361,7 @@ export const translations = {
     markAsRead: 'Mark as read',
     markAsUnread: 'Mark as unread',
     typeMessage: 'Type your message...',
+    loadMoreMessages: 'Load more messages',
     send: 'Send',
     quickReplies: 'Quick Replies',
     attach: 'Attach',
@@ -1320,7 +1371,28 @@ export const translations = {
     yesterday: 'Yesterday',
     minutes: 'min',
     agentSales: 'Sales Agent',
-    
+    errorLoadingImage: 'Error loading image',
+    lowQuality: 'Low quality',
+    downloadImage: 'Download image',
+    downloadVideo: 'Download video',
+    unmute: 'Unmute',
+    mute: 'Mute',
+    downloading: 'Downloading...',
+    errorDownloadingDocument: 'Error downloading document',
+    downloadDocument: 'Click to download',
+    fileUploadedSuccessfully: 'File uploaded successfully!',
+    errorUploadingFile: 'Error uploading file',
+    sendFile: 'Send File',
+    clickToSelect: 'Click to select',
+    orDragFilesHere: 'or drag files here',
+    supportsImagesVideosDocumentsMax2MB: 'Supports images, videos and documents (max. 2MB)',
+    selectedFiles: 'Selected files',
+    sending: 'Sending...',
+    clear: 'Clear',
+    clickToLoad: 'Click to load',
+    imageMessage: 'Image',
+    videoMessage: 'Video',
+
     // Quick Replies
     quickReply1: 'Hello! How can I help you today?',
     quickReply2: 'Thank you for contacting us! We will get back to you soon.',
@@ -1331,26 +1403,26 @@ export const translations = {
     agentActive: 'Automatic agent active',
     selectConversation: 'Select a conversation',
     chooseConversationToStart: 'Choose a conversation from the list to start',
-    
+
     // Conversation Stats
     waitingResponse: 'Waiting Response',
     qualifiedConversations: 'Qualified Conversations',
     unreadMessages: 'Unread Messages',
     vsYesterday: 'vs. yesterday',
-    
+
     // Create Agent Page
     configureCustomAgent: 'Configure your custom AI agent',
     step: 'Step',
     previous: 'Previous',
     next: 'Next',
-    
+
     // Agent Creation Steps
     personality: 'Personality',
     behavior: 'Behavior',
     knowledgeBase: 'Knowledge Base',
     followUps: 'Follow-ups',
     channels: 'Channels',
-    
+
     // Personality Step
     agentPersonality: 'Agent Personality',
     agentName: 'Agent Name',
@@ -1360,7 +1432,7 @@ export const translations = {
     voiceSettings: 'Voice Settings',
     greetingMessage: 'Greeting Message',
     greetingMessagePlaceholder: 'Hello! How can I help you today?',
-    
+
     // Voice Tone Options
     professional: 'Professional',
     professionalDesc: 'Formal and respectful tone',
@@ -1370,7 +1442,7 @@ export const translations = {
     casualDesc: 'Relaxed and informal tone',
     formal: 'Formal',
     formalDesc: 'Very formal and structured tone',
-    
+
     // Voice Settings Options
     always: 'Always',
     alwaysDesc: 'Use voice in all messages',
@@ -1380,7 +1452,7 @@ export const translations = {
     whenRequestedDesc: 'Use voice only when the lead explicitly requests it',
     never: 'Never',
     neverDesc: 'Do not use voice in any message',
-    
+
     // Behavior Step
     agentBehavior: 'Agent Behavior',
     systemPrompt: 'System Prompt',
@@ -1388,14 +1460,17 @@ export const translations = {
     useTemplate: 'Use Template',
     advancedMode: 'Advanced Mode',
     systemPromptEditable: 'System Prompt (Editable)',
-    systemPromptEditablePlaceholder: 'The template prompt will be loaded here. You can edit it as needed...',
-    systemPromptEditableHelp: 'You can customize the selected template prompt according to your needs',
+    systemPromptEditablePlaceholder:
+      'The template prompt will be loaded here. You can edit it as needed...',
+    systemPromptEditableHelp:
+      'You can customize the selected template prompt according to your needs',
     advancedTemplatePlaceholder: 'Type the custom system prompt for the agent...',
     workingHours: 'Working Hours',
     setWorkingHours: 'Set working hours',
     start: 'Start',
     end: 'End',
-    agentBehaviorPlaceholder: 'Define how the agent should behave, its responsibilities, and communication style',
+    agentBehaviorPlaceholder:
+      'Define how the agent should behave, its responsibilities, and communication style',
 
     // System Prompt Templates
     attendance: 'Customer Service',
@@ -1404,7 +1479,7 @@ export const translations = {
     commercial: 'Commercial (SDR)',
     commercialDesc: 'Focused on lead qualification and sales',
     supportDesc: 'Specialized in technical problem resolution',
-    
+
     // Knowledge Base Step
     knowledgeBaseTitle: 'Knowledge Base',
     websiteUrl: 'Website URL',
@@ -1413,7 +1488,8 @@ export const translations = {
     analyzing: 'Analyzing...',
     analyzeSiteHelp: 'The agent will analyze your website content and suggest FAQs automatically',
     analyzingSite: 'Analyzing site...',
-    siteAnalysisComplete: 'Site analysis completed! FAQs have been added based on the content found.',
+    siteAnalysisComplete:
+      'Site analysis completed! FAQs have been added based on the content found.',
     documents: 'Documents',
     dragFilesHere: 'Drag files here or click to select',
     selectFiles: 'Select Files',
@@ -1429,19 +1505,20 @@ export const translations = {
     update: 'Update',
     editFaq: 'Edit FAQ',
     removeFaq: 'Remove FAQ',
-    
+
     // YouTube Videos
     youtubeVideos: 'YouTube Videos',
     youtubeVideosDesc: 'Add YouTube videos so the agent can use the content as knowledge base',
     youtubeUrlPlaceholder: 'https://www.youtube.com/watch?v=...',
     analyzeVideo: 'Analyze Video',
     analyzingVideo: 'Analyzing YouTube video...',
-    videoAnalysisComplete: 'Video analysis completed! The content has been added to the knowledge base.',
+    videoAnalysisComplete:
+      'Video analysis completed! The content has been added to the knowledge base.',
     addedVideos: 'Added Videos',
     openVideo: 'Open video',
     removeVideo: 'Remove video',
     addedOn: 'Added on:',
-    
+
     // Follow-ups Step
     enableFollowUps: 'Enable automatic follow-ups',
     followUpsDesc: 'Configure automatic messages to nurture your leads',
@@ -1457,7 +1534,7 @@ export const translations = {
     message: 'Message',
     messagePlaceholder: 'Type the message...',
     addMessage: 'Add Message',
-    
+
     // Channels Step
     serviceChannels: 'Service Channels',
     connected: 'Connected',
@@ -1466,15 +1543,15 @@ export const translations = {
     disconnect: 'Disconnect',
     channelConnected: 'connected successfully!',
     channelDisconnected: 'disconnected successfully!',
-    
+
     // Follow-up Modal
     editSequence: 'Edit Sequence',
     configureAutoMessages: 'Configure automatic messages to nurture your leads',
     messageNumber: 'Message',
-    
+
     // CRM Columns
     crmColumns: 'CRM Columns',
-    
+
     // Triggers
     triggers: 'Triggers',
     newLeadTrigger: 'New Lead',
@@ -1484,14 +1561,14 @@ export const translations = {
     followUpReminderTrigger: 'Follow-up Reminder',
     birthdayTrigger: 'Customer Birthday',
     customTrigger: 'Custom Trigger',
-    
+
     // Message Attachments
     attachments: 'Attachments',
     addDocument: 'Add Document',
     addVideo: 'Add Video',
     addAudio: 'Add Audio',
     removeAttachment: 'Remove Attachment',
-    
+
     // Delay
     immediate: 'Immediate',
     customDelay: 'Custom Time',
@@ -1511,7 +1588,7 @@ export const translations = {
     reminderTemplate: 'Reminder Template',
     offerTemplate: 'Offer Template',
     customMessage: 'Custom Message',
-    
+
     // Delay Options
     thirtyMinutes: '30 minutes',
     oneHour: '1 hour',
@@ -1520,20 +1597,25 @@ export const translations = {
     oneDay: '1 day',
     threeDays: '3 days',
     oneWeek: '1 week',
-    
+
     // Channel Descriptions
     whatsappBusinessOfficial: 'WhatsApp Business Official',
     whatsappBusinessDescription: 'Direct connection with official WhatsApp Business API',
     whatsappEvolutionAPI: 'WhatsApp Evolution API',
     whatsappEvolutionDescription: 'Connection via Evolution API for WhatsApp',
     hubsoft: 'Hubsoft',
-    hubsoftDescription: 'Integration with Hubsoft system for invoice management and payment promises',
-  
+    hubsoftDescription:
+      'Integration with Hubsoft system for invoice management and payment promises',
+
     // Prompt Template Translations
-    attendancePromptTemplate: 'You are a customer service assistant. Your role is to help customers with questions, provide information about products and services, and resolve issues efficiently and courteously. Always be patient, helpful, and maintain a professional and friendly tone.',
-    billingPromptTemplate: 'You are a billing specialist. Your role is to negotiate overdue payments respectfully and effectively. You must be firm yet cordial, offer flexible payment options, and seek agreements that are beneficial for both parties. Always maintain a professional and empathetic tone.',
-    commercialPromptTemplate: 'You are a sales representative (SDR). Your role is to qualify leads, identify business opportunities, and schedule meetings with qualified prospects. You must be proactive, ask strategic questions, and demonstrate the value of the solution. Maintain an enthusiastic and professional tone.',
-    supportPromptTemplate: 'You are a technical support specialist. Your role is to help customers resolve technical issues, provide guidance on using products and services, and ensure a positive experience. Always maintain a patient and helpful tone.',
+    attendancePromptTemplate:
+      'You are a customer service assistant. Your role is to help customers with questions, provide information about products and services, and resolve issues efficiently and courteously. Always be patient, helpful, and maintain a professional and friendly tone.',
+    billingPromptTemplate:
+      'You are a billing specialist. Your role is to negotiate overdue payments respectfully and effectively. You must be firm yet cordial, offer flexible payment options, and seek agreements that are beneficial for both parties. Always maintain a professional and empathetic tone.',
+    commercialPromptTemplate:
+      'You are a sales representative (SDR). Your role is to qualify leads, identify business opportunities, and schedule meetings with qualified prospects. You must be proactive, ask strategic questions, and demonstrate the value of the solution. Maintain an enthusiastic and professional tone.',
+    supportPromptTemplate:
+      'You are a technical support specialist. Your role is to help customers resolve technical issues, provide guidance on using products and services, and ensure a positive experience. Always maintain a patient and helpful tone.',
 
     // WHATSAPP
     connectWhatsApp: 'Connect to WhatsApp',
@@ -1543,9 +1625,9 @@ export const translations = {
     invalidCurrentPassword: 'Invalid current password',
     passwordTooShort: 'New password must be at least 8 characters long',
     fillAllFields: 'Please fill in all fields',
-  }
-};
+  },
+}
 
 export const useTranslation = (context: LanguageContextType) => {
-  return translations[context.language] || translations.pt;
-}; 
+  return translations[context.language] || translations.pt
+}

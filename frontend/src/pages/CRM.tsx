@@ -7,13 +7,13 @@ import {
   Mail,
   MessageSquare,
   Edit,
-  Trash2,
   Eye,
   Clock,
   Tag,
   Settings,
   Filter,
   GripVertical,
+  Archive,
 
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
@@ -339,7 +339,7 @@ const CRM: React.FC = () => {
                               <li><a href="#" onClick={() => handleEditLead(lead)}><Edit className="w-3 h-3" />{t.edit}</a></li>
                               <li><a href="#"><MessageSquare className="w-3 h-3" />{t.chat}</a></li>
                               <li><hr className="my-1" /></li>
-                              <li><a href="#" className="text-error" onClick={() => handleDeleteLead(lead.id)}><Trash2 className="w-3 h-3" />{t.delete}</a></li>
+                              <li><a href="#" className="text-error" onClick={() => handleDeleteLead(lead.id)}><Archive className="w-3 h-3" />{t.archive}</a></li>
                             </ul>
                           </div>
                         </div>

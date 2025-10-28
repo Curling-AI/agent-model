@@ -1,10 +1,11 @@
-import { HumanMessage } from "@langchain/core/messages";
 import { OpenAIWhisperAudio } from "@langchain/community/document_loaders/fs/openai_whisper_audio";
 import fs from 'fs/promises';
 import os from 'os';
 import path from 'path';
 import OpenAI from "openai";
 import { ChatOpenAI } from '@langchain/openai';
+import { isUrl } from "@/utils";
+import { HumanMessage } from 'langchain';
 
 export async function processMediaFromUrlLangchainOpenAI(
   url: string,
@@ -12,10 +13,10 @@ export async function processMediaFromUrlLangchainOpenAI(
   instruction: string,
   language?: string,
 ): Promise<string> {
-  const apiKey = process.env.OPENAI_API_KEY;
+  const apiKey = process.env.LLM_API_KEY;
 
   if (!apiKey) {
-    throw new Error("A variável de ambiente OPENAI_API_KEY deve ser definida.");
+    throw new Error("A variável de ambiente LLM_API_KEY deve ser definida.");
   }
 
   const visionModelName = process.env.AI_MODEL_VISION || 'gpt-4o';
@@ -38,26 +39,31 @@ export async function processMediaFromUrlLangchainOpenAI(
         { type: "text", text: instruction },
       ],
     });
-
+    
     const response = await chatModel.invoke([message]);
-
+    
     return response.content.toString();
-
   } else if (mediaType === 'audio') {
     let tempFilePath: string | undefined;
-
+    let audioBuffer: Buffer;
+    let extension = 'ogg';
     try {
-      const fetchResponse = await fetch(url);
+      if (isUrl(url)) {
+        const fetchResponse = await fetch(url);
 
-      if (!fetchResponse.ok) {
-        throw new Error(`Falha ao baixar o áudio: ${fetchResponse.statusText}`);
+        if (!fetchResponse.ok) {
+          throw new Error(`Falha ao baixar o áudio: ${fetchResponse.statusText}`);
+        }
+
+        const arrayBuffer = await fetchResponse.arrayBuffer();
+        audioBuffer = Buffer.from(arrayBuffer);
+
+        const contentType = fetchResponse.headers.get('content-type') || 'audio/mp3';
+        extension = contentType.split('/')[1] || 'mp3';
+
+      } else {
+        audioBuffer = Buffer.from(url.split(',')[1], 'base64');
       }
-
-      const arrayBuffer = await fetchResponse.arrayBuffer();
-      const audioBuffer = Buffer.from(arrayBuffer);
-
-      const contentType = fetchResponse.headers.get('content-type') || 'audio/mp3';
-      const extension = contentType.split('/')[1] || 'mp3';
 
       const tempDir = os.tmpdir();
       tempFilePath = path.join(tempDir, `audio-${Date.now()}.${extension}`);
@@ -65,6 +71,9 @@ export async function processMediaFromUrlLangchainOpenAI(
       await fs.writeFile(tempFilePath, audioBuffer);
 
       const loader = new OpenAIWhisperAudio(tempFilePath, {
+        clientOptions: { 
+          apiKey: apiKey,
+        },
         transcriptionCreateParams: {
           language: language,
           prompt: instruction,
@@ -112,11 +121,11 @@ export async function textToSpeechOpenAI(
     model: model,
     voice: voice,
     input: text,
-    response_format: "mp3",
+    response_format: "opus",
   });
 
   const arrayBuffer = await response.arrayBuffer();
   const audioBuffer = Buffer.from(arrayBuffer);
 
-  return `data:audio/mp3;base64,${audioBuffer.toString('base64')}`;
+  return `data:audio/ogg;base64,${audioBuffer.toString('base64')}`;
 }

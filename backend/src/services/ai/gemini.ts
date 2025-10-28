@@ -1,10 +1,10 @@
 import { GenerateContentConfig, GoogleGenAI, Part } from "@google/genai";
-import { convertWavToMp3, fileToBase64, saveWaveFile } from "@/utils";
+import { convertWavToOgg, fileToBase64, saveWaveFile } from "@/utils";
 import { HumanMessage } from "@langchain/core/messages";
 import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
 import fs from 'fs/promises';
 
-export async function processMediaFromUrlLangchainGemini(
+export async function processMediaFromBase64LangchainGemini(
   data: string,
   instruction: string,
   mimeType?: string,
@@ -78,7 +78,7 @@ export async function textToSpeechGemini(
 
   await saveWaveFile(audioFilePath, audioBuffer);
 
-  await convertWavToMp3(audioFilePath, outputFilePath);
+  await convertWavToOgg(audioFilePath, outputFilePath);
 
   const base64Audio = await fileToBase64(outputFilePath);
 
