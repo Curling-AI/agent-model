@@ -76,42 +76,28 @@ export const WebhookController = {
                   return res.status(404).json({ error: "Agent not found" });
                 }
 
-                let lead = await getByFilter("leads", { phone });
+                const leads = await getByFilter('leads', { phone });
+                if (leads && leads.length > 0) {
 
-                if (lead && lead.length > 0 && lead[0]["archived_at"] !== null) {
-                  update("leads", lead[0]["id"], { archived_at: null });
+                  if (leads[0]['archived_at'] !== null) {
+                    update('leads', leads[0]['id'], { archived_at: null });
+                  }
+
+                  const newConversation = await getByFilter('conversations', { lead_id: leads[0]['id'], agent_id: agent['id'] });
+                  conversation = newConversation && newConversation.length > 0 ? newConversation[0] : null;
                 }
 
-                if (lead && lead.length > 0) {
-                  const newConversation = await getByFilter("conversations", {
-                    lead_id: lead[0]["id"],
-                    agent_id: agent["id"],
-                  });
-                  conversation =
-                    newConversation && newConversation.length > 0 ? newConversation[0] : null;
-                } else {
-                  const newLead = await upsert("leads", {
-                    phone: phone,
-                    name: contacts[0].profile.name || "Desconhecido",
-                    organization_id: agent["organization_id"],
-                    value: 0,
-                    source: "whatsapp",
-                  });
-                  conversation = await upsert("conversations", {
-                    lead_id: newLead["id"],
-                    agent_id: agent["id"],
-                    organization_id: agent["organization_id"],
-                    integration: "meta",
-                  });
+                if (!conversation) {
+                  let lead;
+                  if (!leads || leads.length === 0) {
+                    lead = await upsert('leads', { phone: phone, name: contacts[0].profile.name || 'Desconhecido', organization_id: agent['organization_id'], value: 0, source: 'whatsapp' });
+                  } else {
+                    lead = leads[0];
+                  }
+                  conversation = await upsert('conversations', { lead_id: lead['id'], agent_id: agent['id'], organization_id: agent['organization_id'] });
                 }
-
-                await upsert("conversation_messages", {
-                  conversation_id: conversation["id"],
-                  sender: "human",
-                  content: text || "",
-                  metadata: { message, contacts, metadata },
-                  timestamp: new Date(timestamp * 1000),
-                });
+                
+                await upsert('conversation_messages', { conversation_id: conversation['id'], sender: 'human', content: text || '', metadata: message, timestamp: new Date(timestamp * 1000) });
 
                 if (conversation["mode"] === "agent") {
                   let responseMessage: any = {};
@@ -329,24 +315,19 @@ export const WebhookController = {
           );
         }
 
-        await upsert("conversation_messages", {
-          conversation_id: conversation["id"],
-          sender: "agent",
-          content: message.outputText,
-          metadata: message,
-          timestamp: new Date(),
-        });
-
-        res.status(200).json({ message: "Webhook processed successfully", conversation });
+        await upsert('conversation_messages', { conversation_id: conversation['id'], sender: 'agent', content: message.outputText, metadata: message, timestamp: new Date() });
 
         if (message.type === "audio") {
           await sendMedia(phone, message.output, "audio", webhookContent.token);
         } else {
+          console.log('Sending message:', message.outputText);
           await sendMessage(phone, message.outputText, webhookContent.token);
         }
-      } else {
-        res.status(200).json({ message: "Webhook processed successfully", conversation });
-      }
+
+      } 
+
+      res.status(200).json({ message: 'Webhook processed successfully', conversation });
+
     } catch (err) {
       console.log(err);
       res.status(500).json({ error: "Failed to upsert conversation", details: err });

@@ -1,15 +1,13 @@
 import { ChatPromptTemplate, MessagesPlaceholder } from "@langchain/core/prompts";
 import { supabase } from '../../config/supabaseClient';
-import { AgentExecutor } from "langchain/agents";
 import { ChatOpenAI, OpenAIEmbeddings } from '@langchain/openai';
 import { ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings } from '@langchain/google-genai';
-import { createToolCallingAgent, createOpenAIToolsAgent } from "langchain/agents";
 import { getById } from '../storage';
-import { PostgresChatMessageHistory } from "@langchain/community/stores/message/postgres";
-import { Pool } from "pg";
-import { RunnableWithMessageHistory } from "@langchain/core/runnables";
+import { PostgresSaver } from "@langchain/langgraph-checkpoint-postgres";
 import { processMediaFromBase64LangchainGemini, textToSpeechGemini } from "./gemini";
 import { processMediaFromUrlLangchainOpenAI, textToSpeechOpenAI } from "./openai";
+import { createAgent, ReactAgent, summarizationMiddleware, tool } from "langchain";
+import { BaseChatModel } from "@langchain/core/language_models/chat_models";
 
 export const AiExecutor = {
   executeAgentText: async (agentId: number, userId: number, userInput: string) => {
@@ -29,14 +27,14 @@ async function executeAgent(agentId: number, userId: number, userInput: string, 
 
     const IMAGE_PROMPT = 'Describe the image in detail and provide relevant information.'
     const AUDIO_PROMPT = 'Transcribe the audio to text. The language spoken is portuguese. If there is background noise or multiple speakers, do your best to accurately capture the main content.'
-    
+
     const agentPromptTemplate = ChatPromptTemplate.fromMessages([
       ["system", generateAgentPrompt(agent)],
       new MessagesPlaceholder("chat_history"),
       ["human", "{input}"],
       new MessagesPlaceholder("agent_scratchpad"),
     ]);
-    
+
     let message;
     if (type !== 'text' && process.env.LLM_PROVIDER === 'gemini') {
       if (type === 'image') {
@@ -53,32 +51,50 @@ async function executeAgent(agentId: number, userId: number, userInput: string, 
     } else {
       message = userInput;
     }
-    
-    const tools = await getKnowledgeFromDatabase(agentId, message);
-    const agentExecutor = await getAgentExecutor(agentPromptTemplate, tools);
-    const runnableWithHistory = await createRunnableWithMessageHistory(sessionId, agentExecutor);
-    const response = await runnableWithHistory.invoke({ input: message }, { configurable: { sessionId } });
+
+    const knowledgeTool = tool(
+      async () => {
+        await getKnowledgeFromDatabase(agentId, message);
+      },
+      {
+        name: 'get_knowledge',
+        description: 'Useful for when you need to get relevant knowledge from the database to answer user questions.',
+        returnDirect: true,
+      }
+    );
+
+    const agentExecutor = await getAgent(generateAgentPrompt(agent), knowledgeTool ? [knowledgeTool] : []);
+
+    const response = await agentExecutor.invoke({
+      messages: [{ role: 'user', content: message }]
+    }, { configurable: { thread_id: sessionId } });
+
+    const aiMessage = response.messages.at(-1);
 
     if (agent['voice_configuration'] !== 'never' && type === 'audio') {
       let responseAudio = {
         output: message,
         type: 'audio',
-        outputText: response.output
+        outputText: aiMessage.content,
+        responseMetadata: aiMessage.response_metadata,
+        usageMetadata: aiMessage['usage_metadata'],
       }
 
       if (process.env.LLM_PROVIDER === 'openai') {
-        responseAudio.output = await textToSpeechOpenAI(response.output);
+        responseAudio.output = await textToSpeechOpenAI(aiMessage.content.toString());
       } else if (type === 'audio' && process.env.LLM_PROVIDER === 'gemini') {
-        responseAudio.output = await textToSpeechGemini(sessionId, response.output);
+        responseAudio.output = await textToSpeechGemini(sessionId, aiMessage.content.toString());
       }
 
       return responseAudio;
     }
 
     return {
-      outputText: response.output,
-      output: response.output,
-      type: 'text'
+      outputText: aiMessage.content,
+      output: '',
+      type: 'text',
+      responseMetadata: aiMessage.response_metadata,
+      usageMetadata: aiMessage['usage_metadata'],
     };
   } catch (error) {
     console.error('Error executing agent:', error);
@@ -96,7 +112,7 @@ async function getKnowledgeFromDatabase(agentId: number, userInput: string) {
       openAIApiKey: process.env.LLM_API_KEY,
       modelName: process.env.LLM_EMBEDDING_MODEL || "text-embedding-3-small",
     });
-    
+
     embedding = await embeddings.embedDocuments([userInput]);
   } else if (process.env.LLM_PROVIDER === 'gemini') {
     functionName = 'match_knowledge_gemini';
@@ -106,7 +122,7 @@ async function getKnowledgeFromDatabase(agentId: number, userInput: string) {
     });
     embedding = await embeddings.embedDocuments([userInput]);
   }
-  
+
   const { data: ragData } = await supabase.rpc(functionName, {
     query_embedding: embedding,
     match_count: 3,
@@ -116,38 +132,43 @@ async function getKnowledgeFromDatabase(agentId: number, userInput: string) {
   return knowledge;
 }
 
-async function getAgentExecutor(agentPromptTemplate: ChatPromptTemplate, tools: any[]) {
-  let agentExecutor: AgentExecutor;
-  let agent;
+async function getAgent(agentPromptTemplate: string, tools: any[]) {
+
+  const checkpointer = PostgresSaver.fromConnString(process.env.SUPABASE_POSTGRES_URL);
+  await checkpointer.setup();
+
+  let agent: ReactAgent;
+  let chatModel: BaseChatModel;
   if (process.env.LLM_PROVIDER === 'openai') {
-    const chatModel = new ChatOpenAI({
+    chatModel = new ChatOpenAI({
       apiKey: process.env.LLM_API_KEY,
       model: process.env.LLM_CHAT_MODEL || 'gpt-4o',
       temperature: Number(process.env.LLM_CHAT_MODEL_TEMPERATURE) || 0,
     });
 
-    agent = await createOpenAIToolsAgent({
-      llm: chatModel,
-      tools: tools,
-      prompt: agentPromptTemplate,
-    });
-
   } else if (process.env.LLM_PROVIDER === 'gemini') {
-    const chatModel = new ChatGoogleGenerativeAI({
+    chatModel = new ChatGoogleGenerativeAI({
       model: process.env.LLM_CHAT_MODEL || 'gemini-2.5-pro',
       apiKey: process.env.LLM_API_KEY,
       temperature: Number(process.env.LLM_CHAT_MODEL_TEMPERATURE) || 0,
     });
-
-    agent = await createToolCallingAgent({
-      llm: chatModel,
-      tools: tools,
-      prompt: agentPromptTemplate,
-    });
   }
-  agentExecutor = new AgentExecutor({ agent, tools, verbose: process.env.LLM_LOGGER_ENABLED === 'true' });
 
-  return agentExecutor;
+  agent = createAgent({
+      model: chatModel,
+      tools: tools,
+      systemPrompt: agentPromptTemplate,
+      checkpointer,
+      middleware: [
+        summarizationMiddleware({
+          model: chatModel,
+          maxTokensBeforeSummary: 4000,
+          messagesToKeep: 10,
+        }),
+      ],
+    });
+
+  return agent;
 }
 
 function generateAgentPrompt(agent: any) {
@@ -162,27 +183,6 @@ function generateAgentPrompt(agent: any) {
     If user ask for an audio message and your voice configuration allows it, you have to answer using an audio message, so generates audio files when needed.
     `;
   return basePrompt;
-}
-
-async function createRunnableWithMessageHistory(sessionId: string, agentExecutor: AgentExecutor) {
-  const pool = new Pool({
-    connectionString: process.env.SUPABASE_POSTGRES_URL,
-  });
-
-  const agentWithHistory = new RunnableWithMessageHistory({
-    runnable: agentExecutor,
-    getMessageHistory: (sessionId) => new PostgresChatMessageHistory({
-      pool,
-      sessionId,
-      tableName: "chat_messages",
-    }),
-
-    inputMessagesKey: "input",
-    historyMessagesKey: "chat_history",
-    config: { configurable: { sessionId: sessionId } },
-  });
-
-  return agentWithHistory;
 }
 
 
