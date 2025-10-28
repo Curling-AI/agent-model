@@ -13,6 +13,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { useTranslation } from '../translations';
 import { useAgentStore } from '@/store/agent';
 import { Agent } from '@/types/agent';
+import { useAuthStore } from '@/store/auth';
 
 const Agents = () => {
   const navigate = useNavigate();
@@ -21,8 +22,14 @@ const Agents = () => {
   const [filter, setFilter] = useState('all');
   const { agents, newAgent, fetchAgents, createOrUpdateAgent, deleteAgent, setAgent } = useAgentStore();
 
+  const { user, getLoggedUser } = useAuthStore();
+
   useEffect(() => {
-    fetchAgents(1, filter);
+    getLoggedUser();
+  }, []);
+  
+  useEffect(() => {
+    fetchAgents(user?.organizationId!, filter);
   }, [fetchAgents, filter]);
 
   const toggleAgentStatus = async (agentId: number) => {
@@ -33,7 +40,7 @@ const Agents = () => {
         break;
       }
     }
-    await fetchAgents(1, filter);
+    await fetchAgents(user?.organizationId!, filter);
   };
 
   const handleDeleteAgent = (agentId: number) => {

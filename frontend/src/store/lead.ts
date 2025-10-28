@@ -7,7 +7,7 @@ interface LeadState {
   loading: boolean;
   error: string | null;
   setLead: (leads: Lead[]) => void;
-  fetchLeads: () => Promise<void>;
+  fetchLeads: (organizationId: number) => Promise<void>;
   upsertLead: (lead: Lead) => Promise<void>;
   deleteLead: (leadId: number) => Promise<void>;
 }
@@ -17,10 +17,10 @@ export const useLeadStore = create<LeadState>((set, get) => ({
   loading: false,
   error: null,
   setLead: (leads) => set({ leads }),
-  fetchLeads: async () => {
+  fetchLeads: async (organizationId: number) => {
     set({ loading: true, error: null });
     try {
-      const response = await fetch(`${BASE_URL}/leads?organizationId=1`);
+      const response = await fetch(`${BASE_URL}/leads?organizationId=${organizationId}`);
       const data = await response.json();
       set({ leads: mapToLead(data), loading: false });
     } catch (error) {

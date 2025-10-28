@@ -4,20 +4,20 @@ import { Request, Response } from 'express';
 // Controller
 export const AgentController = {
   getAll: (req: Request, res: Response) => {
-    const { filter } = req.query;
+    const { filter, organizationId } = req.query;
     switch (filter) {
       case 'active':
-        getByFilter('agents', { active: true }, 'name').then(data => {
+        getByFilter('agents', { active: true, organization_id: organizationId }, 'name').then(data => {
           res.json(data);
         });
         break;
       case 'paused':
-        getByFilter('agents', { active: false }, 'name').then(data => {
+        getByFilter('agents', { active: false, organization_id: organizationId }, 'name').then(data => {
           res.json(data);
         });
         break;
       default:
-        getAll('agents').then(data => {
+        getByFilter('agents', { organization_id: organizationId }, 'name').then(data => {
           res.json(data);
         });
     }

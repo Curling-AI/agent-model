@@ -11,12 +11,13 @@ import { useCrmColumnStore } from "@/store/crm-column";
 
 // Componente Modal Follow-up
 interface FollowUpModalProps {
+  organizationId: number;
   isOpen: boolean;
   onClose: () => void;
   followUp?: FollowUp;
 }
 
-const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, followUp }) => {
+const FollowUpModal: React.FC<FollowUpModalProps> = ({ organizationId, isOpen, onClose, followUp }) => {
   const bucket = import.meta.env.VITE_SUPABASE_STORAGE_NAME ?? "";
   if (!bucket) {
     throw new Error("SUPABASE_STORAGE_NAME environment variable is not defined");
@@ -27,20 +28,20 @@ const FollowUpModal: React.FC<FollowUpModalProps> = ({ isOpen, onClose, followUp
   const { agent } = useAgentStore();
   const { crmColumns } = useCrmColumnStore();
   const { followUpTriggers } = useSystemStore();
-  const { followUpMessages, addOrUpdateFollowUp, deleteFollowUpMessage, deleteFollowUpMessageDocument } = useFollowUpStore();
+  const { addOrUpdateFollowUp, deleteFollowUpMessage, deleteFollowUpMessageDocument } = useFollowUpStore();
 
   const [negativeId, setNegativeId] = useState(-1);
   const [followUpData, setFollowUpData] = useState<FollowUp>(followUp || {
     id: 0,
     name: "",
     description: "",
-    organizationId: 1,
+    organizationId: organizationId,
     agentId: agent.id,
     crmColumn: crmColumns && crmColumns[0] ? crmColumns[0].id : 0,
     trigger: followUpTriggers && followUpTriggers[0] ? followUpTriggers[0].id : 0,
     messages: []
   });
-console.log(crmColumns, followUpTriggers);
+
   const messageTemplateOptions = [
     { value: 'custom', label: t.customMessage },
     { value: 'welcome', label: t.welcomeTemplate },

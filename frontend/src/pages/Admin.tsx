@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, use } from 'react';
 import { 
   Users, 
   Building2, 
@@ -13,14 +13,13 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useTranslation } from '../translations';
-import { Department, Permission, User } from '@/types/user';
+import { Department, User } from '@/types/user';
 import UserModal from '@/components/modal/UserModal';
 import DepartmentModal from '@/components/modal/DepartmentModal';
 import { useDepartmentStore } from '@/store/department';
 import { useUserStore } from '@/store/user';
 import { useSystemStore } from '@/store/system';
 import DepartmentUserCount from '@/components/DepartmentUserCount';
-import { get } from 'http';
 import { useAuthStore } from '@/store/auth';
 
 type Tab = {
@@ -57,20 +56,23 @@ const Admin: React.FC = () => {
 
   const { user, getLoggedUser } = useAuthStore();
 
+  useEffect(() => {
+    getLoggedUser();
+  }, []);
+
   // Mock data
   useEffect(() => {
     setLoading(true);
-    getLoggedUser();
     fetchPermissions();
-    fetchDepartments();
+    fetchDepartments(user?.organizationId!);
     fetchUsers(user?.organizationId!);
-    fetchJobs();
+    fetchJobs(user?.organizationId!);
     setLoading(false);
     handleUserCount();
   }, []);
 
   const handleUserCount = useCallback(async () => {
-    setDepartmentUserCounts(await getDepartmentUserCount(0));
+    setDepartmentUserCounts(await getDepartmentUserCount(0, user?.organizationId!));
   }, [departments, getDepartmentUserCount]);
 
   const getRoleLabel = (id: number) => {
@@ -148,7 +150,7 @@ const Admin: React.FC = () => {
   const handleDeleteDepartment = async (departmentId: number) => {
     if (window.confirm(t.confirmDeleteDepartment)) {
       await deleteDepartment(departmentId);
-      fetchDepartments();
+      fetchDepartments(user?.organizationId!);
     }
   };
 
@@ -454,6 +456,7 @@ const Admin: React.FC = () => {
           user={editingUser}
           departments={departments}
           permissions={permissions}
+          organizationId={user?.organizationId!}
           onClose={() => {
             fetchUsers(user?.organizationId!);
             handleUserCount();
@@ -465,9 +468,10 @@ const Admin: React.FC = () => {
       {/* Department Modal */}
       {showDepartmentModal && (
         <DepartmentModal
+          organizationId={user?.organizationId!}
           department={editingDepartment}
           onClose={() => {
-            fetchDepartments();
+            fetchDepartments(user?.organizationId!);
             setShowDepartmentModal(false);
           }}
         />

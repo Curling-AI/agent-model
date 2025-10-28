@@ -7,7 +7,7 @@ interface CrmColumnState {
   loading: boolean;
   error: string | null;
   setColumns: (columns: CrmColumn[]) => void;
-  fetchCrmColumns: () => Promise<void>;
+  fetchCrmColumns: (organizationId: number) => Promise<void>;
   upsertCrmColumn: (crmColumn: CrmColumn) => Promise<void>;
   deleteCrmColumn: (crmColumnId: number) => Promise<void>;
 }
@@ -17,10 +17,10 @@ export const useCrmColumnStore = create<CrmColumnState>((set, get) => ({
   loading: false,
   error: null,
   setColumns: (columns: CrmColumn[]) => set({ crmColumns: columns }),
-  fetchCrmColumns: async () => {
+  fetchCrmColumns: async (organizationId: number) => {
     set({ loading: true, error: null });
     try {
-      const response = await fetch(`${BASE_URL}/crm-columns?organizationId=1`);
+      const response = await fetch(`${BASE_URL}/crm-columns?organizationId=${organizationId}`);
       const data = await response.json();
       set({ crmColumns: mapToCrmColumn(data), loading: false });
     } catch (error) {

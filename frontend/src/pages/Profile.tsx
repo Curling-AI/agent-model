@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { use, useEffect, useState } from 'react';
 import { 
   Edit,
   Save,
@@ -34,9 +34,12 @@ const Profile = () => {
 
   useEffect(() => {
     getLoggedUser();
-    fetchJobs();
   }, []);
-  
+
+  useEffect(() => {
+    fetchJobs(user?.organizationId!);
+  }, [fetchJobs]);
+
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
     newPassword: '',

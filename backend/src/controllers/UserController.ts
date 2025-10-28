@@ -15,7 +15,7 @@ export const UserController = {
 
   listUsers: async (req: Request, res: Response) => {
     const organizationId = Number(req.query.organizationId);
-    const users = await getByFilter('auth.users', { 'organization_id': organizationId });
+    const users = await getByFilter('users', { 'organization_id': organizationId });
 
     if (!users) return res.status(404).json({ error: 'No users found' });
 

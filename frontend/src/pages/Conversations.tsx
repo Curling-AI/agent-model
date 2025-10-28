@@ -36,6 +36,7 @@ import { formatDistanceStrict, formatRelative } from 'date-fns'
 import { ptBR, enUS } from 'date-fns/locale'
 import { useCrmColumnStore } from '@/store/crm-column'
 import { useLeadStore } from '@/store/lead'
+import { useAuthStore } from '@/store/auth'
 
 const Conversations = () => {
   const language = useLanguage()
@@ -78,14 +79,21 @@ const Conversations = () => {
   } = useConversationStore()
   const [unread, setUnread] = useState<{ [key: number]: number }>({})
   const [conversationPage, setConversationPage] = useState<{ [key: number]: number }>({})
-  const { organization } = useOrganizationStore()
-  const organizationId = organization.id
-  const userId = 1
   const { deleteLead } = useLeadStore()
+  const { user, getLoggedUser } = useAuthStore();
+  let organizationId = 0;
+  let userId = 0;
 
   const { fetchCrmColumns, crmColumns } = useCrmColumnStore()
+
   useEffect(() => {
-    fetchCrmColumns()
+    getLoggedUser();
+  }, [])
+
+  useEffect(() => {
+    userId = user?.id!;
+    organizationId = user?.organizationId!;
+    fetchCrmColumns(organizationId)
   }, [fetchCrmColumns])
 
   useEffect(() => {
