@@ -1,12 +1,11 @@
-import { HumanMessage } from "@langchain/core/messages";
 import { OpenAIWhisperAudio } from "@langchain/community/document_loaders/fs/openai_whisper_audio";
 import fs from 'fs/promises';
 import os from 'os';
 import path from 'path';
 import OpenAI from "openai";
 import { ChatOpenAI } from '@langchain/openai';
-import { is } from "cheerio/dist/commonjs/api/traversing";
 import { isUrl } from "@/utils";
+import { HumanMessage } from 'langchain';
 
 export async function processMediaFromUrlLangchainOpenAI(
   url: string,
@@ -122,11 +121,11 @@ export async function textToSpeechOpenAI(
     model: model,
     voice: voice,
     input: text,
-    response_format: "mp3",
+    response_format: "opus",
   });
 
   const arrayBuffer = await response.arrayBuffer();
   const audioBuffer = Buffer.from(arrayBuffer);
 
-  return `data:audio/mp3;base64,${audioBuffer.toString('base64')}`;
+  return `data:audio/ogg;base64,${audioBuffer.toString('base64')}`;
 }

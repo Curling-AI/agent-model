@@ -86,7 +86,7 @@ export function convertWavToOgg(
   return new Promise((resolve, reject) => {
     ffmpeg(inputWavPath)
       .audioCodec('libvorbis')
-      .addOption('-q:a', quality.toString())
+      .toFormat('ogg')
       .on('start', (commandLine) => {
         console.log('Iniciando conversão com o comando: ' + commandLine);
       })

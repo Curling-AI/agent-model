@@ -2,7 +2,7 @@
   "compilerOptions": {
     "module": "ESNext", // Or "ES2020", "ES2022", etc.
     "target": "ESNext", // Or a suitable target for your Node.js version
-    "moduleResolution": "Node",
+    "moduleResolution": "bundler",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "outDir": "./dist",
