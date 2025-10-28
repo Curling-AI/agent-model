@@ -12,6 +12,7 @@ interface DocumentMessageProps {
   className?: string
   userId?: number
   agentId?: number
+  integration?: 'uazapi' | 'meta'
 }
 
 export function DocumentMessage({
@@ -21,6 +22,7 @@ export function DocumentMessage({
   className = '',
   userId,
   agentId,
+  integration,
 }: DocumentMessageProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(false)
@@ -109,7 +111,7 @@ export function DocumentMessage({
     setError(false)
 
     try {
-      const { data } = await getMediaContent(messageId, userId, agentId)
+      const { data } = await getMediaContent(messageId, userId, agentId, integration)
       if (data && data.base64Data) {
         // Usar base64Data se disponível
         const extension = documentTitle?.split('.').pop() || 'bin'

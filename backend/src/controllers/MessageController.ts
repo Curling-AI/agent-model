@@ -1,4 +1,5 @@
-import { getById, upsert } from '@/services/storage';
+import { getMetaMediaContent, getTokenFromPhoneNumberId, sendMetaMedia, sendMetaMessage } from '@/services/facebook';
+import { getByFilter, getById, upsert } from '@/services/storage';
 import { createInstance, deleteInstance, generateQrCode, getMediaContent, getTokenFromInstance, registerWebhook, sendMedia, sendMessage } from '@/services/uazapi';
 import { Request, Response } from 'express';
 
@@ -112,9 +113,78 @@ export const MessageController = {
         return res.status(404).json({ error: 'Mensagem não encontrada' });
       }
       const data = await getMediaContent(message.metadata.message?.id || message.metadata.id, token);
+      if (data.error) {
+        return res.status(500).json({ success: false, error: data });
+      }
       res.json({ success: true, data });
     } catch (error: any) {
       res.status(500).json({ error: 'Erro ao obter conteúdo da mídia', details: error.message });
     }
-  }
+  },
+
+  async getMetaMediaContent(req: Request, res: Response) {
+    try {
+      const { id: messageId } = req.query;
+      if (!messageId) {
+        return res.status(400).json({ error: 'messageId é obrigatório' });
+      }
+      const message = await getById<any>('conversation_messages', Number(messageId));
+      const token = await getTokenFromPhoneNumberId(message.metadata.metadata?.phone_number_id as string);
+      const data = await getMetaMediaContent(message.metadata.message, token);
+      res.json({ success: true, data });
+    } catch (error: any) {
+      console.log(error);
+      res.status(500).json({ error: 'Erro ao obter conteúdo da mídia', details: error.message });
+    }
+  },
+
+  async sendMetaMessage(req: Request, res: Response) {
+    try {
+      const { to, message, conversationId } = req.body;
+      if (!to || !message || !conversationId) {
+        return res.status(400).json({ error: 'to, message e conversationId são obrigatórios' });
+      }
+
+      const messages = await getByFilter('conversation_messages', { conversation_id: conversationId, sender: 'human' }) as any[];
+      if (!messages || messages.length === 0) {
+        return res.status(404).json({ error: 'Mensagem não encontrada' });
+      }
+      const lastMessage = messages[messages.length - 1];
+      const token = await getTokenFromPhoneNumberId(lastMessage.metadata.metadata?.phone_number_id as string);
+
+      const data = await sendMetaMessage(lastMessage.metadata.metadata?.phone_number_id as string, to, message, token);
+      if (!data) {
+        return res.status(500).json({ error: 'Erro ao enviar mensagem', details: data });
+      }
+      await upsert('conversation_messages', { conversation_id: conversationId, sender: 'member', content: message, metadata: data, timestamp: new Date() });
+      res.json({ success: true, data });
+    } catch (error: any) {
+      console.log(error);
+      res.status(500).json({ error: 'Erro ao enviar mensagem', details: error.message });
+    }
+  },
+  
+  async sendMetaMedia(req: Request, res: Response) {
+    try {
+      const { to, media, name, type, conversationId, mimeType } = req.body;
+      if (!to || !media || !type || !conversationId || !mimeType) {
+        return res.status(400).json({ error: 'to, media e type são obrigatórios' });
+      }
+      const messages = await getByFilter('conversation_messages', { conversation_id: conversationId, sender: 'human' }) as any[];
+      if (!messages || messages.length === 0) {
+        return res.status(404).json({ error: 'Mensagem não encontrada' });
+      }
+      const lastMessage = messages[messages.length - 1];
+      const token = await getTokenFromPhoneNumberId(lastMessage.metadata.metadata?.phone_number_id as string);
+      const data = await sendMetaMedia(lastMessage.metadata.metadata?.phone_number_id as string, to, media, type, mimeType, token, name);
+      if (!data) {
+        return res.status(500).json({ error: 'Erro ao enviar mídia', details: data });
+      }
+      await upsert('conversation_messages', { conversation_id: conversationId, sender: 'member', content: '', metadata: data, timestamp: new Date() });
+      res.json({ success: true, data });
+    } catch (error: any) {
+        console.log(error);
+        res.status(500).json({ error: 'Erro ao enviar mídia', details: error.message });
+      }
+    }
 };
