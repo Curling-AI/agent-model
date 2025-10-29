@@ -8,8 +8,9 @@ import FollowUpModal from "../modal/FollowUpModal";
 import { useSystemStore } from "@/store/system";
 import { useFollowUpStore } from "@/store/follow-up";
 import { useCrmColumnStore } from "@/store/crm-column";
+import { User } from "@/types/user";
 
-const NewAgentFollowUp: React.FC = () => {
+const NewAgentFollowUp: React.FC<{ organizationId: number }> = ({ organizationId }) => {
 
   const language = useLanguage();
   const t = useTranslation(language);
@@ -27,7 +28,7 @@ const NewAgentFollowUp: React.FC = () => {
   const [editingFollowUp, setEditingFollowUp] = useState<FollowUp | null>(null);
 
   useEffect(() => {
-    fetchCrmColumns();
+    fetchCrmColumns(organizationId);
     fetchFollowUpTriggers();
   }, []);
 
@@ -133,6 +134,7 @@ const NewAgentFollowUp: React.FC = () => {
 
       {showFollowUpModal && (
         <FollowUpModal
+          organizationId={organizationId}
           isOpen={showFollowUpModal}
           onClose={() => handleFollowUpModalClose()}
           followUp={editingFollowUp ?? undefined}

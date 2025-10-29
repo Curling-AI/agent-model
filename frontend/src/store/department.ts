@@ -6,10 +6,10 @@ interface DepartmentState {
   departments: Department[];
   loading: boolean;
   error: string | null;
-  fetchDepartments: () => Promise<void>;
+  fetchDepartments: (organizationId: number) => Promise<void>;
   upsertDepartment: (department: Omit<Department, 'id'> & { id?: number }) => Promise<void>;
   deleteDepartment: (departmentId: number) => Promise<void>;
-  getDepartmentUserCount: (departmentId: number) => Promise<number>;
+  getDepartmentUserCount: (departmentId: number, organizationId: number) => Promise<number>;
 }
 
 export const useDepartmentStore = create<DepartmentState>((set, get) => ({
@@ -17,10 +17,10 @@ export const useDepartmentStore = create<DepartmentState>((set, get) => ({
   loading: false,
   error: null,
 
-  fetchDepartments: async () => {
+  fetchDepartments: async (organizationId: number) => {
     set({ loading: true, error: null });
     try {
-      const response = await fetch(`${BASE_URL}/departments?organizationId=1`);
+      const response = await fetch(`${BASE_URL}/departments?organizationId=${organizationId}`);
       const data = await response.json();
       set({ departments: mapToDepartment(data), loading: false });
     } catch (error) {
@@ -76,10 +76,10 @@ export const useDepartmentStore = create<DepartmentState>((set, get) => ({
     }
   },
 
-  getDepartmentUserCount: async (departmentId: number) => {
+  getDepartmentUserCount: async (departmentId: number, organizationId: number) => {
     set({ loading: true, error: null });
     try {
-      const response = await fetch(`${BASE_URL}/departments/${departmentId}/user-count?organizationId=1`);
+      const response = await fetch(`${BASE_URL}/departments/${departmentId}/user-count?organizationId=${organizationId}`);
       const data = await response.json();
       set({ loading: false });
       return data.count || 0;

@@ -7,6 +7,7 @@ import type {
   UserCredits,
   UserUsageData,
 } from '../types/plans';
+import { BASE_URL } from '@/utils/constants';
 
 interface PlansStore {
   products: StripeProduct[];
@@ -45,8 +46,6 @@ interface PlansStore {
   clearError: () => void;
 }
 
-const API_BASE_URL = (import.meta as any).env.VITE_BASE_URL || 'http://localhost:3000/api/v1';
-
 export const usePlansStore = create<PlansStore>((set) => ({
   products: [],
   invoices: [],
@@ -64,7 +63,7 @@ export const usePlansStore = create<PlansStore>((set) => ({
     set({ isLoadingProducts: true, error: null });
     
     try {
-      const response = await fetch(`${API_BASE_URL}/stripe/products`, {
+      const response = await fetch(`${BASE_URL}/stripe/products`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -99,7 +98,7 @@ export const usePlansStore = create<PlansStore>((set) => ({
     try {
       let url = '';
       if (customerId) {
-        url = `${API_BASE_URL}/stripe/invoices?customer_id=${customerId}`;
+        url = `${BASE_URL}/stripe/invoices?customer_id=${customerId}`;
       } else {
         const authState = useAuthStore.getState();
         let userId: number | undefined = undefined;
@@ -116,7 +115,7 @@ export const usePlansStore = create<PlansStore>((set) => ({
           set({ invoices: [] });
           return;
         }
-        url = `${API_BASE_URL}/stripe/invoices?user_id=${userId}`;
+        url = `${BASE_URL}/stripe/invoices?user_id=${userId}`;
       }
       const response = await fetch(url, {
         method: 'GET',
@@ -169,8 +168,8 @@ export const usePlansStore = create<PlansStore>((set) => ({
       }
 
       const url = userId !== undefined
-        ? `${API_BASE_URL}/stripe/user-subscription?user_id=${userId}`
-        : `${API_BASE_URL}/stripe/user-subscription`;
+        ? `${BASE_URL}/stripe/user-subscription?user_id=${userId}`
+        : `${BASE_URL}/stripe/user-subscription`;
 
       const response = await fetch(url, {
         method: 'GET',
@@ -246,7 +245,7 @@ export const usePlansStore = create<PlansStore>((set) => ({
     set({ isCreatingCheckout: true, error: null });
     
     try {
-      const response = await fetch(`${API_BASE_URL}/stripe/checkout/session`, {
+      const response = await fetch(`${BASE_URL}/stripe/checkout/session`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -288,7 +287,7 @@ export const usePlansStore = create<PlansStore>((set) => ({
     set({ isCreatingCheckout: true, error: null });
     
     try {
-      const response = await fetch(`${API_BASE_URL}/stripe/billing-portal/session`, {
+      const response = await fetch(`${BASE_URL}/stripe/billing-portal/session`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

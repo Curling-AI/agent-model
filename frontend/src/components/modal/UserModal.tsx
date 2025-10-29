@@ -12,16 +12,17 @@ interface UserModalProps {
   departments: Department[];
   permissions: Permission[];
   onClose: () => void;
+  organizationId: number;
 }
 
-const UserModal: React.FC<UserModalProps> = ({ user, departments, permissions, onClose }) => {
+const UserModal: React.FC<UserModalProps> = ({ user, departments, permissions, onClose, organizationId }) => {
   const language = useLanguage();
   const t = useTranslation(language);
   const { upsertUser } = useUserStore();
   const { jobs } = useSystemStore();
   const [formData, setFormData] = useState(user || {
     id: 0,
-    organizationId: 1,
+    organizationId: organizationId,
     name: '',
     fullname: '',
     surname: '',

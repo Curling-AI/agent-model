@@ -39,6 +39,8 @@ const Dashboard: React.FC = () => {
   const [selectedPeriod, setSelectedPeriod] = useState(t.last30Days);
   const [selectedAgent, setSelectedAgent] = useState('all');
 
+  // const { user, getLoggedUser } = useAuthStore();
+
   // Lista de agentes disponíveis
   const availableAgents = [
     { id: 'all', name: t.allAgents },

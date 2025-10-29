@@ -5,7 +5,7 @@ import { Department } from "@/types/user";
 import { useState } from "react";
 
 // Department Modal Component
-const DepartmentModal: React.FC<{ department?: Department | null; onClose: () => void; }> = ({ department, onClose }) => {
+const DepartmentModal: React.FC<{ department?: Department | null; organizationId: number; onClose: () => void; }> = ({ department, organizationId, onClose }) => {
   const  language = useLanguage();
   const t = useTranslation(language);
 
@@ -13,7 +13,7 @@ const DepartmentModal: React.FC<{ department?: Department | null; onClose: () =>
 
   const [newDepartment, setDepartment] = useState<Department>(department || {
     id: 0,
-    organizationId: 1,
+    organizationId: organizationId,
     name: '',
     description: '',
     managerName: '',

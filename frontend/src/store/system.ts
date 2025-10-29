@@ -1,4 +1,4 @@
-import { CrmColumn, Plan, ServiceProvider } from '@/types';
+import { Plan, ServiceProvider } from '@/types';
 import { ConversationTag } from '@/types/conversation';
 import { FollowUpTrigger } from '@/types/follow_up';
 import { Department, Job, Permission } from '@/types/user';
@@ -15,9 +15,9 @@ type SystemStore = {
   followUpTriggers: FollowUpTrigger[];
   loading: boolean;
   error: string | null;
-  fetchJobs: () => Promise<void>;
-  fetchDepartments: () => Promise<void>;
-  fetchConversationTags: () => Promise<void>;
+  fetchJobs: (organizationId: number) => Promise<void>;
+  fetchDepartments: (organizationId: number) => Promise<void>;
+  fetchConversationTags: (organizationId: number) => Promise<void>;
   fetchPlans: () => Promise<void>;
   fetchPermissions: () => Promise<void>;
   fetchServiceProviders: () => Promise<void>;
@@ -35,10 +35,10 @@ export const useSystemStore = create<SystemStore>((set) => ({
   loading: false,
   error: null,
 
-  fetchJobs: async () => {
+  fetchJobs: async (organizationId: number) => {
     set({ loading: true, error: null });
     try {
-      const res = await fetch(`${BASE_URL}/system-params/jobs`);
+      const res = await fetch(`${BASE_URL}/system-params/jobs?organizationId=${organizationId}`);
       if (!res.ok) throw new Error('Erro ao buscar jobs');
       const data = await res.json();
       set({ jobs: data, loading: false });
@@ -47,10 +47,10 @@ export const useSystemStore = create<SystemStore>((set) => ({
     }
   },
 
-  fetchDepartments: async () => {
+  fetchDepartments: async (organizationId: number) => {
     set({ loading: true, error: null });
     try {
-      const res = await fetch(`${BASE_URL}/system-params/departments`);
+      const res = await fetch(`${BASE_URL}/system-params/departments?organizationId=${organizationId}`);
       if (!res.ok) throw new Error('Erro ao buscar departments');
       const data = await res.json();
       set({ departments: data, loading: false });
@@ -59,10 +59,10 @@ export const useSystemStore = create<SystemStore>((set) => ({
     }
   },
 
-  fetchConversationTags: async () => {
+  fetchConversationTags: async (organizationId: number) => {
     set({ loading: true, error: null });
     try {
-      const res = await fetch(`${BASE_URL}/system-params/conversation-tags`);
+      const res = await fetch(`${BASE_URL}/system-params/conversation-tags?organizationId=${organizationId}`);
       if (!res.ok) throw new Error('Erro ao buscar conversationTags');
       const data = await res.json();
       set({ conversationTags: data, loading: false });

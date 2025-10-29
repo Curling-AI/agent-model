@@ -27,6 +27,7 @@ import { useLeadStore } from '@/store/lead';
 import FilterLeadModal from '@/components/modal/FilterLeadModal';
 import { formatDateDMYHM } from '@/utils/date';
 import CrmColumnModal from '@/components/modal/CrmColumnModal';
+import { useAuthStore } from '@/store/auth';
 
 const CRM: React.FC = () => {
   const language = useLanguage();
@@ -41,7 +42,7 @@ const CRM: React.FC = () => {
 
   const { crmColumns, fetchCrmColumns } = useCrmColumnStore();
   const { leads, setLead, fetchLeads, upsertLead, deleteLead } = useLeadStore();
-
+  const { user, getLoggedUser } = useAuthStore();
   // Estado para filtros
   const [filters, setFilters] = useState<CrmFilter>({
     status: [],
@@ -60,8 +61,12 @@ const CRM: React.FC = () => {
   const [dragOverColumn, setDragOverColumn] = useState<number | null>(null);
 
   useEffect(() => {
-    fetchCrmColumns();
-    fetchLeads();
+    getLoggedUser();
+  }, []);
+
+  useEffect(() => {
+    fetchCrmColumns(user?.organizationId!);
+    fetchLeads(user?.organizationId!);
   }, []);
 
   // Função para aplicar filtros aos leads
@@ -386,7 +391,10 @@ const CRM: React.FC = () => {
 
       {/* Modal Novo Lead */}
       {showNewLeadModal && (
-        <LeadModal onClose={() => setShowNewLeadModal(false)} lead={editingLead} />
+        <LeadModal
+          organizationId={user?.organizationId!}
+          onClose={() => setShowNewLeadModal(false)}
+          lead={editingLead} />
       )}
 
       {/* Modal de Filtros */}
@@ -403,7 +411,10 @@ const CRM: React.FC = () => {
 
       {/* Modal Configurações de Colunas */}
       {showColumnSettings && (
-        <SettingCrmColumnModal onClose={() => setShowColumnSettings(false)} setEditingColumn={setEditingColumn} />
+        <SettingCrmColumnModal 
+        organizationId={user?.organizationId!}
+        onClose={() => setShowColumnSettings(false)} 
+        setEditingColumn={setEditingColumn} />
       )}
 
       {/* Modal Editar Coluna */}

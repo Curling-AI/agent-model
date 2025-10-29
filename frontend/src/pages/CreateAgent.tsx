@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useTranslation } from '../translations';
@@ -19,6 +19,7 @@ import NewAgentBehavior from '@/components/agent/NewAgentBehavior';
 import NewAgentKnowledge from '@/components/agent/NewAgentKnowledge';
 import NewAgentFollowUp from '@/components/agent/NewAgentFollowUp';
 import NewAgentChannel from '@/components/agent/NewAgentChannel';
+import { useAuthStore } from '@/store/auth';
 
 const CreateAgent: React.FC = () => {
   const navigate = useNavigate();
@@ -27,6 +28,13 @@ const CreateAgent: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(1);
 
   const { agent, createOrUpdateAgent } = useAgentStore();
+
+  const { user, getLoggedUser } = useAuthStore();
+  
+  useEffect(() => {
+    getLoggedUser();
+  }, []);
+
   const steps = [
     { id: 1, name: t.personality, icon: User },
     { id: 2, name: t.behavior, icon: Brain },
@@ -117,7 +125,7 @@ const CreateAgent: React.FC = () => {
           )}
 
           {currentStep === 4 && (
-            <NewAgentFollowUp />
+            <NewAgentFollowUp organizationId={user?.organizationId!} />
           )}
 
           {currentStep === 5 && (

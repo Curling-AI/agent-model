@@ -9,9 +9,10 @@ import { useState } from 'react';
 interface LeadModalProps {
   onClose: () => void;
   lead: Lead | null;
+  organizationId: number;
 }
 
-const LeadModal: React.FC<LeadModalProps> = ({ onClose, lead }) => {
+const LeadModal: React.FC<LeadModalProps> = ({ onClose, lead, organizationId }) => {
 
   const language = useLanguage();
   const t = useTranslation(language);
@@ -29,7 +30,7 @@ const LeadModal: React.FC<LeadModalProps> = ({ onClose, lead }) => {
       observation: '',
       priority: 'medium' as 'low' | 'medium' | 'high',
       tags: [],
-      organizationId: 1,
+      organizationId: organizationId,
       id: 0,
       status: 1
     });
@@ -65,7 +66,7 @@ const LeadModal: React.FC<LeadModalProps> = ({ onClose, lead }) => {
       source: newLead.source,
       tags: newLead.tags,
       observation: newLead.observation,
-      organizationId: 1
+      organizationId: organizationId
     };
 
     await upsertLead(newLeadData);

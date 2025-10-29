@@ -12,9 +12,10 @@ import { useLeadStore } from '@/store/lead';
 interface SettingCrmColumnModalProps {
   onClose: () => void;
   setEditingColumn: (column: CrmColumn) => void;
+  organizationId: number;
 }
 
-const SettingCrmColumnModal: React.FC<SettingCrmColumnModalProps> = ({ onClose, setEditingColumn }) => {
+const SettingCrmColumnModal: React.FC<SettingCrmColumnModalProps> = ({ onClose, setEditingColumn, organizationId }) => {
 
   const language = useLanguage();
   const t = useTranslation(language);
@@ -106,7 +107,7 @@ const SettingCrmColumnModal: React.FC<SettingCrmColumnModalProps> = ({ onClose, 
       titlePt: t.newColumn,
       titleEn: t.newColumn,
       isSystem: false,
-      organizationId: 1, 
+      organizationId: organizationId, 
       color: availableColors.length > 0 ? availableColors[0] : complementaryColors[5] // Roxo como fallback
     };
     await upsertCrmColumn(newColumn);
