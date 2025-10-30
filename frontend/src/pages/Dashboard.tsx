@@ -20,8 +20,10 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { useLanguage } from '@/context/LanguageContext';
 import { useTranslation } from '@/translations';
 import { useAuthStore } from '@/store/auth';
-
-type AgentId = 'all' | 'sales' | 'technical' | 'marketing' | 'financial';
+import { useConversationStore } from '@/store/conversation';
+import { useAgentStore } from '@/store/agent';
+import { Agent } from '@/types/agent';
+import { useCrmColumnStore } from '@/store/crm-column';
 
 interface Kpi {
   title: any;
@@ -36,297 +38,172 @@ const Dashboard: React.FC = () => {
   const language = useLanguage();
   const t = useTranslation(language);
   const [activityFilter, setActivityFilter] = useState(t.all);
-  const [selectedPeriod, setSelectedPeriod] = useState(t.last30Days);
-  const [selectedAgent, setSelectedAgent] = useState('all');
+  const [selectedPeriod, setSelectedPeriod] = useState<string>('last30Days');
+  const [selectedAgent, setSelectedAgent] = useState<number>(-1);
 
-  // const { user, getLoggedUser } = useAuthStore();
+  const { user, getLoggedUser } = useAuthStore();
+  //const { leads, fetchLeads } = useLeadStore();
+  const { conversations, listConversations } = useConversationStore();
+  const { agents, fetchAgents } = useAgentStore();
+  const { crmColumns, fetchCrmColumns } = useCrmColumnStore();
+  const [kpisData, setKpisData] = useState<Record<number, Kpi[]>>({});
+  const [funnelData, setFunnelData] = useState<Record<number, { namePt: string, nameEn: string, value: number, fill: string }[]>>({});
+  const [agentsPerformance, setAgentsPerformance] = useState<{ name: string, atendimentos: number }[]>([]);
+
+  useEffect(() => {
+    getLoggedUser();
+  }, []);
+
+  useEffect(() => {
+    if (user?.organizationId) {
+      listConversations(user.organizationId);
+      fetchAgents(user.organizationId, 'all');
+      fetchCrmColumns(user.organizationId);
+    }
+  }, [user?.organizationId]);
 
   // Lista de agentes disponíveis
-  const availableAgents = [
-    { id: 'all', name: t.allAgents },
-    { id: 'sales', name: t.salesAgent },
-    { id: 'technical', name: t.technicalSupport },
-    { id: 'marketing', name: t.marketingAgent },
-    { id: 'financial', name: t.financialAgent }
-  ];
+  const availableAgents = [{ id: -1, name: t.allAgents }].concat(agents.map((agent: Agent) => ({ id: agent.id, name: agent.name })));
 
   // Dados de exemplo filtrados por agente
 
-  const getKpisByAgent = (agentId: AgentId) => {
-    const kpisData: Record<AgentId, Kpi[]> = {
-      all: [
+  const getKpisByAgent = (agentId?: number, selectedPeriod?: string) => {
+    agentId = agentId ?? -1;
+    const periodToDate = {
+      ['today']: new Date().setHours(0, 0, 0, 0),
+      ['last7Days']: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).setHours(0, 0, 0, 0),
+      ['last30Days']: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).setHours(0, 0, 0, 0),
+      ['thisMonth']: new Date(new Date().getFullYear(), new Date().getMonth(), 1).setHours(0, 0, 0, 0),
+      ['thisYear']: new Date(new Date().getFullYear(), 0, 1).setHours(0, 0, 0, 0),
+    }
+    const startDate = periodToDate[selectedPeriod as keyof typeof periodToDate] ?? periodToDate['last30Days'];
+    const previousPeriod = startDate - (Date.now() - startDate);
+    const leadsAttended = conversations.filter((conversation) => (agentId === -1 ? true : conversation.agent.id === agentId) && Date.parse(conversation.lead.createdAt!) >= startDate).length;
+    const previousLeadsAttended = conversations.filter((conversation) => (agentId === -1 ? true : conversation.agent.id === agentId) && Date.parse(conversation.lead.createdAt!) >= previousPeriod && Date.parse(conversation.lead.createdAt!) < startDate).length;
+    const changeLeadsAttended = previousLeadsAttended ? ((leadsAttended - previousLeadsAttended)/previousLeadsAttended * 100) : 0;
+    const qualifiedLeads = conversations.filter((conversation) => (agentId === -1 ? true : conversation.agent.id === agentId) && conversation.lead.status <= 2 && Date.parse(conversation.lead.createdAt!) >= startDate).length;
+    const previousQualifiedLeads = conversations.filter((conversation) => (agentId === -1 ? true : conversation.agent.id === agentId) && conversation.lead.status <= 2 && Date.parse(conversation.lead.createdAt!) >= previousPeriod && Date.parse(conversation.lead.createdAt!) < startDate).length;
+    const changeQualifiedLeads = previousQualifiedLeads ? ((qualifiedLeads - previousQualifiedLeads)/previousQualifiedLeads * 100) : 0;
+    const conversionRate = leadsAttended ? qualifiedLeads / leadsAttended * 100 : 0;
+    const previousConversionRate = previousLeadsAttended ? previousQualifiedLeads / previousLeadsAttended * 100 : 0;
+    const changeConversionRate = previousConversionRate ? ((conversionRate - previousConversionRate)/previousConversionRate * 100) : 0;
+    const activeConversations = conversations.filter((conversation) => (agentId === -1 ? true : conversation.agent.id === agentId) && (conversation.messages[conversation.messages.length - 1].timestamp) > new Date(startDate)).length;
+    const previousActiveConversations = conversations.filter((conversation) => (agentId === -1 ? true : conversation.agent.id === agentId) && (conversation.messages[conversation.messages.length - 1].timestamp) > new Date(previousPeriod) && (conversation.messages[conversation.messages.length - 1].timestamp) < new Date(startDate)).length;
+    const changeActiveConversations = previousActiveConversations ? ((activeConversations - previousActiveConversations)/previousActiveConversations * 100) : 0;
+    const kpisData: Record<number, Kpi[]> = {
+      [agentId ?? -1]: [
         {
           title: t.leadsAttended,
-          value: '1,247',
-          change: '+12%',
-          trending: 'up',
+          value: leadsAttended.toString(),
+          change: changeLeadsAttended.toFixed(0) + '%',
+          trending: changeLeadsAttended > 0 ? 'up' : 'down',
           icon: Users,
           color: 'text-primary'
         },
         {
           title: t.qualifiedLeads,
-          value: '328',
-          change: '+8%',
-          trending: 'up',
+          value: qualifiedLeads.toString(),
+          change: changeQualifiedLeads.toFixed(0) + '%',
+          trending: changeQualifiedLeads > 0 ? 'up' : 'down',
           icon: Target,
           color: 'text-primary'
         },
         {
           title: t.conversionRate,
-          value: '26.3%',
-          change: '-2%',
-          trending: 'down',
+          value: conversionRate.toFixed(2).toString() + '%',
+          change: changeConversionRate.toFixed(0) + '%',
+          trending: changeConversionRate > 0 ? 'up' : 'down',
           icon: TrendingUp,
           color: 'text-accent'
         },
         {
           title: t.activeConversations,
-          value: '89',
-          change: '+15%',
-          trending: 'up',
+          value: activeConversations.toString(),
+          change: changeActiveConversations.toFixed(0) + '%',
+          trending: changeActiveConversations > 0 ? 'up' : 'down',
           icon: MessageSquare,
           color: 'text-primary'
         }
       ],
-      sales: [
-        {
-          title: t.leadsAttended,
-          value: '456',
-          change: '+18%',
-          trending: 'up',
-          icon: Users,
-          color: 'text-primary'
-        },
-        {
-          title: t.qualifiedLeads,
-          value: '128',
-          change: '+12%',
-          trending: 'up',
-          icon: Target,
-          color: 'text-primary'
-        },
-        {
-          title: t.conversionRate,
-          value: '28.1%',
-          change: '+3%',
-          trending: 'up',
-          icon: TrendingUp,
-          color: 'text-success'
-        },
-        {
-          title: t.activeConversations,
-          value: '32',
-          change: '+8%',
-          trending: 'up',
-          icon: MessageSquare,
-          color: 'text-primary'
-        }
-      ],
-      technical: [
-        {
-          title: t.leadsAttended,
-          value: '389',
-          change: '+5%',
-          trending: 'up',
-          icon: Users,
-          color: 'text-primary'
-        },
-        {
-          title: t.qualifiedLeads,
-          value: '95',
-          change: '+2%',
-          trending: 'up',
-          icon: Target,
-          color: 'text-primary'
-        },
-        {
-          title: t.conversionRate,
-          value: '24.4%',
-          change: '-1%',
-          trending: 'down',
-          icon: TrendingUp,
-          color: 'text-accent'
-        },
-        {
-          title: t.activeConversations,
-          value: '28',
-          change: '+12%',
-          trending: 'up',
-          icon: MessageSquare,
-          color: 'text-primary'
-        }
-      ],
-      marketing: [
-        {
-          title: t.leadsAttended,
-          value: '234',
-          change: '+15%',
-          trending: 'up',
-          icon: Users,
-          color: 'text-primary'
-        },
-        {
-          title: t.qualifiedLeads,
-          value: '67',
-          change: '+9%',
-          trending: 'up',
-          icon: Target,
-          color: 'text-primary'
-        },
-        {
-          title: t.conversionRate,
-          value: '28.6%',
-          change: '+4%',
-          trending: 'up',
-          icon: TrendingUp,
-          color: 'text-success'
-        },
-        {
-          title: t.activeConversations,
-          value: '18',
-          change: '+6%',
-          trending: 'up',
-          icon: MessageSquare,
-          color: 'text-primary'
-        }
-      ],
-      financial: [
-        {
-          title: t.leadsAttended,
-          value: '168',
-          change: '+7%',
-          trending: 'up',
-          icon: Users,
-          color: 'text-primary'
-        },
-        {
-          title: t.qualifiedLeads,
-          value: '38',
-          change: '+3%',
-          trending: 'up',
-          icon: Target,
-          color: 'text-primary'
-        },
-        {
-          title: t.conversionRate,
-          value: '22.6%',
-          change: '-3%',
-          trending: 'down',
-          icon: TrendingUp,
-          color: 'text-accent'
-        },
-        {
-          title: t.activeConversations,
-          value: '11',
-          change: '+4%',
-          trending: 'up',
-          icon: MessageSquare,
-          color: 'text-primary'
-        }
-      ]
     };
-
-    return kpisData[agentId] || kpisData.all;
+    return kpisData[agentId ?? -1] || [];
   };
 
-  const kpis = getKpisByAgent(selectedAgent as AgentId);
+  useEffect(() => {
+    setKpisData((prev) => ({ ...prev, [selectedAgent as number]: getKpisByAgent(selectedAgent as number, selectedPeriod) }));
+  }, [selectedAgent, selectedPeriod, conversations]);
 
   // Dados de conversas filtrados por agente
-  const getConversationsDataByAgent = (agentId: AgentId) => {
+  const getConversationsDataByAgent = (agentId?: number) => {
+    agentId = agentId ?? -1;
+    const conversationsData = conversations.filter((conversation) => (agentId === -1 ? true : conversation.agent.id === agentId));
     const conversationsDataByAgent = {
-      all: [
-        { name: 'Jan', conversas: 120, qualificados: 45 },
-        { name: 'Fev', conversas: 150, qualificados: 52 },
-        { name: 'Mar', conversas: 180, qualificados: 68 },
-        { name: 'Abr', conversas: 220, qualificados: 78 },
-        { name: 'Mai', conversas: 190, qualificados: 65 },
-        { name: 'Jun', conversas: 240, qualificados: 85 },
+      [agentId ?? -1]: [
+        { name: t.jan, conversas: conversationsData.filter((conversation) => new Date(conversation.lead.createdAt!).getMonth() === 0).length, qualificados: conversationsData.filter((conversation) => new Date(conversation.lead.createdAt!).getMonth() === 0 && conversation.lead.status <= 2).length },
+        { name: t.feb, conversas: conversationsData.filter((conversation) => new Date(conversation.lead.createdAt!).getMonth() === 1).length, qualificados: conversationsData.filter((conversation) => new Date(conversation.lead.createdAt!).getMonth() === 1 && conversation.lead.status <= 2).length },
+        { name: t.mar, conversas: conversationsData.filter((conversation) => new Date(conversation.lead.createdAt!).getMonth() === 2).length, qualificados: conversationsData.filter((conversation) => new Date(conversation.lead.createdAt!).getMonth() === 2 && conversation.lead.status <= 2).length },
+        { name: t.apr, conversas: conversationsData.filter((conversation) => new Date(conversation.lead.createdAt!).getMonth() === 3).length, qualificados: conversationsData.filter((conversation) => new Date(conversation.lead.createdAt!).getMonth() === 3 && conversation.lead.status <= 2).length },
+        { name: t.may, conversas: conversationsData.filter((conversation) => new Date(conversation.lead.createdAt!).getMonth() === 4).length, qualificados: conversationsData.filter((conversation) => new Date(conversation.lead.createdAt!).getMonth() === 4 && conversation.lead.status <= 2).length },
+        { name: t.jun, conversas: conversationsData.filter((conversation) => new Date(conversation.lead.createdAt!).getMonth() === 5).length, qualificados: conversationsData.filter((conversation) => new Date(conversation.lead.createdAt!).getMonth() === 5 && conversation.lead.status <= 2).length },
+        { name: t.jul, conversas: conversationsData.filter((conversation) => new Date(conversation.lead.createdAt!).getMonth() === 6).length, qualificados: conversationsData.filter((conversation) => new Date(conversation.lead.createdAt!).getMonth() === 6 && conversation.lead.status <= 2).length },
+        { name: t.aug, conversas: conversationsData.filter((conversation) => new Date(conversation.lead.createdAt!).getMonth() === 7).length, qualificados: conversationsData.filter((conversation) => new Date(conversation.lead.createdAt!).getMonth() === 7 && conversation.lead.status <= 2).length },
+        { name: t.sep, conversas: conversationsData.filter((conversation) => new Date(conversation.lead.createdAt!).getMonth() === 8).length, qualificados: conversationsData.filter((conversation) => new Date(conversation.lead.createdAt!).getMonth() === 8 && conversation.lead.status <= 2).length },
+        { name: t.oct, conversas: conversationsData.filter((conversation) => new Date(conversation.lead.createdAt!).getMonth() === 9).length, qualificados: conversationsData.filter((conversation) => new Date(conversation.lead.createdAt!).getMonth() === 9 && conversation.lead.status <= 2).length },
+        { name: t.nov, conversas: conversationsData.filter((conversation) => new Date(conversation.lead.createdAt!).getMonth() === 10).length, qualificados: conversationsData.filter((conversation) => new Date(conversation.lead.createdAt!).getMonth() === 10 && conversation.lead.status <= 2).length },
+        { name: t.dec, conversas: conversationsData.filter((conversation) => new Date(conversation.lead.createdAt!).getMonth() === 11).length, qualificados: conversationsData.filter((conversation) => new Date(conversation.lead.createdAt!).getMonth() === 11 && conversation.lead.status <= 2).length },
       ],
-      sales: [
-        { name: 'Jan', conversas: 45, qualificados: 18 },
-        { name: 'Fev', conversas: 52, qualificados: 22 },
-        { name: 'Mar', conversas: 68, qualificados: 28 },
-        { name: 'Abr', conversas: 78, qualificados: 32 },
-        { name: 'Mai', conversas: 65, qualificados: 26 },
-        { name: 'Jun', conversas: 85, qualificados: 35 },
-      ],
-      technical: [
-        { name: 'Jan', conversas: 35, qualificados: 12 },
-        { name: 'Fev', conversas: 42, qualificados: 15 },
-        { name: 'Mar', conversas: 48, qualificados: 18 },
-        { name: 'Abr', conversas: 55, qualificados: 22 },
-        { name: 'Mai', conversas: 52, qualificados: 20 },
-        { name: 'Jun', conversas: 58, qualificados: 25 },
-      ],
-      marketing: [
-        { name: 'Jan', conversas: 25, qualificados: 10 },
-        { name: 'Fev', conversas: 32, qualificados: 12 },
-        { name: 'Mar', conversas: 38, qualificados: 15 },
-        { name: 'Abr', conversas: 42, qualificados: 18 },
-        { name: 'Mai', conversas: 35, qualificados: 14 },
-        { name: 'Jun', conversas: 48, qualificados: 20 },
-      ],
-      financial: [
-        { name: 'Jan', conversas: 15, qualificados: 5 },
-        { name: 'Fev', conversas: 24, qualificados: 8 },
-        { name: 'Mar', conversas: 26, qualificados: 10 },
-        { name: 'Abr', conversas: 45, qualificados: 16 },
-        { name: 'Mai', conversas: 38, qualificados: 12 },
-        { name: 'Jun', conversas: 49, qualificados: 15 },
-      ]
     };
-
-    return conversationsDataByAgent[agentId] || conversationsDataByAgent.all;
+    return conversationsDataByAgent[agentId ?? -1] || [];
   };
-
-  const conversationsData = getConversationsDataByAgent(selectedAgent as AgentId);
+  const conversationsData = getConversationsDataByAgent(selectedAgent as number);
 
   // Dados do funil filtrados por agente
-  const getFunnelDataByAgent = (agentId: AgentId) => {
+  const getFunnelDataByAgent = (agentId?: number) => {
+    if (crmColumns.length === 0) {
+      setFunnelData((prev) => ({ ...prev, [agentId ?? -1]: [] }));
+      return;
+    }
+    const periodToDate = {
+      ['today']: new Date().setHours(0, 0, 0, 0),
+      ['last7Days']: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).setHours(0, 0, 0, 0),
+      ['last30Days']: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).setHours(0, 0, 0, 0),
+      ['thisMonth']: new Date(new Date().getFullYear(), new Date().getMonth(), 1).setHours(0, 0, 0, 0),
+      ['thisYear']: new Date(new Date().getFullYear(), 0, 1).setHours(0, 0, 0, 0),
+    }
+    const startDate = periodToDate[selectedPeriod as keyof typeof periodToDate] ?? periodToDate['last30Days'];
+    const leads = conversations.filter((conversation) => (agentId === -1 ? true : conversation.agent.id === agentId) && Date.parse(conversation.lead.createdAt!) >= startDate).map((conversation) => conversation.lead);
     const funnelDataByAgent = {
-      all: [
-        { name: t.visitors, value: 1000, fill: '#229ad2' },
-        { name: t.leads, value: 400, fill: '#3ba8e0' },
-        { name: t.qualified, value: 150, fill: '#6b7280' },
-        { name: t.clients, value: 50, fill: '#9ca3af' },
+      [agentId ?? -1]: [
+        { namePt: crmColumns.find(column => column.id === 1)?.titlePt ?? '', nameEn: crmColumns.find(column => column.id === 1)?.titleEn ?? '', value: leads.filter((lead) => lead.status >= 1).length, fill: '#229ad2' },
+        { namePt: crmColumns.find(column => column.id === 2)?.titlePt ?? '', nameEn: crmColumns.find(column => column.id === 2)?.titleEn ?? '', value: leads.filter((lead) => lead.status >= 2).length, fill: '#3ba8e0' },
+        { namePt: crmColumns.find(column => column.id === 3)?.titlePt ?? '', nameEn: crmColumns.find(column => column.id === 3)?.titleEn ?? '', value: leads.filter((lead) => lead.status >= 3).length, fill: '#6b7280' },
+        { namePt: crmColumns.find(column => column.id === 4)?.titlePt ?? '', nameEn: crmColumns.find(column => column.id === 4)?.titleEn ?? '', value: leads.filter((lead) => lead.status >= 4).length, fill: '#9ca3af' },
+        { namePt: crmColumns.find(column => column.id === 5)?.titlePt ?? '', nameEn: crmColumns.find(column => column.id === 5)?.titleEn ?? '', value: leads.filter((lead) => lead.status >= 5).length, fill: '#9ca3af' },
       ],
-      sales: [
-        { name: t.visitors, value: 350, fill: '#229ad2' },
-        { name: t.leads, value: 140, fill: '#3ba8e0' },
-        { name: t.qualified, value: 55, fill: '#6b7280' },
-        { name: t.clients, value: 18, fill: '#9ca3af' },
-      ],
-      technical: [
-        { name: t.visitors, value: 280, fill: '#229ad2' },
-        { name: t.leads, value: 110, fill: '#3ba8e0' },
-        { name: t.qualified, value: 42, fill: '#6b7280' },
-        { name: t.clients, value: 15, fill: '#9ca3af' },
-      ],
-      marketing: [
-        { name: t.visitors, value: 220, fill: '#229ad2' },
-        { name: t.leads, value: 88, fill: '#3ba8e0' },
-        { name: t.qualified, value: 33, fill: '#6b7280' },
-        { name: t.clients, value: 12, fill: '#9ca3af' },
-      ],
-      financial: [
-        { name: t.visitors, value: 150, fill: '#229ad2' },
-        { name: t.leads, value: 62, fill: '#3ba8e0' },
-        { name: t.qualified, value: 20, fill: '#6b7280' },
-        { name: t.clients, value: 5, fill: '#9ca3af' },
-      ]
     };
-
-    return funnelDataByAgent[agentId] || funnelDataByAgent.all;
+    setFunnelData((prev) => ({ ...prev, [agentId ?? -1]: funnelDataByAgent[agentId ?? -1]}));
   };
 
-  const funnelData = getFunnelDataByAgent(selectedAgent as AgentId);
+  const getAgentsPerformance = (period: string) => {
+    const periodToDate = {
+      ['today']: new Date().setHours(0, 0, 0, 0),
+      ['last7Days']: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).setHours(0, 0, 0, 0),
+      ['last30Days']: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).setHours(0, 0, 0, 0),
+      ['thisMonth']: new Date(new Date().getFullYear(), new Date().getMonth(), 1).setHours(0, 0, 0, 0),
+      ['thisYear']: new Date(new Date().getFullYear(), 0, 1).setHours(0, 0, 0, 0),
+    }
+    const startDate = periodToDate[period as keyof typeof periodToDate] ?? periodToDate['last30Days'];
+    const agentsPerformance = agents.map((agent) => ({ name: agent.name, atendimentos: conversations.filter((conversation) => conversation.agent.id === agent.id && Date.parse(conversation.lead.createdAt!) >= startDate).length }));
+    setAgentsPerformance(agentsPerformance);
+  };
 
-  const agentsPerformance = [
-    { name: t.agent1, atendimentos: 45, satisfacao: 95 },
-    { name: t.agent2, atendimentos: 38, satisfacao: 92 },
-    { name: t.agent3, atendimentos: 52, satisfacao: 88 },
-    { name: t.agent4, atendimentos: 41, satisfacao: 94 },
-  ];
+  useEffect(() => {
+    getAgentsPerformance(selectedPeriod);
+  }, [selectedPeriod, conversations]);
+
+  useEffect(() => {
+    getFunnelDataByAgent(selectedAgent as number);
+  }, [selectedAgent, selectedPeriod, conversations]);
 
   // Dados de atividade recente focados em agentes WhatsApp
   const recentActivities = [
@@ -440,9 +317,9 @@ const Dashboard: React.FC = () => {
         typeMatch = true;
     }
 
-    // Filtro por agente
+    // Filtro por agente - só filtra se um agente específico estiver selecionado (não -1)
     let agentMatch = true;
-    if (selectedAgent !== 'all') {
+    if (selectedAgent !== null && selectedAgent !== -1) {
       const agentName = availableAgents.find(agent => agent.id === selectedAgent)?.name;
       agentMatch = activity.agent === agentName;
     }
@@ -458,9 +335,9 @@ const Dashboard: React.FC = () => {
           <h1 className="text-3xl font-bold text-base-content">{t.dashboardTitle}</h1>
           <p className="text-neutral mt-1">
             {t.dashboardSubtitle}
-            {selectedAgent !== 'all' && (
+            {selectedAgent !== null && (
               <span className="ml-2 badge badge-primary badge-sm">
-                {availableAgents.find(agent => agent.id === selectedAgent)?.name}
+                {availableAgents.find(agent => agent.id === selectedAgent)?.name ?? t.allAgents}
               </span>
             )}
           </p>
@@ -470,7 +347,7 @@ const Dashboard: React.FC = () => {
           <div className="dropdown dropdown-end">
             <button
               tabIndex={0}
-              className={`btn btn-sm gap-2 ${selectedAgent !== 'all'
+              className={`btn btn-sm gap-2 ${selectedAgent !== null
                   ? 'btn-primary'
                   : 'btn-outline hover:bg-base-200'
                 }`}
@@ -498,9 +375,9 @@ const Dashboard: React.FC = () => {
           </div>
 
           {/* Botão para limpar filtro */}
-          {selectedAgent !== 'all' && (
+          {selectedAgent !== -1 && (
             <button
-              onClick={() => setSelectedAgent('all')}
+              onClick={() => setSelectedAgent(-1)}
               className="btn btn-ghost btn-sm"
               title={t.clearFilter}
             >
@@ -516,18 +393,18 @@ const Dashboard: React.FC = () => {
               className="btn btn-outline btn-sm gap-2 hover:bg-base-200"
             >
               <Calendar className="w-4 h-4" />
-              <span className="hidden sm:inline">{selectedPeriod}</span>
+              <span className="hidden sm:inline">{t[selectedPeriod as keyof typeof t]}</span>
               <span className="sm:hidden">{t.period}</span>
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
               </svg>
             </button>
             <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
-              <li><a href="#today" onClick={() => setSelectedPeriod(t.today)}>{t.today}</a></li>
-              <li><a href="#7days" onClick={() => setSelectedPeriod(t.last7Days)}>{t.last7Days}</a></li>
-              <li><a href="#30days" onClick={() => setSelectedPeriod(t.last30Days)}>{t.last30Days}</a></li>
-              <li><a href="#month" onClick={() => setSelectedPeriod(t.thisMonth)}>{t.thisMonth}</a></li>
-              <li><a href="#year" onClick={() => setSelectedPeriod(t.thisYear)}>{t.thisYear}</a></li>
+              <li><a href="#today" onClick={() => setSelectedPeriod('today')}>{t.today}</a></li>
+              <li><a href="#7days" onClick={() => setSelectedPeriod('last7Days')}>{t.last7Days}</a></li>
+              <li><a href="#30days" onClick={() => setSelectedPeriod('last30Days')}>{t.last30Days}</a></li>
+              <li><a href="#month" onClick={() => setSelectedPeriod('thisMonth')}>{t.thisMonth}</a></li>
+              <li><a href="#year" onClick={() => setSelectedPeriod('thisYear')}>{t.thisYear}</a></li>
             </ul>
           </div>
 
@@ -565,14 +442,14 @@ const Dashboard: React.FC = () => {
 
       {/* KPIs */}
       <div className="responsive-grid gap-4 md:gap-6">
-        {kpis.map((kpi, index) => {
+        {kpisData[selectedAgent as number]?.map((kpi, index) => {
           const Icon = kpi.icon;
           return (
             <div key={index} className="card bg-base-100">
               <div className="card-body p-4 md:p-6">
                 <div className="flex items-center justify-between">
-                  <div className={`p-2 md:p-3 rounded-xl bg-opacity-10 ${kpi.color.replace('text-', 'bg-')}`}>
-                    <Icon className={`mobile-icon ${kpi.color}`} />
+                  <div className={`p-2 md:p-3 rounded-xl bg-opacity-10`}>
+                    <Icon className={`w-6 h-6 md:w-8 md:h-8 ${kpi.color}`} />
                   </div>
                   <div className={`flex items-center text-xs md:text-sm ${kpi.trending === 'up' ? 'text-primary' : 'text-accent'}`}>
                     {kpi.trending === 'up' ? <ArrowUp className="w-3 h-3 md:w-4 md:h-4" /> : <ArrowDown className="w-3 h-3 md:w-4 md:h-4" />}
@@ -664,16 +541,16 @@ const Dashboard: React.FC = () => {
         {/* Funil de Conversão */}
         <div className="card bg-base-100">
           <div className="card-body">
-            <h3 className="card-title">{t.conversionFunnel}</h3>
-            <div className="h-80 mt-12">
-              <div className="flex flex-col justify-center h-full space-y-4 px-6">
-                {funnelData.map((entry, index) => {
-                  const percentage = (entry.value / funnelData[0].value) * 100;
+            <h3 className="card-title mb-4">{t.conversionFunnel}</h3>
+            <div className="min-h-[500px] py-4">
+              <div className="flex flex-col justify-start items-center space-y-4 px-6">
+                {funnelData[selectedAgent]?.map((entry, index) => {
+                  const percentage = funnelData[selectedAgent]?.[0]?.value ? (entry.value / funnelData[selectedAgent]?.[0]?.value) * 100 : 0;
                   const width = Math.max(percentage, 25); // Largura mínima de 25%
-                  const conversionRate = index > 0 ? ((entry.value / funnelData[index - 1].value) * 100).toFixed(1) : 100;
+                  const conversionRate = index > 0 && funnelData[selectedAgent]?.[index - 1]?.value ? ((entry.value / funnelData[selectedAgent]?.[index - 1]?.value) * 100).toFixed(1) : 0;
 
                   return (
-                    <div key={entry.name} className="flex flex-col items-center group">
+                    <div key={entry.nameEn} className="flex flex-col items-center group w-full">
                       <div
                         className="relative h-14 flex items-center justify-center text-white font-semibold text-sm rounded-lg shadow-md transition-all duration-500 hover:shadow-xl hover:scale-105"
                         style={{
@@ -686,7 +563,7 @@ const Dashboard: React.FC = () => {
                         }}
                       >
                         <span className="drop-shadow-md z-10">
-                          {entry.name}
+                          {language.language === 'pt' ? entry.namePt : entry.nameEn}
                         </span>
                         <div className="absolute inset-0 bg-white bg-opacity-10 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                       </div>
@@ -700,7 +577,7 @@ const Dashboard: React.FC = () => {
                         )}
                       </div>
 
-                      {index < funnelData.length - 1 && (
+                      {index < funnelData[selectedAgent]?.length - 1 && (
                         <div className="w-0 h-0 border-l-4 border-r-4 border-t-6 border-l-transparent border-r-transparent border-t-base-300 mt-1 opacity-50"></div>
                       )}
                     </div>
@@ -712,12 +589,12 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-6">
+      <div className="grid lg:grid-cols-2 gap-6 h-full">
         {/* Performance dos Agentes */}
-        <div className="card bg-base-100 h-full">
-          <div className="card-body flex flex-col p-4 md:p-6">
-            <h3 className="card-title mobile-text-lg md:text-xl">{t.agentPerformance}</h3>
-            <div className="flex-1 mt-4 responsive-chart">
+        <div className="card bg-base-100">
+          <div className="card-body p-4 md:p-6">
+            <h3 className="card-title mobile-text-lg md:text-xl mb-4">{t.agentPerformance}</h3>
+            <div className="responsive-chart">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={agentsPerformance} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
                   <defs>
@@ -744,7 +621,8 @@ const Dashboard: React.FC = () => {
                       border: '1px solid #e5e7eb',
                       borderRadius: '8px',
                       boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                      fontSize: '14px'
+                      fontSize: '14px',
+                      color: '#374151',
                     }}
                     labelStyle={{ color: '#374151', fontWeight: 'bold' }}
                     formatter={(value, name) => [value, t.attendances]}

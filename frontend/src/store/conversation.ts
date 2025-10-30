@@ -77,8 +77,8 @@ export const useConversationStore = create<ConversationState>((set, get) => ({
           return { ...conversation, messages }
         }),
       )
-      set({ conversations: conversationsWithMessages, isLoading: false })
-      return conversationsWithMessages
+      set({ conversations: conversationsWithMessages.map((conversation: Conversation) => ({ ...conversation, lead: { ...conversation.lead, createdAt: (conversation.lead as unknown as { created_at: string }).created_at! } })), isLoading: false })
+      return conversationsWithMessages.map((conversation: Conversation) => ({ ...conversation, lead: { ...conversation.lead, createdAt: (conversation.lead as unknown as { created_at: string }).created_at! } }))
     } catch (error) {
       set({ isLoading: false })
       return []
