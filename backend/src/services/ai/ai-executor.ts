@@ -1,13 +1,8 @@
-import { ChatPromptTemplate, MessagesPlaceholder } from "@langchain/core/prompts";
-import { supabase } from '../../config/supabaseClient';
-import { ChatOpenAI, OpenAIEmbeddings } from '@langchain/openai';
-import { ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings } from '@langchain/google-genai';
 import { getById } from '../storage';
-import { PostgresSaver } from "@langchain/langgraph-checkpoint-postgres";
 import { processMediaFromBase64LangchainGemini, textToSpeechGemini } from "./gemini";
 import { processMediaFromUrlLangchainOpenAI, textToSpeechOpenAI } from "./openai";
-import { createAgent, ReactAgent, summarizationMiddleware, tool } from "langchain";
-import { BaseChatModel } from "@langchain/core/language_models/chat_models";
+import { MainAgent } from "./main-agent";
+import { GetCpfCustomerAgent } from './get-cpf-customer-agent';
 
 export const AiExecutor = {
   executeAgentText: async (agentId: number, userId: number, userInput: string) => {
@@ -28,13 +23,6 @@ async function executeAgent(agentId: number, userId: number, userInput: string, 
     const IMAGE_PROMPT = 'Describe the image in detail and provide relevant information.'
     const AUDIO_PROMPT = 'Transcribe the audio to text. The language spoken is portuguese. If there is background noise or multiple speakers, do your best to accurately capture the main content.'
 
-    const agentPromptTemplate = ChatPromptTemplate.fromMessages([
-      ["system", generateAgentPrompt(agent)],
-      new MessagesPlaceholder("chat_history"),
-      ["human", "{input}"],
-      new MessagesPlaceholder("agent_scratchpad"),
-    ]);
-
     let message;
     if (type !== 'text' && process.env.LLM_PROVIDER === 'gemini') {
       if (type === 'image') {
@@ -52,24 +40,11 @@ async function executeAgent(agentId: number, userId: number, userInput: string, 
       message = userInput;
     }
 
-    const knowledgeTool = tool(
-      async () => {
-        await getKnowledgeFromDatabase(agentId, message);
-      },
-      {
-        name: 'get_knowledge',
-        description: 'Useful for when you need to get relevant knowledge from the database to answer user questions.',
-        returnDirect: true,
-      }
-    );
+    const cpfAgent = new GetCpfCustomerAgent();
+    const aiMessage = await cpfAgent.call(agent, message, sessionId);
 
-    const agentExecutor = await getAgent(generateAgentPrompt(agent), knowledgeTool ? [knowledgeTool] : []);
-
-    const response = await agentExecutor.invoke({
-      messages: [{ role: 'user', content: message }]
-    }, { configurable: { thread_id: sessionId } });
-
-    const aiMessage = response.messages.at(-1);
+    // const mainAgent = new MainAgent();
+    // const aiMessage = await mainAgent.call(agent, message, sessionId);
 
     if (agent['voice_configuration'] !== 'never' && type === 'audio') {
       let responseAudio = {
@@ -102,88 +77,8 @@ async function executeAgent(agentId: number, userId: number, userInput: string, 
   }
 }
 
-async function getKnowledgeFromDatabase(agentId: number, userInput: string) {
-  let knowledge: string[] = [];
-  let functionName = '';
-  let embedding = [];
-  if (process.env.LLM_PROVIDER === 'openai') {
-    functionName = 'match_knowledge_openai';
-    const embeddings = new OpenAIEmbeddings({
-      openAIApiKey: process.env.LLM_API_KEY,
-      modelName: process.env.LLM_EMBEDDING_MODEL || "text-embedding-3-small",
-    });
 
-    embedding = await embeddings.embedDocuments([userInput]);
-  } else if (process.env.LLM_PROVIDER === 'gemini') {
-    functionName = 'match_knowledge_gemini';
-    const embeddings = new GoogleGenerativeAIEmbeddings({
-      apiKey: process.env.LLM_API_KEY,
-      modelName: process.env.LLM_EMBEDDING_MODEL || "models/embedding-001",
-    });
-    embedding = await embeddings.embedDocuments([userInput]);
-  }
 
-  const { data: ragData } = await supabase.rpc(functionName, {
-    query_embedding: embedding,
-    match_count: 3,
-    filter: JSON.stringify({ agent_id: agentId })
-  });
-  knowledge = ragData?.map((item: any) => item.content) || [];
-  return knowledge;
-}
-
-async function getAgent(agentPromptTemplate: string, tools: any[]) {
-
-  const checkpointer = PostgresSaver.fromConnString(process.env.SUPABASE_POSTGRES_URL);
-  await checkpointer.setup();
-
-  let agent: ReactAgent;
-  let chatModel: BaseChatModel;
-  if (process.env.LLM_PROVIDER === 'openai') {
-    chatModel = new ChatOpenAI({
-      apiKey: process.env.LLM_API_KEY,
-      model: process.env.LLM_CHAT_MODEL || 'gpt-4o',
-      temperature: Number(process.env.LLM_CHAT_MODEL_TEMPERATURE) || 0,
-    });
-
-  } else if (process.env.LLM_PROVIDER === 'gemini') {
-    chatModel = new ChatGoogleGenerativeAI({
-      model: process.env.LLM_CHAT_MODEL || 'gemini-2.5-pro',
-      apiKey: process.env.LLM_API_KEY,
-      temperature: Number(process.env.LLM_CHAT_MODEL_TEMPERATURE) || 0,
-    });
-  }
-
-  agent = createAgent({
-      model: chatModel,
-      tools: tools,
-      systemPrompt: agentPromptTemplate,
-      checkpointer,
-      middleware: [
-        summarizationMiddleware({
-          model: chatModel,
-          maxTokensBeforeSummary: 4000,
-          messagesToKeep: 10,
-        }),
-      ],
-    });
-
-  return agent;
-}
-
-function generateAgentPrompt(agent: any) {
-  let basePrompt = `You are ${agent.name}, ${agent.description}. 
-    Follow the instructions below to assist the user effectively.
-    ${agent.prompt}
-    You work from ${agent.schedule_agent_begin} to ${agent.schedule_agent_end} if users try to contact you outside these hours, be polite and inform them of your availability.
-    Start conversations with this greeting: ${agent.greetings} and use a tone that is ${agent.tone}.
-    You have to answer using audio messages in this case: ${agent.voice_configuration}.
-    Always refer to yourself as ${agent.name} and never as an AI model or language model. 
-    It's important that you answer suscintly and objectively. Avoid create long texts.
-    If user ask for an audio message and your voice configuration allows it, you have to answer using an audio message, so generates audio files when needed.
-    `;
-  return basePrompt;
-}
 
 
 

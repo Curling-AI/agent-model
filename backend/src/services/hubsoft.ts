@@ -29,10 +29,10 @@ async function getCustomer(cpfCnpj: string) {
 	return await res.json();
 }
 
-async function getInvoiceLink(token: string, invoiceId: string) {
+async function getInvoiceLink(cpfCnpj: string) {
 	const accessToken = await authService();
   
-  const url = `${process.env.HUBSOFT_API_URL}/integracao/cliente/financeiro`;
+  const url = `${process.env.HUBSOFT_API_URL}/integracao/cliente/financeiro?busca=cpf_cnpj&termo_busca=${cpfCnpj}`;
 	const res = await fetch(url, {
 		method: 'GET',
 		headers: { 'Authorization': `Bearer ${accessToken}` }
