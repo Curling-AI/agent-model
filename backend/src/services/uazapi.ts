@@ -114,6 +114,16 @@ export const generateQrCode = async (token: string) => {
   return data;
 }
 
+export const getInstanceStatus = async (token: string) => {
+  const response = await fetch(`${process.env.UAZAPI_API_URL}/instance/status`, {
+    headers: {
+      'Content-Type': 'application/json',
+      'token': token
+    }});
+  const data = await response.json();
+  return data;
+}
+
 export const getTokenFromInstance = async (instance: string): Promise<string> => {
   const instances = await getByFilter('integrations', { 'metadata->instance->>name': instance });
   

@@ -1,6 +1,6 @@
 import { getMetaMediaContent, getTokenFromPhoneNumberId, sendMetaMedia, sendMetaMessage } from '@/services/facebook';
 import { getByFilter, getById, upsert } from '@/services/storage';
-import { createInstance, deleteInstance, generateQrCode, getMediaContent, getTokenFromInstance, registerWebhook, sendMedia, sendMessage } from '@/services/uazapi';
+import { createInstance, deleteInstance, generateQrCode, getInstanceStatus, getMediaContent, getTokenFromInstance, registerWebhook, sendMedia, sendMessage } from '@/services/uazapi';
 import { Request, Response } from 'express';
 
 export const MessageController = {
@@ -97,6 +97,19 @@ export const MessageController = {
       res.json({ success: true, qrCode: data.instance.qrcode });
     } catch (error: any) {
       res.status(500).json({ error: 'Erro ao gerar QR Code', details: error.message });
+    }
+  },
+
+  async getInstanceStatusNotOfficialApi(req: Request, res: Response) {
+    try {
+      const { instanceName } = req.query;
+      const token = await getTokenFromInstance(instanceName as string);
+
+      const data = await getInstanceStatus(token);
+
+      res.json({ success: true, status: data });
+    } catch (error: any) {
+      res.status(500).json({ error: 'Erro ao obter status de conexão Uazapi', details: error.message });
     }
   },
 
