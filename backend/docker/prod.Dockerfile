@@ -7,7 +7,6 @@ RUN npm ci
 
 ADD src ./src
 ADD tsconfig.json .
-ADD .env .
 
 EXPOSE 3000
 
