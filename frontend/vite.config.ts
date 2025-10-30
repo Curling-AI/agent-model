@@ -7,7 +7,7 @@ import wasm from 'vite-plugin-wasm'
 
 export default defineConfig({
   plugins: [
-    react(), 
+    react(),
     tailwindcss(),
     wasm(),
   ],
@@ -19,8 +19,14 @@ export default defineConfig({
     // },
   },
   resolve: {
-  alias: {
-    '@': path.resolve(__dirname, 'src'),
+    alias: {
+      '@': path.resolve(__dirname, 'src'),
+    },
   },
-}
+  server: {
+    allowedHosts: [
+      'localhost',
+      'https://agent-model.onrender.com'
+    ],
+  },
 })
