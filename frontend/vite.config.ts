@@ -26,7 +26,7 @@ export default defineConfig({
   server: {
     allowedHosts: [
       'localhost',
-      'https://agent-model.onrender.com'
+      'agent-model.onrender.com'
     ],
   },
 })
