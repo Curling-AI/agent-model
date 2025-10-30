@@ -17,8 +17,9 @@ const NewAgentChannel: React.FC = () => {
   const { serviceProviders, fetchServiceProviders } = useSystemStore();
   const { agent } = useAgentStore();
   const { subscribeFacebookApp, registerFacebookNumber, upsertIntegration, deleteIntegration } = useIntegrationStore();
-  const { integrations, fetchIntegrations, createNotOfficialInstance, deleteNotOfficialInstance, getNotOfficialQrCode } = useIntegrationStore();
+  const { integrations, fetchIntegrations, createNotOfficialInstance, deleteNotOfficialInstance, getNotOfficialQrCode, getNotOfficialStatus } = useIntegrationStore();
   const wppConnectionMonitorRef = useRef<NodeJS.Timeout | null>(null)
+  const wppQrCodeContentMonitorRef = useRef<NodeJS.Timeout | null>(null)
   const [isWhatsappModalOpen, setIsWhatsappModalOpen] = useState(false)
   const [qrcode, setQrcode] = useState<string | null>(null)
   const [userId, setUserId] = useState<number | null>(1)
@@ -53,27 +54,43 @@ const NewAgentChannel: React.FC = () => {
   const generateWhatsappQrCode = () => {
     setIsWhatsappModalOpen(true)
 
-    const checkWhatsappConnection = async () => {
+    const getWhatsappQrCode = async () => {
 
       const result = await getNotOfficialQrCode(`agent-${agent.id}-user-${userId}`);
-      console.log('QR Code fetch result:', result);
       if (!result) {
-        setIsWhatsappModalOpen(false)
+        handleWhatsappModalClose();
+        return;
       } else {
-        wppConnectionMonitorRef.current = setTimeout(checkWhatsappConnection, 60000)
+        wppQrCodeContentMonitorRef.current = setTimeout(getWhatsappQrCode, 60000)
       }
       setQrcode(result.qrCode)
+      return;
+    }
+    getWhatsappQrCode();
+    checkWhatsappConnection();
+  }
+
+  const checkWhatsappConnection = async () => {
+    const result = await getNotOfficialStatus(`agent-${agent.id}-user-${userId}`);
+
+    if (result.status.instance.status === 'connected') {
+      handleWhatsappModalClose();
       fetchIntegrations(agent.id);
       return;
     }
-    checkWhatsappConnection();
-  }
+   
+    wppConnectionMonitorRef.current = setTimeout(checkWhatsappConnection, 5000);
+  };
 
   const handleWhatsappModalClose = () => {
     setIsWhatsappModalOpen(false)
 
+    if (wppQrCodeContentMonitorRef.current) {
+      clearTimeout(wppQrCodeContentMonitorRef.current);
+    }
+
     if (wppConnectionMonitorRef.current) {
-      clearTimeout(wppConnectionMonitorRef.current)
+      clearTimeout(wppConnectionMonitorRef.current);
     }
   }
 
@@ -116,7 +133,7 @@ const NewAgentChannel: React.FC = () => {
       <div className="grid md:grid-cols-2 gap-6">
         {serviceProviders.map(channel => {
           const isConnected = integrations.some(i => i.serviceProviderId === channel.id && i.agentId === agent.id);
-
+          const isWhatsAppConnected = integrations.find(i => (i.serviceProviderId === 1 || i.serviceProviderId === 2) && i.agentId === agent.id);
           return (
             <div key={channel.id} className="card bg-base-200 hover:bg-base-300 transition-colors">
               <div className="card-body p-6">
@@ -178,6 +195,7 @@ const NewAgentChannel: React.FC = () => {
                     onClick={() => connectChannel(channel.id)}
                     className="btn btn-primary w-full"
                     style={{ textTransform: 'uppercase' }}
+                    disabled={isWhatsAppConnected && (channel.id === 1 || channel.id === 2)}
                   >
                     {t.connect}
                   </button>

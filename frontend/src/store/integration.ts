@@ -14,6 +14,7 @@ interface IntegrationState {
   createNotOfficialInstance: (instanceName: string) => Promise<any>;
   deleteNotOfficialInstance: (instanceName: string) => Promise<void>;
   getNotOfficialQrCode: (instanceName: string) => Promise<any>;
+  getNotOfficialStatus: (instanceName: string) => Promise<any>;
 }
 
 export const useIntegrationStore = create<IntegrationState>((set) => ({
@@ -119,6 +120,13 @@ export const useIntegrationStore = create<IntegrationState>((set) => ({
     console.log('Fetching QR Code for instance:', instanceName);
     const res = await fetch(`${BASE_URL}/messages/qrcode?instanceName=${instanceName}`);
     if (!res.ok) throw new Error('Erro ao obter qrcode de conexão Uazapi');
+    return res.json();
+  },
+
+  getNotOfficialStatus: async (instanceName: string) => {
+    console.log('Fetching status for instance:', instanceName);
+    const res = await fetch(`${BASE_URL}/messages/status?instanceName=${instanceName}`);
+    if (!res.ok) throw new Error('Erro ao obter status de conexão Uazapi');
     return res.json();
   },
 }));
