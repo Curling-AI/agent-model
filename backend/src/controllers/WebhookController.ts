@@ -257,28 +257,33 @@ export const WebhookController = {
         return res.status(404).json({ error: "Agent not found" });
       }
 
-      let lead = await getByFilter("leads", { phone });
+      const leads = await getByFilter("leads", { phone });
+      let lead = leads && leads.length > 0 ? leads[0] : null;
 
-      if (lead && lead.length > 0 && lead[0]["archived_at"] !== null) {
-        update("leads", lead[0]["id"], { archived_at: null });
+      if (lead && lead["archived_at"] !== null) {
+        update("leads", lead["id"], { archived_at: null });
       }
 
-      if (lead && lead.length > 0) {
-        const newConversation = await getByFilter("conversations", {
-          lead_id: lead[0]["id"],
-          agent_id: agent["id"],
-        });
-        conversation = newConversation && newConversation.length > 0 ? newConversation[0] : null;
-      } else {
-        const newLead = await upsert("leads", {
+      if (!lead) {
+        lead = await upsert("leads", {
           phone: phone,
           name: webhookContent.message.senderName || "Desconhecido",
           organization_id: agent["organization_id"],
           value: 0,
           source: "whatsapp",
         });
+      } 
+
+      const conversations = await getByFilter("conversations", {
+          lead_id: lead["id"],
+          agent_id: agent["id"],
+      });
+      
+      conversation = conversations && conversations.length > 0 ? conversations[0] : null;
+
+      if (!conversation) {
         conversation = await upsert("conversations", {
-          lead_id: newLead["id"],
+          lead_id: lead["id"],
           agent_id: agent["id"],
           organization_id: agent["organization_id"],
           integration: "uazapi",
