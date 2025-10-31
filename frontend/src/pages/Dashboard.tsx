@@ -35,6 +35,7 @@ import { useCrmColumnStore } from '@/store/crm-column'
 import { formatDistanceToNow } from 'date-fns'
 import { enUS, ptBR } from 'date-fns/locale'
 import { useNavigate } from 'react-router-dom'
+import { useLeadStore } from '@/store/lead'
 
 interface Kpi {
   title: any
@@ -72,6 +73,7 @@ const Dashboard: React.FC = () => {
   const { conversations, listConversations } = useConversationStore()
   const { agents, fetchAgents } = useAgentStore()
   const { crmColumns, fetchCrmColumns } = useCrmColumnStore()
+  const { leadsCRMHistory, fetchLeadsCRMHistory } = useLeadStore()
   const [kpisData, setKpisData] = useState<Record<number, Kpi[]>>({})
   const [funnelData, setFunnelData] = useState<
     Record<number, { namePt: string; nameEn: string; value: number; fill: string }[]>
@@ -105,6 +107,7 @@ const Dashboard: React.FC = () => {
       listConversations(user.organizationId)
       fetchAgents(user.organizationId, 'all')
       fetchCrmColumns(user.organizationId)
+      fetchLeadsCRMHistory(user.organizationId)
     }
   }, [user?.organizationId])
 
@@ -502,7 +505,29 @@ const Dashboard: React.FC = () => {
         }
       }
     })
-
+    // lead status history
+    leadsCRMHistory.filter((crmHistory) => ( agentId === -1 || crmHistory.agentId === agentId)).forEach((crmHistory) => {
+      if (new Date(crmHistory.createdAt!) > new Date(startDate)) {
+        const oldStatusColumn = crmColumns.find((column) => column.id === crmHistory.oldStatus)?.[language.language === 'pt' ? 'titlePt' : 'titleEn']
+        const newStatusColumn = crmColumns.find((column) => column.id === crmHistory.newStatus)?.[language.language === 'pt' ? 'titlePt' : 'titleEn']
+        const conversationId = conversations.find((conversation) => conversation.lead.id === crmHistory.lead.id)?.id.toString() ?? ''
+        activityById.set(conversationId + '_' + crmHistory.id.toString() + '_lead_status_history', {
+          id: conversationId + '_' + crmHistory.id.toString() + '_lead_status_history',
+          type: 'lead_status_updated',
+          title: t.leadStatusUpdated,
+          description: `${crmHistory.lead.name}: ${t.from} "${oldStatusColumn}" ${t.to} "${newStatusColumn}"`,
+          agent: agents.find(agent => agent.id === crmHistory.agentId)?.name ?? '',
+          time: new Date(crmHistory.createdAt!),
+          priority: crmHistory.lead.priority ?? 'medium',
+          icon: CheckCircle,
+          color: crmHistory.newStatus > crmHistory.oldStatus ? 'bg-success' : 'bg-warning',
+          iconColor: crmHistory.newStatus > crmHistory.oldStatus ? 'text-success-content' : 'text-warning-content',
+          status: 'completed',
+          platform: crmHistory.lead.source,
+          phone: crmHistory.lead.phone,
+        })
+      }
+    })
     const deduped = Array.from(activityById.values()).sort(
       (a, b) => b.time.getTime() - a.time.getTime(),
     )
@@ -524,7 +549,7 @@ const Dashboard: React.FC = () => {
             typeMatch = activity.type === 'whatsapp_message' || activity.type === 'whatsapp_media'
             break
           case 'leads':
-            typeMatch = activity.type === 'whatsapp_lead'
+            typeMatch = activity.type === 'whatsapp_lead' || activity.type === 'lead_status_updated'
             break
           case 'sales':
             typeMatch = activity.type === 'whatsapp_conversation'

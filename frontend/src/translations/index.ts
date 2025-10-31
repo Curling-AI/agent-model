@@ -105,7 +105,8 @@ export const translations = {
     showing: 'Mostrando',
     of: 'de',
     activities: 'atividades WhatsApp',
-
+    to: 'para',
+    from: 'de',
     // Activity Types
     whatsappMessageSent: 'Mensagem WhatsApp enviada',
     whatsappMessageReceived: 'Mensagem WhatsApp recebida',
@@ -114,6 +115,7 @@ export const translations = {
     whatsappFollowUpScheduled: 'Follow-up WhatsApp agendado',
     whatsappMediaSent: 'Mídia enviada via WhatsApp',
     whatsappStatusUpdated: 'Status WhatsApp atualizado',
+    leadStatusUpdated: 'Status do lead atualizado',
 
     // Activity Descriptions
     proposalSent: 'Proposta enviada para',
@@ -933,7 +935,8 @@ export const translations = {
     showing: 'Showing',
     of: 'of',
     activities: 'WhatsApp activities',
-
+    to: 'to',
+    from: 'from',
     // Activity Types
     whatsappMessageSent: 'WhatsApp message sent',
     whatsappMessageReceived: 'WhatsApp message received',
@@ -942,7 +945,7 @@ export const translations = {
     whatsappFollowUpScheduled: 'WhatsApp follow-up scheduled',
     whatsappMediaSent: 'Media sent via WhatsApp',
     whatsappStatusUpdated: 'WhatsApp status updated',
-
+    leadStatusUpdated: 'Lead status updated',
     // Activity Descriptions
     proposalSent: 'Proposal sent to',
     saleCompleted: 'Sale of $2,500 via WhatsApp Business',

@@ -65,9 +65,11 @@ const CRM: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    fetchCrmColumns(user?.organizationId!);
-    fetchLeads(user?.organizationId!);
-  }, []);
+    if (user?.organizationId) {
+      fetchCrmColumns(user.organizationId);
+      fetchLeads(user.organizationId);
+    }
+  }, [user?.organizationId]);
 
   // Função para aplicar filtros aos leads
   const filteredLeadsData = useMemo(() => {

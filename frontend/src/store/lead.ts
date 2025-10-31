@@ -1,4 +1,4 @@
-import { Lead } from '@/types/lead';
+import { Lead, LeadCRMHistory } from '@/types/lead';
 import { BASE_URL } from '@/utils/constants';
 import { create } from 'zustand';
 
@@ -6,16 +6,19 @@ interface LeadState {
   leads: Lead[];
   loading: boolean;
   error: string | null;
+  leadsCRMHistory: LeadCRMHistory[];
   setLead: (leads: Lead[]) => void;
   fetchLeads: (organizationId: number) => Promise<void>;
   upsertLead: (lead: Lead) => Promise<void>;
   deleteLead: (leadId: number) => Promise<void>;
+  fetchLeadsCRMHistory: (organizationId: number) => Promise<void>;
 }
 
 export const useLeadStore = create<LeadState>((set, get) => ({
   leads: [],
   loading: false,
   error: null,
+  leadsCRMHistory: [],
   setLead: (leads) => set({ leads }),
   fetchLeads: async (organizationId: number) => {
     set({ loading: true, error: null });
@@ -76,6 +79,24 @@ export const useLeadStore = create<LeadState>((set, get) => ({
     }
   },
 
+  fetchLeadsCRMHistory: async (organizationId: number) => {
+    set({ loading: true, error: null });
+    try {
+      const response = await fetch(`${BASE_URL}/leads/history?organizationId=${organizationId}`);
+      const data = await response.json();
+      set({ leadsCRMHistory: data.map((item: any) => ({
+        id: item.id,
+        lead: mapToLead([item.leads])[0],
+        oldStatus: item.old_status,
+        newStatus: item.new_status,
+        createdAt: item.created_at,
+        agentId: item.agent_id,
+      })), loading: false });
+    } catch (error) {
+      console.error("Failed to fetch leads CRM history:", error);
+      set({ error: 'Falha ao buscar histórico de leads.', loading: false });
+    }
+  },
 }));
 
 function mapToLead(data: any[]): Lead[] {

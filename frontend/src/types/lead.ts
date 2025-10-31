@@ -21,3 +21,12 @@ export interface LeadTag extends BaseInterface {
   id: number;
   name: string;
 }
+
+export interface LeadCRMHistory extends BaseInterface {
+  id: number;
+  lead: Lead;
+  oldStatus: number;
+  newStatus: number;
+  createdAt: string;
+  agentId: number;
+}

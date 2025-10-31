@@ -98,4 +98,22 @@ export const LeadController = {
       return res.status(500).json({ error: "Error updating lead status" });
     }
   },
+
+  getLeadsCRMHistory: async (req: Request, res: Response) => {
+    const organizationId = Number(req.query.organizationId);
+    if (!organizationId) {
+      return res.status(400).json({ error: "Invalid organization ID" });
+    }
+    try {
+      const { data: leads, error } = await supabase.from("leads_status_history").select("*, leads!inner(*)")
+      .eq("leads.organization_id", organizationId)
+      if (error) {
+        return res.status(500).json({ error: "Error getting leads CRM history", details: error });
+      }
+      return res.json(leads);
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json({ error: "Error getting leads status history", details: error });
+    }
+  }
 };
