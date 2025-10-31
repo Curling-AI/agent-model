@@ -147,7 +147,7 @@ export const getMetaMediaContent = async (mediaBodyContent: any, token: string):
   }
 
   const filePath = await saveRemoteFile(
-    data.url,
+    data['url'],
     './uploads', `media_${mediaId}.${getExtensionFromMimeType(
       media.mime_type
     )}`,
@@ -158,14 +158,14 @@ export const getMetaMediaContent = async (mediaBodyContent: any, token: string):
   if (process.env.LLM_PROVIDER === 'gemini') {
     base64Data = await fileToBase64(filePath);
   } else {
-    base64Data = `data:${data.mime_type};base64,${await fileToBase64(filePath)}`;
+    base64Data = `data:${data['mime_type']};base64,${await fileToBase64(filePath)}`;
   }
 
   await fss.unlink(filePath);
 
   return {
     base64Data: base64Data,
-    mimetype: data.mime_type,
+    mimetype: data['mime_type'],
   };
 
 }

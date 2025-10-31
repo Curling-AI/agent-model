@@ -1,52 +1,40 @@
-# syntax=docker.io/docker/dockerfile:1
+FROM node:24-alpine AS build
 
-FROM node:22-alpine AS base
-
-# Install dependencies only when needed
-FROM base AS deps
-# Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
-RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-# Install dependencies based on the preferred package manager
-COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* .npmrc* ./
-RUN \
-  if [ -f package-lock.json ]; then npm ci; \
-  elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm i --frozen-lockfile; \
-  else echo "Lockfile not found." && exit 1; \
-  fi
+COPY package*.json ./
 
+RUN npm install
 
-# Rebuild the source code only when needed
-FROM base AS builder
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-RUN \
-  if [ -f package-lock.json ]; then npm run build; \
-  elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm run build; \
-  else echo "Lockfile not found." && exit 1; \
-  fi
+ARG NODE_ENV=production
+ARG VITE_BASE_URL
+ARG VITE_SUPABASE_URL
+ARG VITE_SUPABASE_ANON_KEY
 
-# Production image, copy all the files and run next
-FROM base AS runner
-WORKDIR /app
+ARG VITE_SUPABASE_STORAGE_NAME
 
-ENV NODE_ENV=production
+ARG VITE_FACEBOOK_APP_ID
+ARG VITE_FACEBOOK_APP_SECRET
+ARG VITE_FACEBOOK_GRAPH_API_VERSION
+ARG VITE_FACEBOOK_CONFIGURATION_ID
+ARG VITE_FACEBOOK_FEATURE_TYPE
+ARG VITE_FACEBOOK_URL
 
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+ENV NODE_OPTIONS="--max-old-space-size=2048"
+RUN npm run build
 
-COPY --from=builder /app/public ./public
+FROM nginx:1.27-alpine
 
-EXPOSE 8080
+COPY --from=build /app/dist /var/www/html/
+RUN chown -R nginx:nginx /var/www/html
 
-ENV PORT=8080
+ENV PORT=5000
+EXPOSE ${PORT}
 
+COPY ./nginx.prod.conf.template /etc/nginx/conf.d/default.conf.template
+RUN envsubst '\${PORT}' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf
+RUN rm /etc/nginx/conf.d/default.conf.template
 
-ARG REDIS_URL
-ENV REDIS_URL=${REDIS_URL}
-
-ENV HOSTNAME="0.0.0.0"
-CMD ["node", "server.js"]
+ENTRYPOINT ["nginx","-g","daemon off;"]
