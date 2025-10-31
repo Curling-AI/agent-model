@@ -81,8 +81,8 @@ const Conversations = () => {
   const [conversationPage, setConversationPage] = useState<{ [key: number]: number }>({})
   const { deleteLead } = useLeadStore()
   const { user, getLoggedUser } = useAuthStore();
-  let organizationId = 0;
-  let userId = 0;
+  let organizationId = user?.organizationId!;
+  let userId = user?.id!;
 
   const { fetchCrmColumns, crmColumns } = useCrmColumnStore()
 
@@ -97,6 +97,8 @@ const Conversations = () => {
   }, [fetchCrmColumns])
 
   useEffect(() => {
+    userId = user?.id!;
+    organizationId = user?.organizationId!;
     listConversations(organizationId).then((conversations) => {
       conversations.forEach((conversation) => {
         if (conversation.mode !== 'agent') {
