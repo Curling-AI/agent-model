@@ -94,7 +94,7 @@ export const MessageController = {
 
       const data = await generateQrCode(token);
 
-      res.json({ success: true, qrCode: data.instance.qrcode });
+      res.json({ success: true, qrCode: data['instance']['qrcode'] });
     } catch (error: any) {
       res.status(500).json({ error: 'Erro ao gerar QR Code', details: error.message });
     }

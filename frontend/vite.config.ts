@@ -7,7 +7,7 @@ import wasm from 'vite-plugin-wasm'
 
 export default defineConfig({
   plugins: [
-    react(), 
+    react(),
     tailwindcss(),
     wasm(),
   ],
@@ -19,8 +19,12 @@ export default defineConfig({
     // },
   },
   resolve: {
-  alias: {
-    '@': path.resolve(__dirname, 'src'),
+    alias: {
+      '@': path.resolve(__dirname, 'src'),
+    },
   },
-}
+  server: {
+    host: '0.0.0.0',
+    allowedHosts: true,
+  },
 })

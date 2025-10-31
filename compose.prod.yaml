@@ -12,7 +12,6 @@ services:
       - /app/node_modules
     networks:
       - local
-    command: npm run dev
   backend:
     container_name: app-back
     build:
@@ -26,19 +25,18 @@ services:
       - /app/node_modules
     networks:
       - local
-    command: npm run dev
 
-  evolution-api:
-    container_name: evolution_api
-    image: atendai/evolution-api
-    restart: always
-    ports:
-      - "8080:8080"
-    env_file:
-      - .env
-    volumes:
-      - evolution_store:/evolution/store
-      - evolution_instances:/evolution/instances
+  # evolution-api:
+  #   container_name: evolution_api
+  #   image: atendai/evolution-api
+  #   restart: always
+  #   ports:
+  #     - "8080:8080"
+  #   env_file:
+  #     - .env
+  #   volumes:
+  #     - evolution_store:/evolution/store
+  #     - evolution_instances:/evolution/instances
 
 networks:
   local:
