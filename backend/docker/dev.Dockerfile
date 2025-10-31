@@ -9,6 +9,7 @@ ADD src ./src
 ADD tsconfig.json .
 # ADD .env .
 
-EXPOSE 3000
+ENV PORT=3000
+EXPOSE ${PORT}
 
 CMD ["npm", "run", "dev"]
