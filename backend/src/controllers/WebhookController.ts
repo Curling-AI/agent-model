@@ -257,7 +257,8 @@ export const WebhookController = {
         return res.status(404).json({ error: "Agent not found" });
       }
 
-      let lead = await getByFilter("leads", { phone })[0];
+      const leads = await getByFilter("leads", { phone });
+      let lead = leads && leads.length > 0 ? leads[0] : null;
 
       if (lead && lead["archived_at"] !== null) {
         update("leads", lead["id"], { archived_at: null });
@@ -273,10 +274,12 @@ export const WebhookController = {
         });
       } 
 
-      conversation = await getByFilter("conversations", {
+      const conversations = await getByFilter("conversations", {
           lead_id: lead["id"],
           agent_id: agent["id"],
-      })[0];
+      });
+      
+      conversation = conversations && conversations.length > 0 ? conversations[0] : null;
 
       if (!conversation) {
         conversation = await upsert("conversations", {
