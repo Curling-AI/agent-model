@@ -78,7 +78,7 @@ export const useConversationStore = create<ConversationState>((set, get) => ({
         }),
       )
       set({ conversations: conversationsWithMessages.map((conversation: Conversation) => ({ ...conversation, lead: { ...conversation.lead, createdAt: (conversation.lead as unknown as { created_at: string }).created_at! } })), isLoading: false })
-      return conversationsWithMessages.map((conversation: Conversation) => ({ ...conversation, lead: { ...conversation.lead, createdAt: (conversation.lead as unknown as { created_at: string }).created_at! } }))
+      return conversationsWithMessages.map((conversation: Conversation) => ({ ...conversation, lead: { ...conversation.lead, createdAt: (conversation.lead as unknown as { created_at: string }).created_at!, archivedAt: (conversation.lead as unknown as { archived_at: string }).archived_at! } }))
     } catch (error) {
       set({ isLoading: false })
       return []

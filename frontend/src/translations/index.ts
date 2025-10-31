@@ -101,12 +101,14 @@ export const translations = {
     sales: 'Vendas',
     pending: 'Pendente',
     online: 'Online',
+    offline: 'Offline',
     showing: 'Mostrando',
     of: 'de',
     activities: 'atividades WhatsApp',
 
     // Activity Types
     whatsappMessageSent: 'Mensagem WhatsApp enviada',
+    whatsappMessageReceived: 'Mensagem WhatsApp recebida',
     whatsappConversationEnded: 'Conversa WhatsApp finalizada',
     newWhatsappLead: 'Novo lead via WhatsApp',
     whatsappFollowUpScheduled: 'Follow-up WhatsApp agendado',
@@ -927,12 +929,14 @@ export const translations = {
     sales: 'Sales',
     pending: 'Pending',
     online: 'Online',
+    offline: 'Offline',
     showing: 'Showing',
     of: 'of',
     activities: 'WhatsApp activities',
 
     // Activity Types
     whatsappMessageSent: 'WhatsApp message sent',
+    whatsappMessageReceived: 'WhatsApp message received',
     whatsappConversationEnded: 'WhatsApp conversation ended',
     newWhatsappLead: 'New lead via WhatsApp',
     whatsappFollowUpScheduled: 'WhatsApp follow-up scheduled',

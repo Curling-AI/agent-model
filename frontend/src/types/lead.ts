@@ -14,6 +14,7 @@ export interface Lead extends BaseInterface{
   tags: string[];
   createdAt?: string;
   updatedAt?: string;
+  archivedAt?: string;
 }
 
 export interface LeadTag extends BaseInterface {

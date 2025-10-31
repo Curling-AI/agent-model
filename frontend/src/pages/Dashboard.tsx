@@ -11,7 +11,6 @@ import {
   CheckCircle,
 
   UserPlus,
-  FileText,
   Download,
   BarChart3,
   Filter
@@ -24,6 +23,9 @@ import { useConversationStore } from '@/store/conversation';
 import { useAgentStore } from '@/store/agent';
 import { Agent } from '@/types/agent';
 import { useCrmColumnStore } from '@/store/crm-column';
+import { formatDistanceToNow } from 'date-fns';
+import { enUS, ptBR } from 'date-fns/locale';
+import { useNavigate } from 'react-router-dom';
 
 interface Kpi {
   title: any;
@@ -34,6 +36,21 @@ interface Kpi {
   color: string;
 }
 
+interface RecentActivity {
+  id: string;
+  type: string;
+  title: string;
+  description: string;
+  agent: string;
+  time: Date;
+  priority: string;
+  icon: React.ComponentType<any>;
+  color: string;
+  iconColor: string;
+  status: string;
+  platform: string;
+  phone: string;
+}
 const Dashboard: React.FC = () => {
   const language = useLanguage();
   const t = useTranslation(language);
@@ -49,6 +66,17 @@ const Dashboard: React.FC = () => {
   const [kpisData, setKpisData] = useState<Record<number, Kpi[]>>({});
   const [funnelData, setFunnelData] = useState<Record<number, { namePt: string, nameEn: string, value: number, fill: string }[]>>({});
   const [agentsPerformance, setAgentsPerformance] = useState<{ name: string, atendimentos: number }[]>([]);
+  const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([]);
+  const [filteredActivities, setFilteredActivities] = useState<RecentActivity[]>([]);
+  const navigate = useNavigate();
+
+  const periodToDate = {
+    ['today']: new Date().setHours(0, 0, 0, 0),
+    ['last7Days']: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).setHours(0, 0, 0, 0),
+    ['last30Days']: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).setHours(0, 0, 0, 0),
+    ['thisMonth']: new Date(new Date().getFullYear(), new Date().getMonth(), 1).setHours(0, 0, 0, 0),
+    ['thisYear']: new Date(new Date().getFullYear(), 0, 1).setHours(0, 0, 0, 0),
+  }
 
   useEffect(() => {
     getLoggedUser();
@@ -69,13 +97,6 @@ const Dashboard: React.FC = () => {
 
   const getKpisByAgent = (agentId?: number, selectedPeriod?: string) => {
     agentId = agentId ?? -1;
-    const periodToDate = {
-      ['today']: new Date().setHours(0, 0, 0, 0),
-      ['last7Days']: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).setHours(0, 0, 0, 0),
-      ['last30Days']: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).setHours(0, 0, 0, 0),
-      ['thisMonth']: new Date(new Date().getFullYear(), new Date().getMonth(), 1).setHours(0, 0, 0, 0),
-      ['thisYear']: new Date(new Date().getFullYear(), 0, 1).setHours(0, 0, 0, 0),
-    }
     const startDate = periodToDate[selectedPeriod as keyof typeof periodToDate] ?? periodToDate['last30Days'];
     const previousPeriod = startDate - (Date.now() - startDate);
     const leadsAttended = conversations.filter((conversation) => (agentId === -1 ? true : conversation.agent.id === agentId) && Date.parse(conversation.lead.createdAt!) >= startDate).length;
@@ -163,13 +184,6 @@ const Dashboard: React.FC = () => {
       setFunnelData((prev) => ({ ...prev, [agentId ?? -1]: [] }));
       return;
     }
-    const periodToDate = {
-      ['today']: new Date().setHours(0, 0, 0, 0),
-      ['last7Days']: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).setHours(0, 0, 0, 0),
-      ['last30Days']: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).setHours(0, 0, 0, 0),
-      ['thisMonth']: new Date(new Date().getFullYear(), new Date().getMonth(), 1).setHours(0, 0, 0, 0),
-      ['thisYear']: new Date(new Date().getFullYear(), 0, 1).setHours(0, 0, 0, 0),
-    }
     const startDate = periodToDate[selectedPeriod as keyof typeof periodToDate] ?? periodToDate['last30Days'];
     const leads = conversations.filter((conversation) => (agentId === -1 ? true : conversation.agent.id === agentId) && Date.parse(conversation.lead.createdAt!) >= startDate).map((conversation) => conversation.lead);
     const funnelDataByAgent = {
@@ -205,127 +219,94 @@ const Dashboard: React.FC = () => {
     getFunnelDataByAgent(selectedAgent as number);
   }, [selectedAgent, selectedPeriod, conversations]);
 
-  // Dados de atividade recente focados em agentes WhatsApp
-  const recentActivities = [
-    {
-      id: 1,
-      type: 'whatsapp_message',
-      title: t.whatsappMessageSent,
-      description: `${t.proposalSent} +55 11 99999-9999`,
-      agent: 'Maria Santos',
-      time: 'há 5 min',
-      priority: 'high',
-      icon: MessageSquare,
-      color: 'bg-success',
-      iconColor: 'text-success-content',
-      status: 'completed',
-      platform: 'whatsapp',
-      phone: '+55 11 99999-9999'
-    },
-    {
-      id: 2,
-      type: 'whatsapp_conversation',
-      title: t.whatsappConversationEnded,
-      description: t.saleCompleted,
-      agent: 'Carlos Oliveira',
-      time: 'há 12 min',
-      priority: 'medium',
-      icon: CheckCircle,
-      color: 'bg-primary',
-      iconColor: 'text-primary-content',
-      status: 'completed',
-      platform: 'whatsapp',
-      phone: '+55 11 88888-8888'
-    },
-    {
-      id: 3,
-      type: 'whatsapp_lead',
-      title: t.newWhatsappLead,
-      description: t.interestedInPremium,
-      agent: 'Ana Costa',
-      time: 'há 1h',
-      priority: 'high',
-      icon: UserPlus,
-      color: 'bg-warning',
-      iconColor: 'text-warning-content',
-      status: 'pending',
-      platform: 'whatsapp',
-      phone: '+55 11 77777-7777'
-    },
-    {
-      id: 4,
-      type: 'whatsapp_follow_up',
-      title: t.whatsappFollowUpScheduled,
-      description: t.sendProposalTomorrow,
-      agent: 'Pedro Lima',
-      time: 'há 2h',
-      priority: 'medium',
-      icon: Clock,
-      color: 'bg-info',
-      iconColor: 'text-info-content',
-      status: 'pending',
-      platform: 'whatsapp',
-      phone: '+55 11 66666-6666'
-    },
-    {
-      id: 5,
-      type: 'whatsapp_media',
-      title: t.whatsappMediaSent,
-      description: t.productCatalogSent,
-      agent: 'João Silva',
-      time: 'há 3h',
-      priority: 'low',
-      icon: FileText,
-      color: 'bg-accent',
-      iconColor: 'text-accent-content',
-      status: 'completed',
-      platform: 'whatsapp',
-      phone: '+55 11 55555-5555'
-    },
-    {
-      id: 6,
-      type: 'whatsapp_status',
-      title: t.whatsappStatusUpdated,
-      description: t.statusChangedToAvailable,
-      agent: 'Carla Mendes',
-      time: 'há 4h',
-      priority: 'low',
-      icon: CheckCircle,
-      color: 'bg-secondary',
-      iconColor: 'text-secondary-content',
-      status: 'completed',
-      platform: 'whatsapp',
-      phone: 'N/A'
-    }
-  ];
+  const getRecentActivities = (agentId: number) => {
+    const startDate = periodToDate[selectedPeriod as keyof typeof periodToDate] ?? periodToDate['last30Days'];
+    const activityById = new Map<string, RecentActivity>();
+
+    // lead activities
+    conversations.forEach((conversation) => {
+      if (agentId === -1 || conversation.agent.id === agentId) {
+        if (new Date(conversation.lead.createdAt!) > new Date(startDate)) {
+          activityById.set(conversation.id.toString() + '_new_lead', {
+            id: conversation.id.toString() + '_new_lead',
+            type: 'whatsapp_lead',
+            title: t.newWhatsappLead,
+            description: `${conversation.lead.name}: ${conversation.messages[0].content}`,
+            agent: conversation.agent.name,
+            time: new Date(conversation.lead.createdAt!),
+            priority: conversation.lead.priority ?? 'medium',
+            icon: UserPlus,
+            color: 'bg-success',
+            iconColor: 'text-success-content',
+            status: conversation.messages.some((message) => message.sender === 'agent') ? 'completed' : 'pending',
+            platform: conversation.lead.source,
+            phone: conversation.lead.phone ?? 'N/A',
+          });
+        }
+      }
+    });
+
+    // conversation activities
+    conversations.forEach((conversation) => {
+      if (agentId === -1 || conversation.agent.id === agentId) {
+        if (new Date(conversation.lead.archivedAt!) > new Date(startDate)) {
+          activityById.set(conversation.id.toString() + '_conversation_ended', {
+            id: conversation.id.toString() + '_conversation_ended',
+            type: 'whatsapp_conversation',
+            title: t.whatsappConversationEnded,
+            description: `${conversation.lead.name}: ${conversation.messages[conversation.messages.length - 1].content}`,
+            agent: conversation.agent.name,
+            time: new Date(conversation.lead.archivedAt!),
+            priority: conversation.lead.priority ?? 'medium',
+            icon: CheckCircle,
+            color: conversation.lead.status === 5 ? 'bg-success' : 'bg-primary',
+            iconColor: 'text-primary-content',
+            status: 'completed',
+            platform: conversation.lead.source,
+            phone: conversation.lead.phone,
+          });
+        }
+      }
+    });
+
+    const deduped = Array.from(activityById.values()).sort((a, b) => b.time.getTime() - a.time.getTime());
+    setRecentActivities(deduped);
+  }
+
+  useEffect(() => {
+    getRecentActivities(selectedAgent as number);
+  }, [selectedAgent, selectedPeriod, conversations, language.language]);
+
 
   // Filtrar atividades baseado no filtro selecionado e agente
-  const filteredActivities = recentActivities.filter(activity => {
-    // Filtro por tipo de atividade
-    let typeMatch = true;
-    switch (activityFilter) {
-      case t.messages:
-        typeMatch = activity.type === 'whatsapp_message' || activity.type === 'whatsapp_media';
-        break;
-      case t.leadsActivity:
-        typeMatch = activity.type === 'whatsapp_lead';
-        break;
-      case t.sales:
-        typeMatch = activity.type === 'whatsapp_conversation';
-        break;
-      default:
-        typeMatch = true;
-    }
+  useEffect(() => {
+      setFilteredActivities(recentActivities.filter(activity => {
+      // Filtro por tipo de atividade
+      let typeMatch = true;
+      switch (activityFilter) {
+        case 'messages':
+          typeMatch = activity.type === 'whatsapp_message' || activity.type === 'whatsapp_media';
+          break;
+        case 'leads':
+          typeMatch = activity.type === 'whatsapp_lead';
+          break;
+        case 'sales':
+          typeMatch = activity.type === 'whatsapp_conversation';
+          break;
+        default:
+          typeMatch = true;
+      }
 
-    // Filtro por agente - só filtra se um agente específico estiver selecionado (não -1)
-    let agentMatch = true;
-    if (selectedAgent !== null && selectedAgent !== -1) {
-      const agentName = availableAgents.find(agent => agent.id === selectedAgent)?.name;
-      agentMatch = activity.agent === agentName;
-    }
+      // Filtro por agente - só filtra se um agente específico estiver selecionado (não -1)
+      let agentMatch = true;
+      if (selectedAgent !== null && selectedAgent !== -1) {
+        const agentName = availableAgents.find(agent => agent.id === selectedAgent)?.name;
+        agentMatch = activity.agent === agentName;
+      }
 
-    return typeMatch && agentMatch;
-  });
+      return typeMatch && agentMatch;
+    }));
+  }, [recentActivities, activityFilter, selectedAgent]);
 
   return (
     <div className="space-y-6">
@@ -625,7 +606,7 @@ const Dashboard: React.FC = () => {
                       color: '#374151',
                     }}
                     labelStyle={{ color: '#374151', fontWeight: 'bold' }}
-                    formatter={(value, name) => [value, t.attendances]}
+                    formatter={(value, _) => [value, t.attendances]}
                   />
                   <Bar
                     dataKey="atendimentos"
@@ -652,12 +633,12 @@ const Dashboard: React.FC = () => {
                   value={activityFilter}
                   onChange={(e) => setActivityFilter(e.target.value)}
                 >
-                  <option>{t.all}</option>
-                  <option>{t.messages}</option>
-                  <option>{t.leadsActivity}</option>
-                  <option>{t.sales}</option>
+                  <option value="all">{t.all}</option>
+                  <option value="messages">{t.messages}</option>
+                  <option value="leads">{t.leadsActivity}</option>
+                  <option value="sales">{t.sales}</option>
                 </select>
-                <button className="btn btn-ghost btn-xs">
+                <button className="btn btn-ghost btn-xs" onClick={() => navigate(`/conversations`)}>
                   <MessageSquare className="w-3 h-3" />
                 </button>
               </div>
@@ -668,7 +649,7 @@ const Dashboard: React.FC = () => {
                 const Icon = activity.icon;
                 return (
                   <div
-                    key={activity.id}
+                     key={`${activity.id}_${activity.time.getTime()}`}
                     className={`activity-item group relative p-3 rounded-lg border transition-all duration-200 hover:shadow-md cursor-pointer ${activity.status === 'pending'
                         ? 'border-warning/30 bg-warning/5'
                         : 'border-base-300 hover:border-primary/30'
@@ -710,15 +691,15 @@ const Dashboard: React.FC = () => {
                             )}
                             <span className="text-neutral flex items-center">
                               <Clock className="w-3 h-3 mr-1" />
-                              {activity.time}
+                              {formatDistanceToNow(activity.time, { addSuffix: true, locale: language.language === 'pt' ? ptBR : enUS })}
                             </span>
                           </div>
 
                           <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button className="btn btn-ghost btn-xs" title={t.respond}>
+                            <button className="btn btn-ghost btn-xs" title={t.respond} onClick={() => navigate(`/conversations?conversationId=${activity.id.split('_')[0]}`)}>
                               <MessageSquare className="w-3 h-3" />
                             </button>
-                            <button className="btn btn-ghost btn-xs" title={t.viewConversation}>
+                            <button className="btn btn-ghost btn-xs" title={t.viewConversation} onClick={() => navigate(`/conversations?conversationId=${activity.id.split('_')[0]}`)}>
                               <CheckCircle className="w-3 h-3" />
                             </button>
                           </div>
@@ -736,10 +717,13 @@ const Dashboard: React.FC = () => {
               <div className="flex items-center justify-between text-xs text-neutral">
                 <div className="flex items-center space-x-4">
                   <span>{t.showing} {filteredActivities.length} {t.of} {recentActivities.length} {t.activities}</span>
+                  {
+                    selectedAgent !== -1 &&
                   <div className="flex items-center space-x-2">
-                    <div className="w-2 h-2 bg-success rounded-full"></div>
-                    <span>{t.online}</span>
+                    <div className={`w-2 h-2 bg-${agents.find(agent => agent.id === selectedAgent)?.active ? 'success' : 'warning'} rounded-full`}></div>
+                    <span>{agents.find(agent => agent.id === selectedAgent)?.active ? t.online : t.offline}</span>
                   </div>
+                }
                 </div>
               </div>
             </div>
