@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react'
 import {
   Users,
   Target,
@@ -9,108 +9,169 @@ import {
   ArrowDown,
   Clock,
   CheckCircle,
-
   UserPlus,
   Download,
   BarChart3,
-  Filter
-} from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
-import { useLanguage } from '@/context/LanguageContext';
-import { useTranslation } from '@/translations';
-import { useAuthStore } from '@/store/auth';
-import { useConversationStore } from '@/store/conversation';
-import { useAgentStore } from '@/store/agent';
-import { Agent } from '@/types/agent';
-import { useCrmColumnStore } from '@/store/crm-column';
-import { formatDistanceToNow } from 'date-fns';
-import { enUS, ptBR } from 'date-fns/locale';
-import { useNavigate } from 'react-router-dom';
+  Filter,
+} from 'lucide-react'
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+} from 'recharts'
+import { useLanguage } from '@/context/LanguageContext'
+import { useTranslation } from '@/translations'
+import { useAuthStore } from '@/store/auth'
+import { useConversationStore } from '@/store/conversation'
+import { useAgentStore } from '@/store/agent'
+import { Agent } from '@/types/agent'
+import { useCrmColumnStore } from '@/store/crm-column'
+import { formatDistanceToNow } from 'date-fns'
+import { enUS, ptBR } from 'date-fns/locale'
+import { useNavigate } from 'react-router-dom'
 
 interface Kpi {
-  title: any;
-  value: string;
-  change: string;
-  trending: string;
-  icon: React.ComponentType<any>;
-  color: string;
+  title: any
+  value: string
+  change: string
+  trending: string
+  icon: React.ComponentType<any>
+  color: string
 }
 
 interface RecentActivity {
-  id: string;
-  type: string;
-  title: string;
-  description: string;
-  agent: string;
-  time: Date;
-  priority: string;
-  icon: React.ComponentType<any>;
-  color: string;
-  iconColor: string;
-  status: string;
-  platform: string;
-  phone: string;
+  id: string
+  type: string
+  title: string
+  description: string
+  agent: string
+  time: Date
+  priority: string
+  icon: React.ComponentType<any>
+  color: string
+  iconColor: string
+  status: string
+  platform: string
+  phone: string
 }
 const Dashboard: React.FC = () => {
-  const language = useLanguage();
-  const t = useTranslation(language);
-  const [activityFilter, setActivityFilter] = useState(t.all);
-  const [selectedPeriod, setSelectedPeriod] = useState<string>('last30Days');
-  const [selectedAgent, setSelectedAgent] = useState<number>(-1);
+  const language = useLanguage()
+  const t = useTranslation(language)
+  const [activityFilter, setActivityFilter] = useState(t.all)
+  const [selectedPeriod, setSelectedPeriod] = useState<string>('last30Days')
+  const [selectedAgent, setSelectedAgent] = useState<number>(-1)
 
-  const { user, getLoggedUser } = useAuthStore();
+  const { user, getLoggedUser } = useAuthStore()
   //const { leads, fetchLeads } = useLeadStore();
-  const { conversations, listConversations } = useConversationStore();
-  const { agents, fetchAgents } = useAgentStore();
-  const { crmColumns, fetchCrmColumns } = useCrmColumnStore();
-  const [kpisData, setKpisData] = useState<Record<number, Kpi[]>>({});
-  const [funnelData, setFunnelData] = useState<Record<number, { namePt: string, nameEn: string, value: number, fill: string }[]>>({});
-  const [agentsPerformance, setAgentsPerformance] = useState<{ name: string, atendimentos: number }[]>([]);
-  const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([]);
-  const [filteredActivities, setFilteredActivities] = useState<RecentActivity[]>([]);
-  const navigate = useNavigate();
+  const { conversations, listConversations } = useConversationStore()
+  const { agents, fetchAgents } = useAgentStore()
+  const { crmColumns, fetchCrmColumns } = useCrmColumnStore()
+  const [kpisData, setKpisData] = useState<Record<number, Kpi[]>>({})
+  const [funnelData, setFunnelData] = useState<
+    Record<number, { namePt: string; nameEn: string; value: number; fill: string }[]>
+  >({})
+  const [agentsPerformance, setAgentsPerformance] = useState<
+    { name: string; atendimentos: number }[]
+  >([])
+  const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([])
+  const [filteredActivities, setFilteredActivities] = useState<RecentActivity[]>([])
+  const navigate = useNavigate()
 
   const periodToDate = {
     ['today']: new Date().setHours(0, 0, 0, 0),
     ['last7Days']: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).setHours(0, 0, 0, 0),
     ['last30Days']: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).setHours(0, 0, 0, 0),
-    ['thisMonth']: new Date(new Date().getFullYear(), new Date().getMonth(), 1).setHours(0, 0, 0, 0),
+    ['thisMonth']: new Date(new Date().getFullYear(), new Date().getMonth(), 1).setHours(
+      0,
+      0,
+      0,
+      0,
+    ),
     ['thisYear']: new Date(new Date().getFullYear(), 0, 1).setHours(0, 0, 0, 0),
   }
 
   useEffect(() => {
-    getLoggedUser();
-  }, []);
+    getLoggedUser()
+  }, [])
 
   useEffect(() => {
     if (user?.organizationId) {
-      listConversations(user.organizationId);
-      fetchAgents(user.organizationId, 'all');
-      fetchCrmColumns(user.organizationId);
+      listConversations(user.organizationId)
+      fetchAgents(user.organizationId, 'all')
+      fetchCrmColumns(user.organizationId)
     }
-  }, [user?.organizationId]);
+  }, [user?.organizationId])
 
   // Lista de agentes disponíveis
-  const availableAgents = [{ id: -1, name: t.allAgents }].concat(agents.map((agent: Agent) => ({ id: agent.id, name: agent.name })));
+  const availableAgents = [{ id: -1, name: t.allAgents }].concat(
+    agents.map((agent: Agent) => ({ id: agent.id, name: agent.name })),
+  )
 
   // Dados de exemplo filtrados por agente
 
   const getKpisByAgent = (agentId?: number, selectedPeriod?: string) => {
-    agentId = agentId ?? -1;
-    const startDate = periodToDate[selectedPeriod as keyof typeof periodToDate] ?? periodToDate['last30Days'];
-    const previousPeriod = startDate - (Date.now() - startDate);
-    const leadsAttended = conversations.filter((conversation) => (agentId === -1 ? true : conversation.agent.id === agentId) && Date.parse(conversation.lead.createdAt!) >= startDate).length;
-    const previousLeadsAttended = conversations.filter((conversation) => (agentId === -1 ? true : conversation.agent.id === agentId) && Date.parse(conversation.lead.createdAt!) >= previousPeriod && Date.parse(conversation.lead.createdAt!) < startDate).length;
-    const changeLeadsAttended = previousLeadsAttended ? ((leadsAttended - previousLeadsAttended)/previousLeadsAttended * 100) : 0;
-    const qualifiedLeads = conversations.filter((conversation) => (agentId === -1 ? true : conversation.agent.id === agentId) && conversation.lead.status <= 2 && Date.parse(conversation.lead.createdAt!) >= startDate).length;
-    const previousQualifiedLeads = conversations.filter((conversation) => (agentId === -1 ? true : conversation.agent.id === agentId) && conversation.lead.status <= 2 && Date.parse(conversation.lead.createdAt!) >= previousPeriod && Date.parse(conversation.lead.createdAt!) < startDate).length;
-    const changeQualifiedLeads = previousQualifiedLeads ? ((qualifiedLeads - previousQualifiedLeads)/previousQualifiedLeads * 100) : 0;
-    const conversionRate = leadsAttended ? qualifiedLeads / leadsAttended * 100 : 0;
-    const previousConversionRate = previousLeadsAttended ? previousQualifiedLeads / previousLeadsAttended * 100 : 0;
-    const changeConversionRate = previousConversionRate ? ((conversionRate - previousConversionRate)/previousConversionRate * 100) : 0;
-    const activeConversations = conversations.filter((conversation) => (agentId === -1 ? true : conversation.agent.id === agentId) && (conversation.messages[conversation.messages.length - 1].timestamp) > new Date(startDate)).length;
-    const previousActiveConversations = conversations.filter((conversation) => (agentId === -1 ? true : conversation.agent.id === agentId) && (conversation.messages[conversation.messages.length - 1].timestamp) > new Date(previousPeriod) && (conversation.messages[conversation.messages.length - 1].timestamp) < new Date(startDate)).length;
-    const changeActiveConversations = previousActiveConversations ? ((activeConversations - previousActiveConversations)/previousActiveConversations * 100) : 0;
+    agentId = agentId ?? -1
+    const startDate =
+      periodToDate[selectedPeriod as keyof typeof periodToDate] ?? periodToDate['last30Days']
+    const previousPeriod = startDate - (Date.now() - startDate)
+    const leadsAttended = conversations.filter(
+      (conversation) =>
+        (agentId === -1 ? true : conversation.agent.id === agentId) &&
+        Date.parse(conversation.lead.createdAt!) >= startDate,
+    ).length
+    const previousLeadsAttended = conversations.filter(
+      (conversation) =>
+        (agentId === -1 ? true : conversation.agent.id === agentId) &&
+        Date.parse(conversation.lead.createdAt!) >= previousPeriod &&
+        Date.parse(conversation.lead.createdAt!) < startDate,
+    ).length
+    const changeLeadsAttended = previousLeadsAttended
+      ? ((leadsAttended - previousLeadsAttended) / previousLeadsAttended) * 100
+      : 0
+    const qualifiedLeads = conversations.filter(
+      (conversation) =>
+        (agentId === -1 ? true : conversation.agent.id === agentId) &&
+        conversation.lead.status <= 2 &&
+        Date.parse(conversation.lead.createdAt!) >= startDate,
+    ).length
+    const previousQualifiedLeads = conversations.filter(
+      (conversation) =>
+        (agentId === -1 ? true : conversation.agent.id === agentId) &&
+        conversation.lead.status <= 2 &&
+        Date.parse(conversation.lead.createdAt!) >= previousPeriod &&
+        Date.parse(conversation.lead.createdAt!) < startDate,
+    ).length
+    const changeQualifiedLeads = previousQualifiedLeads
+      ? ((qualifiedLeads - previousQualifiedLeads) / previousQualifiedLeads) * 100
+      : 0
+    const conversionRate = leadsAttended ? (qualifiedLeads / leadsAttended) * 100 : 0
+    const previousConversionRate = previousLeadsAttended
+      ? (previousQualifiedLeads / previousLeadsAttended) * 100
+      : 0
+    const changeConversionRate = previousConversionRate
+      ? ((conversionRate - previousConversionRate) / previousConversionRate) * 100
+      : 0
+    const activeConversations = conversations.filter(
+      (conversation) =>
+        (agentId === -1 ? true : conversation.agent.id === agentId) &&
+        conversation.messages[conversation.messages.length - 1].timestamp > new Date(startDate),
+    ).length
+    const previousActiveConversations = conversations.filter(
+      (conversation) =>
+        (agentId === -1 ? true : conversation.agent.id === agentId) &&
+        conversation.messages[conversation.messages.length - 1].timestamp >
+          new Date(previousPeriod) &&
+        conversation.messages[conversation.messages.length - 1].timestamp < new Date(startDate),
+    ).length
+    const changeActiveConversations = previousActiveConversations
+      ? ((activeConversations - previousActiveConversations) / previousActiveConversations) * 100
+      : 0
     const kpisData: Record<number, Kpi[]> = {
       [agentId ?? -1]: [
         {
@@ -119,7 +180,7 @@ const Dashboard: React.FC = () => {
           change: changeLeadsAttended.toFixed(0) + '%',
           trending: changeLeadsAttended > 0 ? 'up' : 'down',
           icon: Users,
-          color: 'text-primary'
+          color: 'text-primary',
         },
         {
           title: t.qualifiedLeads,
@@ -127,7 +188,7 @@ const Dashboard: React.FC = () => {
           change: changeQualifiedLeads.toFixed(0) + '%',
           trending: changeQualifiedLeads > 0 ? 'up' : 'down',
           icon: Target,
-          color: 'text-primary'
+          color: 'text-primary',
         },
         {
           title: t.conversionRate,
@@ -135,7 +196,7 @@ const Dashboard: React.FC = () => {
           change: changeConversionRate.toFixed(0) + '%',
           trending: changeConversionRate > 0 ? 'up' : 'down',
           icon: TrendingUp,
-          color: 'text-accent'
+          color: 'text-accent',
         },
         {
           title: t.activeConversations,
@@ -143,85 +204,256 @@ const Dashboard: React.FC = () => {
           change: changeActiveConversations.toFixed(0) + '%',
           trending: changeActiveConversations > 0 ? 'up' : 'down',
           icon: MessageSquare,
-          color: 'text-primary'
-        }
+          color: 'text-primary',
+        },
       ],
-    };
-    return kpisData[agentId ?? -1] || [];
-  };
+    }
+    return kpisData[agentId ?? -1] || []
+  }
 
   useEffect(() => {
-    setKpisData((prev) => ({ ...prev, [selectedAgent as number]: getKpisByAgent(selectedAgent as number, selectedPeriod) }));
-  }, [selectedAgent, selectedPeriod, conversations]);
+    setKpisData((prev) => ({
+      ...prev,
+      [selectedAgent as number]: getKpisByAgent(selectedAgent as number, selectedPeriod),
+    }))
+  }, [selectedAgent, selectedPeriod, conversations])
 
   // Dados de conversas filtrados por agente
   const getConversationsDataByAgent = (agentId?: number) => {
-    agentId = agentId ?? -1;
-    const conversationsData = conversations.filter((conversation) => (agentId === -1 ? true : conversation.agent.id === agentId));
+    agentId = agentId ?? -1
+    const conversationsData = conversations.filter((conversation) =>
+      agentId === -1 ? true : conversation.agent.id === agentId,
+    )
     const conversationsDataByAgent = {
       [agentId ?? -1]: [
-        { name: t.jan, conversas: conversationsData.filter((conversation) => new Date(conversation.lead.createdAt!).getMonth() === 0).length, qualificados: conversationsData.filter((conversation) => new Date(conversation.lead.createdAt!).getMonth() === 0 && conversation.lead.status <= 2).length },
-        { name: t.feb, conversas: conversationsData.filter((conversation) => new Date(conversation.lead.createdAt!).getMonth() === 1).length, qualificados: conversationsData.filter((conversation) => new Date(conversation.lead.createdAt!).getMonth() === 1 && conversation.lead.status <= 2).length },
-        { name: t.mar, conversas: conversationsData.filter((conversation) => new Date(conversation.lead.createdAt!).getMonth() === 2).length, qualificados: conversationsData.filter((conversation) => new Date(conversation.lead.createdAt!).getMonth() === 2 && conversation.lead.status <= 2).length },
-        { name: t.apr, conversas: conversationsData.filter((conversation) => new Date(conversation.lead.createdAt!).getMonth() === 3).length, qualificados: conversationsData.filter((conversation) => new Date(conversation.lead.createdAt!).getMonth() === 3 && conversation.lead.status <= 2).length },
-        { name: t.may, conversas: conversationsData.filter((conversation) => new Date(conversation.lead.createdAt!).getMonth() === 4).length, qualificados: conversationsData.filter((conversation) => new Date(conversation.lead.createdAt!).getMonth() === 4 && conversation.lead.status <= 2).length },
-        { name: t.jun, conversas: conversationsData.filter((conversation) => new Date(conversation.lead.createdAt!).getMonth() === 5).length, qualificados: conversationsData.filter((conversation) => new Date(conversation.lead.createdAt!).getMonth() === 5 && conversation.lead.status <= 2).length },
-        { name: t.jul, conversas: conversationsData.filter((conversation) => new Date(conversation.lead.createdAt!).getMonth() === 6).length, qualificados: conversationsData.filter((conversation) => new Date(conversation.lead.createdAt!).getMonth() === 6 && conversation.lead.status <= 2).length },
-        { name: t.aug, conversas: conversationsData.filter((conversation) => new Date(conversation.lead.createdAt!).getMonth() === 7).length, qualificados: conversationsData.filter((conversation) => new Date(conversation.lead.createdAt!).getMonth() === 7 && conversation.lead.status <= 2).length },
-        { name: t.sep, conversas: conversationsData.filter((conversation) => new Date(conversation.lead.createdAt!).getMonth() === 8).length, qualificados: conversationsData.filter((conversation) => new Date(conversation.lead.createdAt!).getMonth() === 8 && conversation.lead.status <= 2).length },
-        { name: t.oct, conversas: conversationsData.filter((conversation) => new Date(conversation.lead.createdAt!).getMonth() === 9).length, qualificados: conversationsData.filter((conversation) => new Date(conversation.lead.createdAt!).getMonth() === 9 && conversation.lead.status <= 2).length },
-        { name: t.nov, conversas: conversationsData.filter((conversation) => new Date(conversation.lead.createdAt!).getMonth() === 10).length, qualificados: conversationsData.filter((conversation) => new Date(conversation.lead.createdAt!).getMonth() === 10 && conversation.lead.status <= 2).length },
-        { name: t.dec, conversas: conversationsData.filter((conversation) => new Date(conversation.lead.createdAt!).getMonth() === 11).length, qualificados: conversationsData.filter((conversation) => new Date(conversation.lead.createdAt!).getMonth() === 11 && conversation.lead.status <= 2).length },
+        {
+          name: t.jan,
+          conversas: conversationsData.filter(
+            (conversation) => new Date(conversation.lead.createdAt!).getMonth() === 0,
+          ).length,
+          qualificados: conversationsData.filter(
+            (conversation) =>
+              new Date(conversation.lead.createdAt!).getMonth() === 0 &&
+              conversation.lead.status <= 2,
+          ).length,
+        },
+        {
+          name: t.feb,
+          conversas: conversationsData.filter(
+            (conversation) => new Date(conversation.lead.createdAt!).getMonth() === 1,
+          ).length,
+          qualificados: conversationsData.filter(
+            (conversation) =>
+              new Date(conversation.lead.createdAt!).getMonth() === 1 &&
+              conversation.lead.status <= 2,
+          ).length,
+        },
+        {
+          name: t.mar,
+          conversas: conversationsData.filter(
+            (conversation) => new Date(conversation.lead.createdAt!).getMonth() === 2,
+          ).length,
+          qualificados: conversationsData.filter(
+            (conversation) =>
+              new Date(conversation.lead.createdAt!).getMonth() === 2 &&
+              conversation.lead.status <= 2,
+          ).length,
+        },
+        {
+          name: t.apr,
+          conversas: conversationsData.filter(
+            (conversation) => new Date(conversation.lead.createdAt!).getMonth() === 3,
+          ).length,
+          qualificados: conversationsData.filter(
+            (conversation) =>
+              new Date(conversation.lead.createdAt!).getMonth() === 3 &&
+              conversation.lead.status <= 2,
+          ).length,
+        },
+        {
+          name: t.may,
+          conversas: conversationsData.filter(
+            (conversation) => new Date(conversation.lead.createdAt!).getMonth() === 4,
+          ).length,
+          qualificados: conversationsData.filter(
+            (conversation) =>
+              new Date(conversation.lead.createdAt!).getMonth() === 4 &&
+              conversation.lead.status <= 2,
+          ).length,
+        },
+        {
+          name: t.jun,
+          conversas: conversationsData.filter(
+            (conversation) => new Date(conversation.lead.createdAt!).getMonth() === 5,
+          ).length,
+          qualificados: conversationsData.filter(
+            (conversation) =>
+              new Date(conversation.lead.createdAt!).getMonth() === 5 &&
+              conversation.lead.status <= 2,
+          ).length,
+        },
+        {
+          name: t.jul,
+          conversas: conversationsData.filter(
+            (conversation) => new Date(conversation.lead.createdAt!).getMonth() === 6,
+          ).length,
+          qualificados: conversationsData.filter(
+            (conversation) =>
+              new Date(conversation.lead.createdAt!).getMonth() === 6 &&
+              conversation.lead.status <= 2,
+          ).length,
+        },
+        {
+          name: t.aug,
+          conversas: conversationsData.filter(
+            (conversation) => new Date(conversation.lead.createdAt!).getMonth() === 7,
+          ).length,
+          qualificados: conversationsData.filter(
+            (conversation) =>
+              new Date(conversation.lead.createdAt!).getMonth() === 7 &&
+              conversation.lead.status <= 2,
+          ).length,
+        },
+        {
+          name: t.sep,
+          conversas: conversationsData.filter(
+            (conversation) => new Date(conversation.lead.createdAt!).getMonth() === 8,
+          ).length,
+          qualificados: conversationsData.filter(
+            (conversation) =>
+              new Date(conversation.lead.createdAt!).getMonth() === 8 &&
+              conversation.lead.status <= 2,
+          ).length,
+        },
+        {
+          name: t.oct,
+          conversas: conversationsData.filter(
+            (conversation) => new Date(conversation.lead.createdAt!).getMonth() === 9,
+          ).length,
+          qualificados: conversationsData.filter(
+            (conversation) =>
+              new Date(conversation.lead.createdAt!).getMonth() === 9 &&
+              conversation.lead.status <= 2,
+          ).length,
+        },
+        {
+          name: t.nov,
+          conversas: conversationsData.filter(
+            (conversation) => new Date(conversation.lead.createdAt!).getMonth() === 10,
+          ).length,
+          qualificados: conversationsData.filter(
+            (conversation) =>
+              new Date(conversation.lead.createdAt!).getMonth() === 10 &&
+              conversation.lead.status <= 2,
+          ).length,
+        },
+        {
+          name: t.dec,
+          conversas: conversationsData.filter(
+            (conversation) => new Date(conversation.lead.createdAt!).getMonth() === 11,
+          ).length,
+          qualificados: conversationsData.filter(
+            (conversation) =>
+              new Date(conversation.lead.createdAt!).getMonth() === 11 &&
+              conversation.lead.status <= 2,
+          ).length,
+        },
       ],
-    };
-    return conversationsDataByAgent[agentId ?? -1] || [];
-  };
-  const conversationsData = getConversationsDataByAgent(selectedAgent as number);
+    }
+    return conversationsDataByAgent[agentId ?? -1] || []
+  }
+  const conversationsData = getConversationsDataByAgent(selectedAgent as number)
 
   // Dados do funil filtrados por agente
   const getFunnelDataByAgent = (agentId?: number) => {
     if (crmColumns.length === 0) {
-      setFunnelData((prev) => ({ ...prev, [agentId ?? -1]: [] }));
-      return;
+      setFunnelData((prev) => ({ ...prev, [agentId ?? -1]: [] }))
+      return
     }
-    const startDate = periodToDate[selectedPeriod as keyof typeof periodToDate] ?? periodToDate['last30Days'];
-    const leads = conversations.filter((conversation) => (agentId === -1 ? true : conversation.agent.id === agentId) && Date.parse(conversation.lead.createdAt!) >= startDate).map((conversation) => conversation.lead);
+    const startDate =
+      periodToDate[selectedPeriod as keyof typeof periodToDate] ?? periodToDate['last30Days']
+    const leads = conversations
+      .filter(
+        (conversation) =>
+          (agentId === -1 ? true : conversation.agent.id === agentId) &&
+          Date.parse(conversation.lead.createdAt!) >= startDate,
+      )
+      .map((conversation) => conversation.lead)
     const funnelDataByAgent = {
       [agentId ?? -1]: [
-        { namePt: crmColumns.find(column => column.id === 1)?.titlePt ?? '', nameEn: crmColumns.find(column => column.id === 1)?.titleEn ?? '', value: leads.filter((lead) => lead.status >= 1).length, fill: '#229ad2' },
-        { namePt: crmColumns.find(column => column.id === 2)?.titlePt ?? '', nameEn: crmColumns.find(column => column.id === 2)?.titleEn ?? '', value: leads.filter((lead) => lead.status >= 2).length, fill: '#3ba8e0' },
-        { namePt: crmColumns.find(column => column.id === 3)?.titlePt ?? '', nameEn: crmColumns.find(column => column.id === 3)?.titleEn ?? '', value: leads.filter((lead) => lead.status >= 3).length, fill: '#6b7280' },
-        { namePt: crmColumns.find(column => column.id === 4)?.titlePt ?? '', nameEn: crmColumns.find(column => column.id === 4)?.titleEn ?? '', value: leads.filter((lead) => lead.status >= 4).length, fill: '#9ca3af' },
-        { namePt: crmColumns.find(column => column.id === 5)?.titlePt ?? '', nameEn: crmColumns.find(column => column.id === 5)?.titleEn ?? '', value: leads.filter((lead) => lead.status >= 5).length, fill: '#9ca3af' },
+        {
+          namePt: crmColumns.find((column) => column.id === 1)?.titlePt ?? '',
+          nameEn: crmColumns.find((column) => column.id === 1)?.titleEn ?? '',
+          value: leads.filter((lead) => lead.status >= 1).length,
+          fill: '#229ad2',
+        },
+        {
+          namePt: crmColumns.find((column) => column.id === 2)?.titlePt ?? '',
+          nameEn: crmColumns.find((column) => column.id === 2)?.titleEn ?? '',
+          value: leads.filter((lead) => lead.status >= 2).length,
+          fill: '#3ba8e0',
+        },
+        {
+          namePt: crmColumns.find((column) => column.id === 3)?.titlePt ?? '',
+          nameEn: crmColumns.find((column) => column.id === 3)?.titleEn ?? '',
+          value: leads.filter((lead) => lead.status >= 3).length,
+          fill: '#6b7280',
+        },
+        {
+          namePt: crmColumns.find((column) => column.id === 4)?.titlePt ?? '',
+          nameEn: crmColumns.find((column) => column.id === 4)?.titleEn ?? '',
+          value: leads.filter((lead) => lead.status >= 4).length,
+          fill: '#9ca3af',
+        },
+        {
+          namePt: crmColumns.find((column) => column.id === 5)?.titlePt ?? '',
+          nameEn: crmColumns.find((column) => column.id === 5)?.titleEn ?? '',
+          value: leads.filter((lead) => lead.status >= 5).length,
+          fill: '#9ca3af',
+        },
       ],
-    };
-    setFunnelData((prev) => ({ ...prev, [agentId ?? -1]: funnelDataByAgent[agentId ?? -1]}));
-  };
+    }
+    setFunnelData((prev) => ({ ...prev, [agentId ?? -1]: funnelDataByAgent[agentId ?? -1] }))
+  }
 
   const getAgentsPerformance = (period: string) => {
     const periodToDate = {
       ['today']: new Date().setHours(0, 0, 0, 0),
       ['last7Days']: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).setHours(0, 0, 0, 0),
       ['last30Days']: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).setHours(0, 0, 0, 0),
-      ['thisMonth']: new Date(new Date().getFullYear(), new Date().getMonth(), 1).setHours(0, 0, 0, 0),
+      ['thisMonth']: new Date(new Date().getFullYear(), new Date().getMonth(), 1).setHours(
+        0,
+        0,
+        0,
+        0,
+      ),
       ['thisYear']: new Date(new Date().getFullYear(), 0, 1).setHours(0, 0, 0, 0),
     }
-    const startDate = periodToDate[period as keyof typeof periodToDate] ?? periodToDate['last30Days'];
-    const agentsPerformance = agents.map((agent) => ({ name: agent.name, atendimentos: conversations.filter((conversation) => conversation.agent.id === agent.id && Date.parse(conversation.lead.createdAt!) >= startDate).length }));
-    setAgentsPerformance(agentsPerformance);
-  };
+    const startDate =
+      periodToDate[period as keyof typeof periodToDate] ?? periodToDate['last30Days']
+    const agentsPerformance = agents.map((agent) => ({
+      name: agent.name,
+      atendimentos: conversations.filter(
+        (conversation) =>
+          conversation.agent.id === agent.id &&
+          Date.parse(conversation.lead.createdAt!) >= startDate,
+      ).length,
+    }))
+    setAgentsPerformance(agentsPerformance)
+  }
 
   useEffect(() => {
-    getAgentsPerformance(selectedPeriod);
-  }, [selectedPeriod, conversations]);
+    getAgentsPerformance(selectedPeriod)
+  }, [selectedPeriod, conversations])
 
   useEffect(() => {
-    getFunnelDataByAgent(selectedAgent as number);
-  }, [selectedAgent, selectedPeriod, conversations]);
+    getFunnelDataByAgent(selectedAgent as number)
+  }, [selectedAgent, selectedPeriod, conversations])
 
   const getRecentActivities = (agentId: number) => {
-    const startDate = periodToDate[selectedPeriod as keyof typeof periodToDate] ?? periodToDate['last30Days'];
-    const activityById = new Map<string, RecentActivity>();
+    const startDate =
+      periodToDate[selectedPeriod as keyof typeof periodToDate] ?? periodToDate['last30Days']
+    const activityById = new Map<string, RecentActivity>()
 
     // lead activities
     conversations.forEach((conversation) => {
@@ -238,13 +470,15 @@ const Dashboard: React.FC = () => {
             icon: UserPlus,
             color: 'bg-success',
             iconColor: 'text-success-content',
-            status: conversation.messages.some((message) => message.sender === 'agent') ? 'completed' : 'pending',
+            status: conversation.messages.some((message) => message.sender === 'agent')
+              ? 'completed'
+              : 'pending',
             platform: conversation.lead.source,
             phone: conversation.lead.phone ?? 'N/A',
-          });
+          })
         }
       }
-    });
+    })
 
     // conversation activities
     conversations.forEach((conversation) => {
@@ -264,61 +498,64 @@ const Dashboard: React.FC = () => {
             status: 'completed',
             platform: conversation.lead.source,
             phone: conversation.lead.phone,
-          });
+          })
         }
       }
-    });
+    })
 
-    const deduped = Array.from(activityById.values()).sort((a, b) => b.time.getTime() - a.time.getTime());
-    setRecentActivities(deduped);
+    const deduped = Array.from(activityById.values()).sort(
+      (a, b) => b.time.getTime() - a.time.getTime(),
+    )
+    setRecentActivities(deduped)
   }
 
   useEffect(() => {
-    getRecentActivities(selectedAgent as number);
-  }, [selectedAgent, selectedPeriod, conversations, language.language]);
-
+    getRecentActivities(selectedAgent as number)
+  }, [selectedAgent, selectedPeriod, conversations, language.language])
 
   // Filtrar atividades baseado no filtro selecionado e agente
   useEffect(() => {
-      setFilteredActivities(recentActivities.filter(activity => {
-      // Filtro por tipo de atividade
-      let typeMatch = true;
-      switch (activityFilter) {
-        case 'messages':
-          typeMatch = activity.type === 'whatsapp_message' || activity.type === 'whatsapp_media';
-          break;
-        case 'leads':
-          typeMatch = activity.type === 'whatsapp_lead';
-          break;
-        case 'sales':
-          typeMatch = activity.type === 'whatsapp_conversation';
-          break;
-        default:
-          typeMatch = true;
-      }
+    setFilteredActivities(
+      recentActivities.filter((activity) => {
+        // Filtro por tipo de atividade
+        let typeMatch = true
+        switch (activityFilter) {
+          case 'messages':
+            typeMatch = activity.type === 'whatsapp_message' || activity.type === 'whatsapp_media'
+            break
+          case 'leads':
+            typeMatch = activity.type === 'whatsapp_lead'
+            break
+          case 'sales':
+            typeMatch = activity.type === 'whatsapp_conversation'
+            break
+          default:
+            typeMatch = true
+        }
 
-      // Filtro por agente - só filtra se um agente específico estiver selecionado (não -1)
-      let agentMatch = true;
-      if (selectedAgent !== null && selectedAgent !== -1) {
-        const agentName = availableAgents.find(agent => agent.id === selectedAgent)?.name;
-        agentMatch = activity.agent === agentName;
-      }
+        // Filtro por agente - só filtra se um agente específico estiver selecionado (não -1)
+        let agentMatch = true
+        if (selectedAgent !== null && selectedAgent !== -1) {
+          const agentName = availableAgents.find((agent) => agent.id === selectedAgent)?.name
+          agentMatch = activity.agent === agentName
+        }
 
-      return typeMatch && agentMatch;
-    }));
-  }, [recentActivities, activityFilter, selectedAgent]);
+        return typeMatch && agentMatch
+      }),
+    )
+  }, [recentActivities, activityFilter, selectedAgent])
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:justify-between md:items-center space-y-4 md:space-y-0">
+      <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
         <div>
-          <h1 className="text-3xl font-bold text-base-content">{t.dashboardTitle}</h1>
+          <h1 className="text-base-content text-3xl font-bold">{t.dashboardTitle}</h1>
           <p className="text-neutral mt-1">
             {t.dashboardSubtitle}
             {selectedAgent !== null && (
-              <span className="ml-2 badge badge-primary badge-sm">
-                {availableAgents.find(agent => agent.id === selectedAgent)?.name ?? t.allAgents}
+              <span className="badge badge-primary badge-sm ml-2">
+                {availableAgents.find((agent) => agent.id === selectedAgent)?.name ?? t.allAgents}
               </span>
             )}
           </p>
@@ -328,19 +565,28 @@ const Dashboard: React.FC = () => {
           <div className="dropdown dropdown-end">
             <button
               tabIndex={0}
-              className={`btn btn-sm gap-2 ${selectedAgent !== null
-                  ? 'btn-primary'
-                  : 'btn-outline hover:bg-base-200'
-                }`}
+              className={`btn btn-sm gap-2 ${
+                selectedAgent !== null ? 'btn-primary' : 'btn-outline hover:bg-base-200'
+              }`}
             >
-              <Filter className="w-4 h-4" />
-              <span className="hidden sm:inline">{availableAgents.find(agent => agent.id === selectedAgent)?.name || t.allAgents}</span>
+              <Filter className="h-4 w-4" />
+              <span className="hidden sm:inline">
+                {availableAgents.find((agent) => agent.id === selectedAgent)?.name || t.allAgents}
+              </span>
               <span className="sm:hidden">{t.filter}</span>
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M19 9l-7 7-7-7"
+                ></path>
               </svg>
             </button>
-            <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+            <ul
+              tabIndex={0}
+              className="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow"
+            >
               {availableAgents.map((agent) => (
                 <li key={agent.id}>
                   <a
@@ -362,57 +608,92 @@ const Dashboard: React.FC = () => {
               className="btn btn-ghost btn-sm"
               title={t.clearFilter}
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M6 18L18 6M6 6l12 12"
+                ></path>
               </svg>
             </button>
           )}
 
           <div className="dropdown dropdown-end">
-            <button
-              tabIndex={0}
-              className="btn btn-outline btn-sm gap-2 hover:bg-base-200"
-            >
-              <Calendar className="w-4 h-4" />
+            <button tabIndex={0} className="btn btn-outline btn-sm hover:bg-base-200 gap-2">
+              <Calendar className="h-4 w-4" />
               <span className="hidden sm:inline">{t[selectedPeriod as keyof typeof t]}</span>
               <span className="sm:hidden">{t.period}</span>
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M19 9l-7 7-7-7"
+                ></path>
               </svg>
             </button>
-            <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
-              <li><a href="#today" onClick={() => setSelectedPeriod('today')}>{t.today}</a></li>
-              <li><a href="#7days" onClick={() => setSelectedPeriod('last7Days')}>{t.last7Days}</a></li>
-              <li><a href="#30days" onClick={() => setSelectedPeriod('last30Days')}>{t.last30Days}</a></li>
-              <li><a href="#month" onClick={() => setSelectedPeriod('thisMonth')}>{t.thisMonth}</a></li>
-              <li><a href="#year" onClick={() => setSelectedPeriod('thisYear')}>{t.thisYear}</a></li>
+            <ul
+              tabIndex={0}
+              className="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow"
+            >
+              <li>
+                <a href="#today" onClick={() => setSelectedPeriod('today')}>
+                  {t.today}
+                </a>
+              </li>
+              <li>
+                <a href="#7days" onClick={() => setSelectedPeriod('last7Days')}>
+                  {t.last7Days}
+                </a>
+              </li>
+              <li>
+                <a href="#30days" onClick={() => setSelectedPeriod('last30Days')}>
+                  {t.last30Days}
+                </a>
+              </li>
+              <li>
+                <a href="#month" onClick={() => setSelectedPeriod('thisMonth')}>
+                  {t.thisMonth}
+                </a>
+              </li>
+              <li>
+                <a href="#year" onClick={() => setSelectedPeriod('thisYear')}>
+                  {t.thisYear}
+                </a>
+              </li>
             </ul>
           </div>
 
           <div className="dropdown dropdown-end">
-            <button
-              tabIndex={0}
-              className="btn btn-primary btn-sm gap-2 hover:bg-primary-focus"
-            >
-              <BarChart3 className="w-4 h-4" />
+            <button tabIndex={0} className="btn btn-primary btn-sm hover:bg-primary-focus gap-2">
+              <BarChart3 className="h-4 w-4" />
               <span>{t.report}</span>
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M19 9l-7 7-7-7"
+                ></path>
               </svg>
             </button>
-            <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-48">
+            <ul
+              tabIndex={0}
+              className="dropdown-content menu bg-base-100 rounded-box z-[1] w-48 p-2 shadow"
+            >
               <li className="menu-title">
                 <span>{t.exportReport}</span>
               </li>
               <li>
                 <a href="#export-pdf">
-                  <Download className="w-4 h-4" />
+                  <Download className="h-4 w-4" />
                   {t.exportPDF}
                 </a>
               </li>
               <li>
                 <a href="#export-excel">
-                  <Download className="w-4 h-4" />
+                  <Download className="h-4 w-4" />
                   {t.exportExcel}
                 </a>
               </li>
@@ -424,37 +705,48 @@ const Dashboard: React.FC = () => {
       {/* KPIs */}
       <div className="responsive-grid gap-4 md:gap-6">
         {kpisData[selectedAgent as number]?.map((kpi, index) => {
-          const Icon = kpi.icon;
+          const Icon = kpi.icon
           return (
             <div key={index} className="card bg-base-100">
               <div className="card-body p-4 md:p-6">
                 <div className="flex items-center justify-between">
-                  <div className={`p-2 md:p-3 rounded-xl bg-opacity-10`}>
-                    <Icon className={`w-6 h-6 md:w-8 md:h-8 ${kpi.color}`} />
+                  <div className={`bg-opacity-10 rounded-xl p-2 md:p-3`}>
+                    <Icon className={`h-6 w-6 md:h-8 md:w-8 ${kpi.color}`} />
                   </div>
-                  <div className={`flex items-center text-xs md:text-sm ${kpi.trending === 'up' ? 'text-primary' : 'text-accent'}`}>
-                    {kpi.trending === 'up' ? <ArrowUp className="w-3 h-3 md:w-4 md:h-4" /> : <ArrowDown className="w-3 h-3 md:w-4 md:h-4" />}
+                  <div
+                    className={`flex items-center text-xs md:text-sm ${kpi.trending === 'up' ? 'text-primary' : 'text-accent'}`}
+                  >
+                    {kpi.trending === 'up' ? (
+                      <ArrowUp className="h-3 w-3 md:h-4 md:w-4" />
+                    ) : (
+                      <ArrowDown className="h-3 w-3 md:h-4 md:w-4" />
+                    )}
                     <span className="ml-1">{kpi.change}</span>
                   </div>
                 </div>
                 <div className="mt-3 md:mt-4">
-                  <h3 className="mobile-text-xl md:text-2xl font-bold text-base-content">{kpi.value}</h3>
+                  <h3 className="mobile-text-xl text-base-content font-bold md:text-2xl">
+                    {kpi.value}
+                  </h3>
                   <p className="text-neutral mobile-text">{kpi.title}</p>
                 </div>
               </div>
             </div>
-          );
+          )
         })}
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-4 md:gap-6">
+      <div className="grid gap-4 md:gap-6 lg:grid-cols-2">
         {/* Conversas por Mês */}
         <div className="card bg-base-100">
           <div className="card-body p-4 md:p-6">
             <h3 className="card-title mobile-text-lg md:text-xl">{t.conversationsPerMonth}</h3>
             <div className="responsive-chart mt-4">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={conversationsData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                <LineChart
+                  data={conversationsData}
+                  margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+                >
                   <defs>
                     <linearGradient id="conversasGradient" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#229ad2" stopOpacity={0.8} />
@@ -483,7 +775,7 @@ const Dashboard: React.FC = () => {
                       border: '1px solid #e5e7eb',
                       borderRadius: '8px',
                       boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                      fontSize: '14px'
+                      fontSize: '14px',
                     }}
                     labelStyle={{ color: '#374151', fontWeight: 'bold' }}
                   />
@@ -506,14 +798,18 @@ const Dashboard: React.FC = () => {
                 </LineChart>
               </ResponsiveContainer>
             </div>
-            <div className="flex justify-center space-x-8 mt-6">
+            <div className="mt-6 flex justify-center space-x-8">
               <div className="flex items-center">
-                <div className="w-4 h-4 bg-primary rounded-full mr-3 shadow-sm"></div>
-                <span className="text-sm font-medium text-base-content">{t.totalConversations}</span>
+                <div className="bg-primary mr-3 h-4 w-4 rounded-full shadow-sm"></div>
+                <span className="text-base-content text-sm font-medium">
+                  {t.totalConversations}
+                </span>
               </div>
               <div className="flex items-center">
-                <div className="w-4 h-4 bg-accent rounded-full mr-3 shadow-sm"></div>
-                <span className="text-sm font-medium text-base-content">{t.qualifiedLeadsChart}</span>
+                <div className="bg-accent mr-3 h-4 w-4 rounded-full shadow-sm"></div>
+                <span className="text-base-content text-sm font-medium">
+                  {t.qualifiedLeadsChart}
+                </span>
               </div>
             </div>
           </div>
@@ -524,33 +820,43 @@ const Dashboard: React.FC = () => {
           <div className="card-body">
             <h3 className="card-title mb-4">{t.conversionFunnel}</h3>
             <div className="min-h-[500px] py-4">
-              <div className="flex flex-col justify-start items-center space-y-4 px-6">
+              <div className="flex flex-col items-center justify-start space-y-4 px-6">
                 {funnelData[selectedAgent]?.map((entry, index) => {
-                  const percentage = funnelData[selectedAgent]?.[0]?.value ? (entry.value / funnelData[selectedAgent]?.[0]?.value) * 100 : 0;
-                  const width = Math.max(percentage, 25); // Largura mínima de 25%
-                  const conversionRate = index > 0 && funnelData[selectedAgent]?.[index - 1]?.value ? ((entry.value / funnelData[selectedAgent]?.[index - 1]?.value) * 100).toFixed(1) : 0;
+                  const percentage = funnelData[selectedAgent]?.[0]?.value
+                    ? (entry.value / funnelData[selectedAgent]?.[0]?.value) * 100
+                    : 0
+                  const width = Math.max(percentage, 25) // Largura mínima de 25%
+                  const conversionRate =
+                    index > 0 && funnelData[selectedAgent]?.[index - 1]?.value
+                      ? (
+                          (entry.value / funnelData[selectedAgent]?.[index - 1]?.value) *
+                          100
+                        ).toFixed(1)
+                      : 0
 
                   return (
-                    <div key={entry.nameEn} className="flex flex-col items-center group w-full">
+                    <div key={entry.nameEn} className="group flex w-full flex-col items-center">
                       <div
-                        className="relative h-14 flex items-center justify-center text-white font-semibold text-sm rounded-lg shadow-md transition-all duration-500 hover:shadow-xl hover:scale-105"
+                        className="relative flex h-14 items-center justify-center rounded-lg text-sm font-semibold text-white shadow-md transition-all duration-500 hover:scale-105 hover:shadow-xl"
                         style={{
                           width: `${width}%`,
                           background: `linear-gradient(135deg, ${entry.fill} 0%, ${entry.fill}dd 50%, ${entry.fill}aa 100%)`,
                           border: '1px solid rgba(255, 255, 255, 0.2)',
                           boxShadow: `0 4px 20px ${entry.fill}22`,
                           animationDelay: `${index * 0.1}s`,
-                          animation: 'slideInFunnel 0.6s ease-out forwards'
+                          animation: 'slideInFunnel 0.6s ease-out forwards',
                         }}
                       >
-                        <span className="drop-shadow-md z-10">
+                        <span className="z-10 drop-shadow-md">
                           {language.language === 'pt' ? entry.namePt : entry.nameEn}
                         </span>
-                        <div className="absolute inset-0 bg-white bg-opacity-10 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        <div className="bg-opacity-10 absolute inset-0 rounded-lg bg-white opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
                       </div>
 
-                      <div className="flex items-center justify-between w-full max-w-xs mt-2 text-xs text-base-content">
-                        <span className="font-medium">{entry.value.toLocaleString()} {t.users}</span>
+                      <div className="text-base-content mt-2 flex w-full max-w-xs items-center justify-between text-xs">
+                        <span className="font-medium">
+                          {entry.value.toLocaleString()} {t.users}
+                        </span>
                         {index > 0 && (
                           <span className="text-accent font-medium">
                             {conversionRate}% {t.conversion}
@@ -559,10 +865,10 @@ const Dashboard: React.FC = () => {
                       </div>
 
                       {index < funnelData[selectedAgent]?.length - 1 && (
-                        <div className="w-0 h-0 border-l-4 border-r-4 border-t-6 border-l-transparent border-r-transparent border-t-base-300 mt-1 opacity-50"></div>
+                        <div className="border-t-base-300 mt-1 h-0 w-0 border-t-6 border-r-4 border-l-4 border-r-transparent border-l-transparent opacity-50"></div>
                       )}
                     </div>
-                  );
+                  )
                 })}
               </div>
             </div>
@@ -570,14 +876,17 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-6 h-full">
+      <div className="grid h-full gap-6 lg:grid-cols-2">
         {/* Performance dos Agentes */}
         <div className="card bg-base-100">
           <div className="card-body p-4 md:p-6">
-            <h3 className="card-title mobile-text-lg md:text-xl mb-4">{t.agentPerformance}</h3>
+            <h3 className="card-title mobile-text-lg mb-4 md:text-xl">{t.agentPerformance}</h3>
             <div className="responsive-chart">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={agentsPerformance} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                <BarChart
+                  data={agentsPerformance}
+                  margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+                >
                   <defs>
                     <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#229ad2" stopOpacity={1} />
@@ -623,7 +932,7 @@ const Dashboard: React.FC = () => {
         {/* Atividade Recente */}
         <div className="card bg-base-100">
           <div className="card-body p-4 md:p-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between mb-4 space-y-2 md:space-y-0">
+            <div className="mb-4 flex flex-col justify-between space-y-2 md:flex-row md:items-center md:space-y-0">
               <div className="flex items-center space-x-2">
                 <h3 className="card-title mobile-text-lg md:text-xl">{t.whatsappActivity}</h3>
               </div>
@@ -639,35 +948,44 @@ const Dashboard: React.FC = () => {
                   <option value="sales">{t.sales}</option>
                 </select>
                 <button className="btn btn-ghost btn-xs" onClick={() => navigate(`/conversations`)}>
-                  <MessageSquare className="w-3 h-3" />
+                  <MessageSquare className="h-3 w-3" />
                 </button>
               </div>
             </div>
 
-            <div className="space-y-3 max-h-96 overflow-y-auto">
+            <div className="max-h-96 space-y-3 overflow-y-auto">
               {filteredActivities.map((activity) => {
-                const Icon = activity.icon;
+                const Icon = activity.icon
                 return (
                   <div
-                     key={`${activity.id}_${activity.time.getTime()}`}
-                    className={`activity-item group relative p-3 rounded-lg border transition-all duration-200 hover:shadow-md cursor-pointer ${activity.status === 'pending'
+                    key={`${activity.id}_${activity.time.getTime()}`}
+                    className={`activity-item group relative cursor-pointer rounded-lg border p-3 transition-all duration-200 hover:shadow-md ${
+                      activity.status === 'pending'
                         ? 'border-warning/30 bg-warning/5'
                         : 'border-base-300 hover:border-primary/30'
-                      }`}
+                    }`}
                   >
                     {/* Indicador de prioridade */}
-                    <div className={`absolute top-3 right-3 w-2 h-2 rounded-full ${activity.priority === 'high' ? 'bg-error' :
-                        activity.priority === 'medium' ? 'bg-warning' : 'bg-success'
-                      }`}></div>
+                    <div
+                      className={`absolute top-3 right-3 h-2 w-2 rounded-full ${
+                        activity.priority === 'high'
+                          ? 'bg-error'
+                          : activity.priority === 'medium'
+                            ? 'bg-warning'
+                            : 'bg-success'
+                      }`}
+                    ></div>
 
                     <div className="flex items-start space-x-2 md:space-x-3">
-                      <div className={`mobile-avatar ${activity.color} rounded-full flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow`}>
+                      <div
+                        className={`mobile-avatar ${activity.color} flex items-center justify-center rounded-full shadow-sm transition-shadow group-hover:shadow-md`}
+                      >
                         <Icon className={`mobile-icon ${activity.iconColor}`} />
                       </div>
 
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center space-x-2 mb-1">
-                          <h4 className="font-semibold text-base-content text-sm truncate">
+                      <div className="min-w-0 flex-1">
+                        <div className="mb-1 flex items-center space-x-2">
+                          <h4 className="text-base-content truncate text-sm font-semibold">
                             {activity.title}
                           </h4>
                           {activity.status === 'pending' && (
@@ -675,68 +993,89 @@ const Dashboard: React.FC = () => {
                           )}
                         </div>
 
-                        <p className="text-xs text-neutral mb-2 leading-relaxed">
+                        <p className="text-neutral mb-2 text-xs leading-relaxed">
                           {activity.description}
                         </p>
 
-                        <div className="flex flex-col md:flex-row md:items-center justify-between space-y-2 md:space-y-0">
-                          <div className="flex flex-wrap items-center space-x-2 md:space-x-3 text-xs">
-                            <span className="text-primary font-medium">
-                              {activity.agent}
-                            </span>
+                        <div className="flex flex-col justify-between space-y-2 md:flex-row md:items-center md:space-y-0">
+                          <div className="flex flex-wrap items-center space-x-2 text-xs md:space-x-3">
+                            <span className="text-primary font-medium">{activity.agent}</span>
                             {activity.phone !== 'N/A' && (
-                              <span className="text-success font-mono hidden sm:inline">
+                              <span className="text-success hidden font-mono sm:inline">
                                 {activity.phone}
                               </span>
                             )}
                             <span className="text-neutral flex items-center">
-                              <Clock className="w-3 h-3 mr-1" />
-                              {formatDistanceToNow(activity.time, { addSuffix: true, locale: language.language === 'pt' ? ptBR : enUS })}
+                              <Clock className="mr-1 h-3 w-3" />
+                              {formatDistanceToNow(activity.time, {
+                                addSuffix: true,
+                                locale: language.language === 'pt' ? ptBR : enUS,
+                              })}
                             </span>
                           </div>
 
-                          <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button className="btn btn-ghost btn-xs" title={t.respond} onClick={() => navigate(`/conversations?conversationId=${activity.id.split('_')[0]}`)}>
-                              <MessageSquare className="w-3 h-3" />
+                          <div className="flex items-center space-x-1 opacity-0 transition-opacity group-hover:opacity-100">
+                            <button
+                              className="btn btn-ghost btn-xs"
+                              title={t.respond}
+                              onClick={() =>
+                                navigate(
+                                  `/conversations?conversationId=${activity.id.split('_')[0]}`,
+                                )
+                              }
+                            >
+                              <MessageSquare className="h-3 w-3" />
                             </button>
-                            <button className="btn btn-ghost btn-xs" title={t.viewConversation} onClick={() => navigate(`/conversations?conversationId=${activity.id.split('_')[0]}`)}>
-                              <CheckCircle className="w-3 h-3" />
+                            <button
+                              className="btn btn-ghost btn-xs"
+                              title={t.viewConversation}
+                              onClick={() =>
+                                navigate(
+                                  `/conversations?conversationId=${activity.id.split('_')[0]}`,
+                                )
+                              }
+                            >
+                              <CheckCircle className="h-3 w-3" />
                             </button>
                           </div>
                         </div>
                       </div>
                     </div>
-
-
                   </div>
-                );
+                )
               })}
             </div>
 
-            <div className="mt-4 pt-4 border-t border-base-300">
-              <div className="flex items-center justify-between text-xs text-neutral">
+            <div className="border-base-300 mt-4 border-t pt-4">
+              <div className="text-neutral flex items-center justify-between text-xs">
                 <div className="flex items-center space-x-4">
-                  <span>{t.showing} {filteredActivities.length} {t.of} {recentActivities.length} {t.activities}</span>
-                  {
-                    selectedAgent !== -1 &&
-                  <div className="flex items-center space-x-2">
-                    <div className={`w-2 h-2 bg-${agents.find(agent => agent.id === selectedAgent)?.active ? 'success' : 'warning'} rounded-full`}></div>
-                    <span>{agents.find(agent => agent.id === selectedAgent)?.active ? t.online : t.offline}</span>
-                  </div>
-                }
+                  <span>
+                    {t.showing} {filteredActivities.length} {t.of} {recentActivities.length}{' '}
+                    {t.activities}
+                  </span>
+                  {selectedAgent !== -1 && (
+                    <div className="flex items-center space-x-2">
+                      <div
+                        className={`h-2 w-2 bg-${agents.find((agent) => agent.id === selectedAgent)?.active ? 'success' : 'warning'} rounded-full`}
+                      ></div>
+                      <span>
+                        {agents.find((agent) => agent.id === selectedAgent)?.active
+                          ? t.online
+                          : t.offline}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-
-
     </div>
-  );
-};
+  )
+}
 
-export default Dashboard;
+export default Dashboard
 
 // Estilos CSS personalizados
 const styles = `
@@ -761,12 +1100,12 @@ const styles = `
   .activity-item:nth-child(4) { animation-delay: 0.4s; }
   .activity-item:nth-child(5) { animation-delay: 0.5s; }
   .activity-item:nth-child(6) { animation-delay: 0.6s; }
-`;
+`
 
 // Adicionar estilos ao head se não existirem
 if (!document.getElementById('dashboard-styles')) {
-  const styleSheet = document.createElement('style');
-  styleSheet.id = 'dashboard-styles';
-  styleSheet.textContent = styles;
-  document.head.appendChild(styleSheet);
-} 
+  const styleSheet = document.createElement('style')
+  styleSheet.id = 'dashboard-styles'
+  styleSheet.textContent = styles
+  document.head.appendChild(styleSheet)
+}
