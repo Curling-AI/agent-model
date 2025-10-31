@@ -13,18 +13,7 @@ export async function processMediaFromUrlLangchainOpenAI(
   instruction: string,
   language?: string,
 ): Promise<string> {
-  const apiKey = process.env.LLM_API_KEY;
-
-  if (!apiKey) {
-    throw new Error("A variável de ambiente LLM_API_KEY deve ser definida.");
-  }
-
-  const visionModelName = process.env.AI_MODEL_VISION || 'gpt-4o';
-  const chatModel = new ChatOpenAI({
-    modelName: visionModelName,
-    temperature: 0,
-    apiKey: apiKey,
-  });
+  const chatModel = loadOpenAiModel();
 
   if (mediaType === 'image') {
     const message = new HumanMessage({
@@ -72,7 +61,7 @@ export async function processMediaFromUrlLangchainOpenAI(
 
       const loader = new OpenAIWhisperAudio(tempFilePath, {
         clientOptions: { 
-          apiKey: apiKey,
+          apiKey: process.env.LLM_API_KEY || '',
         },
         transcriptionCreateParams: {
           language: language,
@@ -128,4 +117,21 @@ export async function textToSpeechOpenAI(
   const audioBuffer = Buffer.from(arrayBuffer);
 
   return `data:audio/ogg;base64,${audioBuffer.toString('base64')}`;
+}
+
+export function loadOpenAiModel() {
+  const apiKey = process.env.LLM_API_KEY;
+
+  if (!apiKey) {
+    throw new Error("A variável de ambiente LLM_API_KEY deve ser definida.");
+  }
+
+  const visionModelName = process.env.AI_MODEL_VISION || 'gpt-4o';
+  const chatModel = new ChatOpenAI({
+    modelName: visionModelName,
+    temperature: 0,
+    apiKey: apiKey,
+  });
+
+  return chatModel;
 }

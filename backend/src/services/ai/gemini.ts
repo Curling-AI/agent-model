@@ -9,17 +9,7 @@ export async function processMediaFromBase64LangchainGemini(
   instruction: string,
   mimeType?: string,
 ): Promise<string> {
-  const apiKey = process.env.LLM_API_KEY;
-
-  if (!apiKey) {
-    throw new Error("A variável de ambiente GEMINI_API_KEY deve ser definida.");
-  }
-
-  const modelName = process.env.LLM_CHAT_MODEL || 'gemini-2.5-flash';
-  const chatModel = new ChatGoogleGenerativeAI({
-    model: modelName,
-    apiKey: apiKey,
-  });
+  const chatModel = loadGeminiModel();
 
   try {
     const message = new HumanMessage({
@@ -86,4 +76,20 @@ export async function textToSpeechGemini(
   await fs.unlink(outputFilePath);
 
   return base64Audio;
+}
+
+export function loadGeminiModel() {
+  const apiKey = process.env.LLM_API_KEY;
+
+  if (!apiKey) {
+    throw new Error("A variável de ambiente GEMINI_API_KEY deve ser definida.");
+  }
+
+  const modelName = process.env.LLM_CHAT_MODEL || 'gemini-2.5-flash';
+  const chatModel = new ChatGoogleGenerativeAI({
+    model: modelName,
+    apiKey: apiKey,
+  });
+
+  return chatModel;
 }

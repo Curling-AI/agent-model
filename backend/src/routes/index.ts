@@ -18,6 +18,7 @@ import crmColumnRoutes from './crm-column-routes';
 import webhookRoutes from './webhook-routes';
 import organizationRoutes from './organization-routes';
 import stripeRoutes from './stripe-routes';
+import testRoutes from './test-routes';
 
 const router = Router();
 
@@ -40,5 +41,6 @@ router.use('/crm-columns', crmColumnRoutes);
 router.use('/organizations', organizationRoutes); 
 router.use('/webhooks', webhookRoutes);
 router.use('/stripe', stripeRoutes);
+router.use('/test', testRoutes);
 
 export default router;
