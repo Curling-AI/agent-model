@@ -1,0 +1,35 @@
+
+server {
+  listen ${PORT};
+  server_name localhost;
+  large_client_header_buffers 4 32k;
+
+  location / {
+    root /var/www/html;
+    index index.html index.htm;
+    try_files $uri $uri/ /index.html =404;
+
+    location ~* \.(?:ico|gif|jpe?g|png|htc|xml|otf|ttf|eot|woff|woff2|svg)$ {
+      expires 1d;
+      access_log off;
+      log_not_found off;
+      add_header Cache-Control private;
+      open_file_cache max=3000 inactive=120s;
+      open_file_cache_valid 120s;
+      open_file_cache_min_uses 4;
+      open_file_cache_errors on;
+    }
+
+    location ~* \.(css|js)$ {
+        expires 30d;
+        access_log on;
+        add_header Cache-Control public;
+    }
+
+    location ~* \.(html)$ {
+        expires 15m;
+        access_log on;
+        add_header Cache-Control public;
+    }
+  }
+}
