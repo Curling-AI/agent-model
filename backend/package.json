@@ -21,7 +21,7 @@
     "@langchain/openai": "^1.0.0",
     "@langchain/textsplitters": "^1.0.0",
     "@supabase/ssr": "^0.7.0",
-    "@supabase/supabase-js": "^2.75.0",
+    "@supabase/supabase-js": "^2.78.0",
     "@types/form-data": "^2.2.1",
     "axios": "^1.12.2",
     "cheerio": "^1.1.2",

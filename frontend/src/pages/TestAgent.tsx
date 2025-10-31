@@ -13,6 +13,7 @@ import { useAgentStore } from '@/store/agent';
 import { Agent } from '@/types/agent';
 import { useConversationStore } from '@/store/conversation';
 import { ConversationMessage } from '@/types/conversation';
+import { useAuthStore } from '@/store/auth';
 
 const TestAgent: React.FC = () => {
   const navigate = useNavigate();
@@ -26,8 +27,14 @@ const TestAgent: React.FC = () => {
   const { agents, fetchAgents } = useAgentStore();
   const { sendTestMessage } = useConversationStore();
 
+  const { user, getLoggedUser } = useAuthStore();
+  
   useEffect(() => {
-    fetchAgents(1, 'all');
+    getLoggedUser();
+  }, []);
+
+  useEffect(() => {
+    fetchAgents(user?.organizationId!, 'all');
   }, [fetchAgents]);
 
   const scrollToBottom = () => {

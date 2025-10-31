@@ -113,6 +113,7 @@ export const AuthController = {
   getLoggedUser: async (_: Request, res: Response) => {
     const { data, error } = await supabase.auth.getUser();
     if (error) {
+      console.log(error);
       res.status(500).json({ error: 'Erro ao buscar usuário' });
     } else {
       const response = await getByFilter('users', { 'auth_id': data.user.id });
