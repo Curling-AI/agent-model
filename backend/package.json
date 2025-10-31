@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "tsx --env-file=.env src/server.ts",
+    "build": "tsc",
+    "start": "node  dist/server.js",
     "sync:stripe": "tsx --env-file=.env ../scripts/stripe.ts",
     "sync:prices-from-stripe": "tsx --env-file=.env -e 'import(\"../scripts/stripe.ts\").then(m => m.syncPricesFromStripe())'",
     "backfill:subscription": "tsx --env-file=.env ../scripts/backfill-subscription.ts"

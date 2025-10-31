@@ -1,14 +1,25 @@
-FROM node:22.12.0-alpine
+
+FROM node:24-alpine AS build
 
 WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+RUN npm run build
 
-ADD package*.json ./
-RUN npm ci
+FROM node:24-alpine
 
-ADD src ./src
-ADD tsconfig.json .
-ADD .env .
+WORKDIR /app
+COPY --from=build /app/package*.json ./
+ARG NODE_ENV=production
+RUN npm ci --only=production
 
-EXPOSE 3000
+COPY --from=build /app/dist ./dist
 
-CMD ["npm", "run", "dev"]
+ENV NODE_ENV=production
+ENV ALLOWED_ORIGINS=http://localhost
+ENV PORT=3000
+
+EXPOSE ${PORT}
+
+CMD ["npm", "run", "start"]
